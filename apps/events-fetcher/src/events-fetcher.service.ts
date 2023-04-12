@@ -1,0 +1,109 @@
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { EventsFetcherDal } from './events-fetcher.dal';
+import { ICity, IEvent, IEventerFullEventResponse } from '@app/types';
+import * as mongoose from 'mongoose';
+
+@Injectable()
+export class EventsFetcherService implements OnModuleInit, OnModuleDestroy {
+  constructor(private readonly dal: EventsFetcherDal) {}
+  public async onModuleDestroy() {}
+  public async onModuleInit() {
+    this.getAllCountryEvents();
+  }
+  public async getAllCountryEvents() {
+    const cities = await this.dal.getAllCities();
+    console.log('Number of cities:', cities.length);
+    for (const city of cities) {
+      const events = await this.dal.fetchEventerList(city.name);
+
+      for (const event of events) {
+        await this.getValidEvent(event.linkName.toLowerCase());
+        // return;
+        // debugger;
+      }
+    }
+    console.log('Finished!');
+  }
+
+  public async getValidEvent(eventSlug: string) {
+    const slug = eventSlug.toLowerCase();
+    const dbEvent = await this.dal.getDbEventBySlug(slug);
+    if (this.validateEventExpiry(dbEvent)) {
+      console.log('Fresh event found in DB!', dbEvent.slug);
+      return dbEvent;
+    }
+    console.log('Trying to fetch event from eventer');
+    const event = await this.dal.fetchEventerFullEvent(slug);
+    if (!event) {
+      return null;
+    }
+    console.log('Event found!', event.event.linkName);
+    const city = await this.extractCityFromEventerResponse(event);
+    const payload = this.mapEventerResponseToDbEvent(event, city);
+    if (!payload) {
+      return null;
+    }
+
+    if (dbEvent) {
+      return await this.dal.updateEvent(payload);
+    }
+    return await this.dal.storeEvent(payload);
+  }
+
+  public async extractCityFromEventerResponse(
+    event: IEventerFullEventResponse,
+  ): Promise<ICity | null> {
+    const { longitude, latitude } = event.event.location;
+    if (!longitude || !latitude) {
+      return null;
+    }
+    const city = await this.dal.getCityByCoordinates(longitude, latitude);
+    city
+      ? console.log('City found!', city.name)
+      : console.log('City not found :(');
+
+    return city;
+  }
+
+  public mapEventerResponseToDbEvent(
+    event: IEventerFullEventResponse,
+    city?: ICity,
+  ): Omit<IEvent, 'id' | 'createdAt' | 'updatedAt'> {
+    const location = event.event.location;
+    if (!location.latitude || !location.longitude) {
+      return null;
+    }
+    return {
+      title: event.event.name,
+      ageLimit: event.event.guestInfoFields?.age.ageLimit ?? 1,
+      picture: event.event.ticketPlatform.images?.imageSquare,
+      slug: event.event.linkName,
+      link: this.generateAffiliateLink(event.event.linkName),
+      description: event.jsonLdData.description,
+      startTime: new Date(event.event.schedule.start),
+      endTime: new Date(event.event.schedule.end),
+      location: {
+        cityId: city ? new mongoose.Types.ObjectId(city.id) : null,
+        country: 'Israel',
+        coordinates: {
+          type: 'Point',
+          coordinates: [location.longitude, location.latitude],
+        },
+      },
+    };
+  }
+  public validateEventExpiry(event?: IEvent) {
+    const ONE_HOUR = 60 * 60 * 1000;
+    if (!event) {
+      return false;
+    }
+    if (+new Date(event.updatedAt) + ONE_HOUR < Date.now()) {
+      return false;
+    }
+    return true;
+  }
+
+  public generateAffiliateLink(eventSlug: string) {
+    return `https://www.eventer.co.il/events/${eventSlug}`;
+  }
+}
