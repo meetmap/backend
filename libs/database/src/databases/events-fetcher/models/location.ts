@@ -1,7 +1,6 @@
+import { PointSchema } from '@app/database/shared-models';
 import { ILocation, IPoint } from '@app/types';
 import * as mongoose from 'mongoose';
-import { PointSchema } from './point';
-import { CitySchema } from './city';
 
 export const LocationSchema = new mongoose.Schema<ILocation>({
   cityId: {
@@ -16,5 +15,6 @@ export const LocationSchema = new mongoose.Schema<ILocation>({
   coordinates: {
     type: PointSchema,
     required: true,
+    index: '2dsphere',
   },
 });

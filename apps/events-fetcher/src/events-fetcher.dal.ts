@@ -1,5 +1,6 @@
 import { eventerAxios } from '@app/axios';
-import { DatabaseService } from '@app/database';
+import { EventsFetcherDb } from '@app/database';
+
 import { RedisService } from '@app/redis';
 import {
   IEvent,
@@ -15,25 +16,18 @@ export class EventsFetcherDal {
   constructor(
     @Inject(RedisService.name)
     private readonly eventsCacheClient: RedisService<IEventCache>,
-    private readonly database: DatabaseService,
+    private readonly database: EventsFetcherDb,
   ) {}
   public async updateEvent(
+    eventId: string,
     payload: Omit<IEvent, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<IEvent> {
-    await this.database.models.event.updateOne(
-      {
-        slug: payload.slug,
-      },
-      {
-        $set: {
-          ...payload,
-          updatedAt: undefined,
-          createdAt: undefined,
-          id: undefined,
-        },
-      },
-    );
-    return await this.database.models.event.findOne({ slug: payload.slug });
+  ): Promise<IEvent | null> {
+    return this.database.models.event.findByIdAndUpdate(eventId, {
+      ...payload,
+      updatedAt: undefined,
+      createdAt: undefined,
+      id: undefined,
+    });
   }
   public async storeEvent(
     payload: Omit<IEvent, 'id' | 'createdAt' | 'updatedAt'>,

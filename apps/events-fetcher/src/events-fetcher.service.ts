@@ -8,7 +8,7 @@ export class EventsFetcherService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly dal: EventsFetcherDal) {}
   public async onModuleDestroy() {}
   public async onModuleInit() {
-    this.getAllCountryEvents();
+    // this.getAllCountryEvents();
   }
   public async getAllCountryEvents() {
     const cities = await this.dal.getAllCities();
@@ -45,7 +45,7 @@ export class EventsFetcherService implements OnModuleInit, OnModuleDestroy {
     }
 
     if (dbEvent) {
-      return await this.dal.updateEvent(payload);
+      return await this.dal.updateEvent(dbEvent.id, payload);
     }
     return await this.dal.storeEvent(payload);
   }
@@ -67,8 +67,8 @@ export class EventsFetcherService implements OnModuleInit, OnModuleDestroy {
 
   public mapEventerResponseToDbEvent(
     event: IEventerFullEventResponse,
-    city?: ICity,
-  ): Omit<IEvent, 'id' | 'createdAt' | 'updatedAt'> {
+    city: ICity | null,
+  ): Omit<IEvent, 'id' | 'createdAt' | 'updatedAt'> | null {
     const location = event.event.location;
     if (!location.latitude || !location.longitude) {
       return null;
@@ -83,7 +83,7 @@ export class EventsFetcherService implements OnModuleInit, OnModuleDestroy {
       startTime: new Date(event.event.schedule.start),
       endTime: new Date(event.event.schedule.end),
       location: {
-        cityId: city ? new mongoose.Types.ObjectId(city.id) : null,
+        cityId: city ? new mongoose.Types.ObjectId(city.id) : undefined,
         country: 'Israel',
         coordinates: {
           type: 'Point',
@@ -92,7 +92,7 @@ export class EventsFetcherService implements OnModuleInit, OnModuleDestroy {
       },
     };
   }
-  public validateEventExpiry(event?: IEvent) {
+  public validateEventExpiry(event: IEvent | null): event is IEvent {
     const ONE_HOUR = 60 * 60 * 1000;
     if (!event) {
       return false;

@@ -56,6 +56,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/axios/tsconfig.lib.json"
       }
+    },
+    "main-app": {
+      "type": "application",
+      "root": "apps/main-app",
+      "entryFile": "main",
+      "sourceRoot": "apps/main-app/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/main-app/tsconfig.app.json"
+      }
     }
   },
   "compilerOptions": {
