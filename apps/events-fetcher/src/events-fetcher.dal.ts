@@ -18,22 +18,15 @@ export class EventsFetcherDal {
     private readonly database: DatabaseService,
   ) {}
   public async updateEvent(
+    eventId: string,
     payload: Omit<IEvent, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<IEvent> {
-    await this.database.models.event.updateOne(
-      {
-        slug: payload.slug,
-      },
-      {
-        $set: {
-          ...payload,
-          updatedAt: undefined,
-          createdAt: undefined,
-          id: undefined,
-        },
-      },
-    );
-    return await this.database.models.event.findOne({ slug: payload.slug });
+  ): Promise<IEvent | null> {
+    return this.database.models.event.findByIdAndUpdate(eventId, {
+      ...payload,
+      updatedAt: undefined,
+      createdAt: undefined,
+      id: undefined,
+    });
   }
   public async storeEvent(
     payload: Omit<IEvent, 'id' | 'createdAt' | 'updatedAt'>,

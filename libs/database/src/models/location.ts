@@ -16,5 +16,6 @@ export const LocationSchema = new mongoose.Schema<ILocation>({
   coordinates: {
     type: PointSchema,
     required: true,
+    index: '2dsphere',
   },
 });
