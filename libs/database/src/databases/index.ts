@@ -1,2 +1,2 @@
 export * from './events-fetcher';
-export * from './main-app.db';
+export * from './main-app';
