@@ -1,5 +1,6 @@
 import { eventerAxios } from '@app/axios';
-import { DatabaseService } from '@app/database';
+import { EventsFetcherDb } from '@app/database';
+
 import { RedisService } from '@app/redis';
 import {
   IEvent,
@@ -15,7 +16,7 @@ export class EventsFetcherDal {
   constructor(
     @Inject(RedisService.name)
     private readonly eventsCacheClient: RedisService<IEventCache>,
-    private readonly database: DatabaseService,
+    private readonly database: EventsFetcherDb,
   ) {}
   public async updateEvent(
     eventId: string,

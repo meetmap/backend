@@ -1,7 +1,7 @@
 import { ICity, IEvent } from '@app/types';
 import * as mongoose from 'mongoose';
 import { LocationSchema } from './location';
-import { PolygonSchema } from './poylgon';
+import { PolygonSchema } from '../../../shared-models/poylgon';
 
 export const CitySchema = new mongoose.Schema<ICity>(
   {

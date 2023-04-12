@@ -8,7 +8,7 @@ export class EventsFetcherService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly dal: EventsFetcherDal) {}
   public async onModuleDestroy() {}
   public async onModuleInit() {
-    this.getAllCountryEvents();
+    // this.getAllCountryEvents();
   }
   public async getAllCountryEvents() {
     const cities = await this.dal.getAllCities();
