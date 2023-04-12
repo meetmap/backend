@@ -5,3 +5,5 @@ export * from './eventer-co-il';
 export * from './city';
 export * from './region';
 export * from './other';
+export * from './user';
+export * from './friends';
