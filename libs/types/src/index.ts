@@ -4,3 +4,4 @@ export * from './event';
 export * from './eventer-co-il';
 export * from './city';
 export * from './region';
+export * from './other';

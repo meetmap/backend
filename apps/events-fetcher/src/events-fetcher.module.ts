@@ -12,7 +12,10 @@ import { RedisModule } from '@app/redis';
       isGlobal: true,
     }),
     RedisModule,
-    DatabaseModule,
+    DatabaseModule.init({
+      connectionStringEnvPath: 'EVENTS_FETCHER_DATABASE_URL',
+      microserviceName: 'events-fetcher',
+    }),
   ],
   controllers: [EventsFetcherController],
   providers: [EventsFetcherService, EventsFetcherDal],
