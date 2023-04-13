@@ -4,12 +4,18 @@ import { IPoint } from '../location';
 
 export interface IUser {
   id: string;
-  nickname: string;
+  username: string;
   phone?: string;
   email: string;
-  age: number;
+  password?: string;
+  refreshToken?: string;
+  birthDate: Date;
   createdAt: Date;
   updatedAt: Date;
   coordinates?: IPoint;
   friendsIds: PopulatedDoc<IFriends>[];
+}
+
+export interface IUserWithPassword extends IUser {
+  password: string;
 }
