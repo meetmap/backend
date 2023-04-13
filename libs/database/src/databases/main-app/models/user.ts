@@ -5,7 +5,7 @@ import { PointSchema } from '@app/database/shared-models';
 
 export const UserSchema = new mongoose.Schema<IUser>(
   {
-    nickname: {
+    username: {
       type: mongoose.SchemaTypes.String,
       unique: true,
       required: true,
@@ -13,18 +13,25 @@ export const UserSchema = new mongoose.Schema<IUser>(
     coordinates: {
       type: PointSchema,
     },
-    age: {
-      type: mongoose.SchemaTypes.Number,
+    birthDate: {
+      type: mongoose.SchemaTypes.Date,
       required: true,
+    },
+    refreshToken: {
+      type: mongoose.SchemaTypes.String,
     },
     email: {
       type: mongoose.SchemaTypes.String,
       unique: true,
       required: true,
     },
+    password: {
+      type: mongoose.SchemaTypes.String,
+    },
     phone: {
       type: mongoose.SchemaTypes.String,
       unique: true,
+      sparse: true,
     },
     friendsIds: [
       {
