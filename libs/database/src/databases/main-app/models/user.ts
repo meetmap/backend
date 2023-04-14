@@ -36,7 +36,7 @@ export const UserSchema = new mongoose.Schema<IUser>(
     friendsIds: [
       {
         type: mongoose.SchemaTypes.ObjectId,
-        ref: 'Friends',
+        ref: 'User',
       },
     ],
   },

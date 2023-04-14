@@ -2,6 +2,7 @@ import { AuthModule } from '@app/auth';
 import { DatabaseModule } from '@app/database';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { FriendsModule } from './friends/friends.module';
 import { MainAppController } from './main-app.controller';
 import { MainAppService } from './main-app.service';
 import { UsersModule } from './users/users.module';
@@ -17,6 +18,7 @@ import { UsersModule } from './users/users.module';
     }),
     AuthModule,
     UsersModule,
+    FriendsModule,
   ],
   controllers: [MainAppController],
   providers: [MainAppService],
