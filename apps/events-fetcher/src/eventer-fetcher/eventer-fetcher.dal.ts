@@ -12,7 +12,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 
 @Injectable()
-export class EventsFetcherDal {
+export class EventerFetcherDal {
   constructor(
     @Inject(RedisService.name)
     private readonly eventsCacheClient: RedisService<IEventCache>,

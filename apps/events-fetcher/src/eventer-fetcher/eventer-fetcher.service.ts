@@ -1,15 +1,19 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { EventsFetcherDal } from './events-fetcher.dal';
+import { EventerFetcherDal } from './eventer-fetcher.dal';
 import { ICity, IEvent, IEventerFullEventResponse } from '@app/types';
+import { Cron } from '@nestjs/schedule';
 import * as mongoose from 'mongoose';
 
 @Injectable()
-export class EventsFetcherService implements OnModuleInit, OnModuleDestroy {
-  constructor(private readonly dal: EventsFetcherDal) {}
+export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
+  constructor(private readonly dal: EventerFetcherDal) {}
   public async onModuleDestroy() {}
+
   public async onModuleInit() {
     // this.getAllCountryEvents();
   }
+
+  @Cron('0,30 * * * *')
   public async getAllCountryEvents() {
     const cities = await this.dal.getAllCities();
     console.log('Number of cities:', cities.length);
@@ -17,6 +21,9 @@ export class EventsFetcherService implements OnModuleInit, OnModuleDestroy {
       const events = await this.dal.fetchEventerList(city.name);
 
       for (const event of events) {
+        if (!event.linkName) {
+          continue;
+        }
         await this.getValidEvent(event.linkName.toLowerCase());
         // return;
         // debugger;
@@ -25,7 +32,7 @@ export class EventsFetcherService implements OnModuleInit, OnModuleDestroy {
     console.log('Finished!');
   }
 
-  public async getValidEvent(eventSlug: string) {
+  public async getValidEvent(eventSlug: string): Promise<IEvent | null> {
     const slug = eventSlug.toLowerCase();
     const dbEvent = await this.dal.getDbEventBySlug(slug);
     if (this.validateEventExpiry(dbEvent)) {
