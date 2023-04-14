@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
-import { EventsFetcherController } from './events-fetcher.controller';
-import { EventsFetcherService } from './events-fetcher.service';
+
+import { EventerFetcherService } from './eventer-fetcher/eventer-fetcher.service';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '@app/database';
-import { EventsFetcherDal } from './events-fetcher.dal';
+
 import { RedisModule } from '@app/redis';
+import { EventerFetcherModule } from './eventer-fetcher/eventer-fetcher.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -16,8 +18,10 @@ import { RedisModule } from '@app/redis';
       connectionStringEnvPath: 'EVENTS_FETCHER_DATABASE_URL',
       microserviceName: 'events-fetcher',
     }),
+    EventerFetcherModule,
+    EventsModule,
   ],
-  controllers: [EventsFetcherController],
-  providers: [EventsFetcherService, EventsFetcherDal],
+  controllers: [],
+  providers: [],
 })
 export class EventsFetcherModule {}
