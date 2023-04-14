@@ -20,7 +20,7 @@ export class LocationDal {
         },
       },
       {
-        EX: 60 * 60, //e.g 1hr
+        EX: 60 * 60 * 24 * 3, //e.g 3d
       },
     );
     return {
