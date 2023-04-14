@@ -5,7 +5,7 @@ import { PointSchema } from '@app/database/shared-models';
 
 export const FriendsSchema = new mongoose.Schema<IFriends>(
   {
-    requestor: {
+    requester: {
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'User',
     },
@@ -15,7 +15,7 @@ export const FriendsSchema = new mongoose.Schema<IFriends>(
     },
     status: {
       type: mongoose.SchemaTypes.String,
-      enum: ['add-friend', 'requested', 'pending', 'rejected'],
+      enum: ['add-friend', 'requested', 'pending', 'rejected', 'friends'],
       default: 'add-friend',
     },
   },

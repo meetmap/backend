@@ -46,6 +46,7 @@ export class UsersController {
     }
     const jwt = await this.jwtService.getTokens({
       sub: user.id,
+      username: user.username,
     });
     await this.usersService.updateUsersRefreshToken(user.id, jwt.rt);
     return jwt;
