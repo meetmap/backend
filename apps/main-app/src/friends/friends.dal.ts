@@ -150,7 +150,8 @@ export class FreindsDal {
         | 'phone'
         | 'birthDate'
         | 'friendsIds'
-      > & { _id: string }
+        | 'id'
+      >
     >([
       {
         $match: {
@@ -191,6 +192,13 @@ export class FreindsDal {
           phone: 1,
           birthDate: 1,
           friendsIds: 1,
+        },
+      },
+      {
+        $addFields: {
+          id: {
+            $toString: '$_id',
+          },
         },
       },
     ]);

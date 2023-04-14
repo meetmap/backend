@@ -7,6 +7,7 @@ import { DatabaseModule } from '@app/database';
 import { RedisModule } from '@app/redis';
 import { EventerFetcherModule } from './eventer-fetcher/eventer-fetcher.module';
 import { EventsModule } from './events/events.module';
+import { InternalAxiosModule } from '@app/axios';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { EventsModule } from './events/events.module';
       connectionStringEnvPath: 'EVENTS_FETCHER_DATABASE_URL',
       microserviceName: 'events-fetcher',
     }),
+    InternalAxiosModule,
     EventerFetcherModule,
     EventsModule,
   ],

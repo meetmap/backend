@@ -7,6 +7,7 @@ import { FriendsModule } from './friends/friends.module';
 import { UsersModule } from './users/users.module';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { RabbitMQExchanges } from '@app/constants';
+import { InternalAxiosModule } from '@app/axios';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { RabbitMQExchanges } from '@app/constants';
       microserviceName: 'main-app',
     }),
     RabbitmqModule.forRoot(),
+    InternalAxiosModule,
     AuthModule,
     UsersModule,
     FriendsModule,
