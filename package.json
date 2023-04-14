@@ -22,15 +22,18 @@
     "compose:dev": "docker-compose -f docker-compose.dev.yaml up"
   },
   "dependencies": {
-    "@nestjs/common": "^8.0.0",
+    "@golevelup/nestjs-rabbitmq": "^3.6.0",
+    "@nestjs/common": "^9.4.0",
     "@nestjs/config": "^2.3.1",
-    "@nestjs/core": "^8.0.0",
+    "@nestjs/core": "^9.4.0",
     "@nestjs/microservices": "^9.4.0",
     "@nestjs/mongoose": "^9.2.2",
     "@nestjs/platform-express": "^8.0.0",
     "@nestjs/schedule": "^2.2.1",
     "@prisma/client": "^4.12.0",
     "@redis/client": "^1.5.6",
+    "amqp-connection-manager": "^4.1.12",
+    "amqplib": "^0.10.3",
     "axios": "^1.3.5",
     "bcrypt": "^5.1.0",
     "class-transformer": "^0.5.1",
@@ -97,7 +100,8 @@
       "^@app/database(|/.*)$": "<rootDir>/libs/database/src/$1",
       "^@app/axios(|/.*)$": "<rootDir>/libs/axios/src/$1",
       "^@app/constants(|/.*)$": "<rootDir>/libs/constants/src/$1",
-      "^@app/auth(|/.*)$": "<rootDir>/libs/auth/src/$1"
+      "^@app/auth(|/.*)$": "<rootDir>/libs/auth/src/$1",
+      "^@app/rabbitmq(|/.*)$": "<rootDir>/libs/rabbitmq/src/$1"
     }
   }
 }

@@ -3,3 +3,11 @@ export const PASSWORD_REGEX =
 export const MIN_AGE = 12;
 export const MAX_AGE = 120;
 export const RADIANS_PER_KILOMETER = 1 / 6371.01;
+
+export enum RabbitMQExchanges {
+  LOCATION_EXCHANGE = 'location-exchange',
+}
+
+export enum RabbitMQQueues {
+  LOCATION_QUEUE = 'location-queue',
+}
