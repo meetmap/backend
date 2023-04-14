@@ -9,9 +9,7 @@ export class RedisService<DataT = unknown> implements OnModuleInit {
 
   constructor(private readonly configService: ConfigService) {
     // console.log('redis', "https"process.env.SESSIONS_AND_CACHE_ENDPOINT);
-    const url =
-      'redis://'.concat(configService.getOrThrow('CACHE_ENDPOINT')) ??
-      'redis://localhost:6379';
+    const url = 'redis://'.concat(configService.getOrThrow('CACHE_ENDPOINT'));
     this._client = redis.createClient({
       url,
       pingInterval: 10000,
@@ -27,7 +25,15 @@ export class RedisService<DataT = unknown> implements OnModuleInit {
   }
   public async get(key: string) {
     const result = await this._client.get(key);
-    return result && this.deserialize(result);
+    if (result) {
+      return this.deserialize(result);
+    }
+    return null;
+  }
+
+  public async getBulk(keys: string[]) {
+    const result = await this._client.mGet(keys);
+    return result.map((r) => (r ? this.deserialize(r) : null));
   }
 
   public async delete(key: string) {

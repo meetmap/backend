@@ -6,11 +6,13 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { RabbitMQExchanges } from '@app/constants';
 import { ConfigModule } from '@nestjs/config';
 import { RabbitmqModule } from '@app/rabbitmq';
+import { InternalAxiosModule } from '@app/axios';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     RedisModule,
+    InternalAxiosModule,
     RabbitmqModule.forRoot(),
     LocationModule,
   ],

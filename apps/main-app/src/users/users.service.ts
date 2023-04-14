@@ -1,4 +1,5 @@
-import { MAX_AGE, MIN_AGE } from '@app/constants';
+import { MAX_AGE, MIN_AGE, RabbitMQExchanges } from '@app/constants';
+import { RabbitmqService } from '@app/rabbitmq';
 import {
   BadRequestException,
   ConflictException,
@@ -9,13 +10,17 @@ import {
   CreateUserRequestDto,
   LoginWithPasswordDto,
   RefreshAccessTokenDto,
+  UpdateUserLocationDto,
   UpdateUsersUsernameDto,
 } from './dto';
 import { UsersDal } from './users.dal';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly dal: UsersDal) {}
+  constructor(
+    private readonly dal: UsersDal,
+    private readonly rmq: RabbitmqService,
+  ) {}
 
   public async createUser(payload: CreateUserRequestDto) {
     if (!this.isValidBirthDate(payload.birthDate)) {
@@ -120,5 +125,15 @@ export class UsersService {
     return await this.dal.updateUser(userId, { username: payload.username });
   }
 
-  public async refreshAccessToken(payload: RefreshAccessTokenDto) {}
+  public async updateUserLocation(userId: string, dto: UpdateUserLocationDto) {
+    this.rmq.amqp.publish(
+      RabbitMQExchanges.LOCATION_EXCHANGE,
+      'update-location',
+      {
+        userId: userId,
+        ...dto,
+      },
+    );
+    return dto;
+  }
 }

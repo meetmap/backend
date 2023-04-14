@@ -6,6 +6,7 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
+  NotFoundException,
   UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
