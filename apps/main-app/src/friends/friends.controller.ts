@@ -45,7 +45,13 @@ export class FreindsController {
     );
   }
 
-  @Get('/:userId/?')
+  @UseAuthGuard()
+  @Get('location')
+  public async getFriendsLocation(@ExtractUser() user: IUser) {
+    return this.friendsService.getFriendsLocation(user.id);
+  }
+
+  @Get('/get/:userId/?')
   //   @UseAuthGuard()
   public async getUserFirends(
     @Param('userId') userId: string,
