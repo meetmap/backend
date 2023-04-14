@@ -1,5 +1,6 @@
 import { JwtService } from '@app/auth';
 import { ExtractUser, UseAuthGuard } from '@app/auth/jwt';
+import { InternalAxiosService } from '@app/axios';
 import { IUser } from '@app/types';
 import {
   BadRequestException,
@@ -17,6 +18,7 @@ import {
   CreateUserRequestDto,
   LoginWithPasswordDto,
   RefreshAccessTokenDto,
+  UpdateUserLocationDto,
   UpdateUsersUsernameDto,
 } from './dto';
 import { UsersService } from './users.service';
@@ -26,6 +28,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly internalAxios: InternalAxiosService,
   ) {}
 
   @Post('/create')
@@ -82,5 +85,14 @@ export class UsersController {
     const accessToken = await this.jwtService.getAt(dto.refreshToken);
     res.setHeader('Authorization', `Bearer ${accessToken}`);
     return { accessToken };
+  }
+
+  @UseAuthGuard()
+  @Post('update-location')
+  public async updateUserLocation(
+    @Body() body: UpdateUserLocationDto,
+    @ExtractUser() user: IUser,
+  ) {
+    return this.usersService.updateUserLocation(user.id, body);
   }
 }

@@ -57,3 +57,10 @@ export class RefreshAccessTokenDto {
   @IsString()
   refreshToken: string;
 }
+
+export class UpdateUserLocationDto {
+  @IsNumber()
+  lat: number;
+  @IsNumber()
+  lng: number;
+}

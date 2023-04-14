@@ -1,3 +1,5 @@
+import { RabbitMQExchanges } from '@app/constants';
+import { RabbitmqService } from '@app/rabbitmq';
 import { IUser } from '@app/types';
 import {
   BadRequestException,
@@ -10,7 +12,10 @@ import { FreindsDal } from './friends.dal';
 
 @Injectable()
 export class FriendsService {
-  constructor(private readonly dal: FreindsDal) {}
+  constructor(
+    private readonly dal: FreindsDal,
+    private readonly rmq: RabbitmqService,
+  ) {}
 
   public async requestFriendship(user: IUser, payload: RequestFriendshipDto) {
     const recipientUser = await this.dal.getUserByUsername(payload.username);
@@ -56,5 +61,16 @@ export class FriendsService {
       throw new NotFoundException('User not found');
     }
     return this.dal.getUserFriends(userId, limit, page);
+  }
+
+  public async getFriendsLocation(userId: string) {
+    const friends = await this.dal.getUserFriends(userId, 0, 0);
+    return await this.rmq.amqp.request({
+      exchange: RabbitMQExchanges.LOCATION_EXCHANGE,
+      routingKey: 'get-users-location',
+      payload: {
+        userIds: friends.map((friend) => friend.id),
+      },
+    });
   }
 }
