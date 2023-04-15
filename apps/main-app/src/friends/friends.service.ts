@@ -65,12 +65,13 @@ export class FriendsService {
 
   public async getFriendsLocation(userId: string) {
     const friends = await this.dal.getUserFriends(userId, 0, 0);
-    return await this.rmq.amqp.request({
+    const resp = await this.rmq.amqp.request({
       exchange: RabbitMQExchanges.LOCATION_EXCHANGE,
       routingKey: 'get-users-location',
       payload: {
         userIds: friends.map((friend) => friend.id),
       },
     });
+    return resp;
   }
 }

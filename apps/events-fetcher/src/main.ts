@@ -5,6 +5,8 @@ import { EventsFetcherModule } from './events-fetcher.module';
 async function bootstrap() {
   const app = await NestFactory.create(EventsFetcherModule);
   app.useGlobalPipes(new ValidationPipe());
-  await app.listen(3000);
+  const PORT = process.env.PORT ?? 3000;
+  await app.listen(PORT);
+  console.log('App is running on port:', PORT);
 }
 bootstrap();

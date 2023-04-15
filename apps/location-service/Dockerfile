@@ -15,7 +15,7 @@ RUN yarn install
 # Bundle app source
 COPY . .
 
-RUN yarn build events-fetcher
+RUN yarn build location-service
 
-EXPOSE 3000
-CMD [ "node", "dist/apps/events-fetcher/main.js" ]
+EXPOSE 3002
+CMD [ "node", "dist/apps/location-service/main.js" ]

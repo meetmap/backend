@@ -202,7 +202,6 @@ export class FreindsDal {
         },
       },
     ]);
-
     return response; // response.map(({ friends }) => friends);
   }
 }

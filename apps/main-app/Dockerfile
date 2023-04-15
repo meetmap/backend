@@ -15,7 +15,7 @@ RUN yarn install
 # Bundle app source
 COPY . .
 
-RUN yarn build events-fetcher
+RUN yarn build main-app
 
-EXPOSE 3000
-CMD [ "node", "dist/apps/events-fetcher/main.js" ]
+EXPOSE 3001
+CMD [ "node", "dist/apps/main-app/main.js" ]
