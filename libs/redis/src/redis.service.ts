@@ -9,7 +9,7 @@ export class RedisService<DataT = unknown> implements OnModuleInit {
 
   constructor(private readonly configService: ConfigService) {
     // console.log('redis', "https"process.env.SESSIONS_AND_CACHE_ENDPOINT);
-    const url = 'redis://'.concat(configService.getOrThrow('CACHE_ENDPOINT'));
+    const url = configService.getOrThrow('CACHE_ENDPOINT');
     this._client = redis.createClient({
       url,
       pingInterval: 10000,
