@@ -14,8 +14,16 @@ export class EventsService {
     return this.dal.getEventsByKeywords(keywords);
   }
 
-  public async getEventBySlug(slug: string) {
-    const event = await this.eventerFetcherService.getValidEvent(slug);
+  // public async getEventBySlug(slug: string) {
+  //   const event = await this.eventerFetcherService.getValidEvent(slug);
+  //   if (!event) {
+  //     throw new NotFoundException('Event not found');
+  //   }
+  //   return event;
+  // }
+
+  public async getEventById(eventId: string) {
+    const event = await this.dal.getEventById(eventId);
     if (!event) {
       throw new NotFoundException('Event not found');
     }
