@@ -7,6 +7,7 @@ import {
   NotFoundException,
   Post,
 } from '@nestjs/common';
+import { GetUserLocationResponseDto } from 'apps/location-service/src/location/dto';
 import { RequestFriendshipDto } from './dto';
 import { FreindsDal } from './friends.dal';
 
@@ -65,7 +66,7 @@ export class FriendsService {
 
   public async getFriendsLocation(userId: string) {
     const friends = await this.dal.getUserFriends(userId, 0, 0);
-    const resp = await this.rmq.amqp.request({
+    const resp = await this.rmq.amqp.request<GetUserLocationResponseDto[]>({
       exchange: RabbitMQExchanges.LOCATION_EXCHANGE,
       routingKey: 'get-users-location',
       payload: {

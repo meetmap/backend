@@ -6,7 +6,11 @@ import {
 } from '@golevelup/nestjs-rabbitmq';
 import { RabbitMQExchanges, RabbitMQQueues } from '@app/constants';
 import { LocationService } from './location.service';
-import { GetUsersLocationDto, UpdateUserLocationDto } from './dto';
+import {
+  GetUsersLocationRequestDto,
+  GetUserLocationResponseDto,
+  UpdateUserLocationRequestDto,
+} from './dto';
 @Controller('location')
 export class LocationController {
   constructor(private readonly locationService: LocationService) {}
@@ -16,8 +20,8 @@ export class LocationController {
     routingKey: 'update-location',
   })
   public async updateUserLocation(
-    @RabbitPayload() payload: UpdateUserLocationDto,
-  ) {
+    @RabbitPayload() payload: UpdateUserLocationRequestDto,
+  ): Promise<GetUserLocationResponseDto> {
     return this.locationService.updateUserLocation(payload);
   }
 
@@ -25,7 +29,9 @@ export class LocationController {
     exchange: RabbitMQExchanges.LOCATION_EXCHANGE,
     routingKey: 'get-users-location',
   })
-  public async getUsersLocation(@RabbitPayload() dto: GetUsersLocationDto) {
+  public async getUsersLocation(
+    @RabbitPayload() dto: GetUsersLocationRequestDto,
+  ): Promise<GetUserLocationResponseDto[]> {
     return await this.locationService.getUsersLocation(dto);
   }
 }
