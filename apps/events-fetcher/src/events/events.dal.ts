@@ -6,6 +6,10 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class EventsDal {
   constructor(private readonly db: EventsFetcherDb) {}
+
+  public async getEventById(eventId: string): Promise<IEvent | null> {
+    return this.db.models.event.findById(eventId);
+  }
   public async getEventsByKeywords(keywords: string): Promise<IEvent[]> {
     const regex = new RegExp(keywords, 'i');
     return await this.db.models.event.find({

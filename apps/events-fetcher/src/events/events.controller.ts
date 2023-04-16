@@ -11,9 +11,14 @@ export class EventsController {
     return this.eventsService.getEventsByKeywords(keywords);
   }
 
-  @Get('/:slug')
-  public async getEventBySlug(@Param('slug') slug: string) {
-    return this.eventsService.getEventBySlug(slug);
+  // @Get('/:slug')
+  // public async getEventBySlug(@Param('slug') slug: string) {
+  //   return this.eventsService.getEventBySlug(slug);
+  // }
+
+  @Get('/:eventId')
+  public async getEventById(@Param('eventId') eventId: string) {
+    return this.eventsService.getEventById(eventId);
   }
 
   @Post('/location')
