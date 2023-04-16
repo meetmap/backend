@@ -10,9 +10,6 @@ export const UserSchema = new mongoose.Schema<IUser>(
       unique: true,
       required: true,
     },
-    coordinates: {
-      type: PointSchema,
-    },
     birthDate: {
       type: mongoose.SchemaTypes.Date,
       required: true,
