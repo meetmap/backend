@@ -12,7 +12,7 @@ export interface IUser {
   birthDate: Date;
   createdAt: Date;
   updatedAt: Date;
-  coordinates?: IPoint;
+  // coordinates?: IPoint;
   friendsIds: PopulatedDoc<IFriends>[];
 }
 

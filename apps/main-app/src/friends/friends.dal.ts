@@ -144,13 +144,7 @@ export class FreindsDal {
     const response = await this.db.models.friends.aggregate<
       Pick<
         IUser,
-        | 'username'
-        | 'coordinates'
-        | 'email'
-        | 'phone'
-        | 'birthDate'
-        | 'friendsIds'
-        | 'id'
+        'username' | 'email' | 'phone' | 'birthDate' | 'friendsIds' | 'id'
       >
     >([
       {
@@ -187,7 +181,7 @@ export class FreindsDal {
         $project: {
           _id: 1,
           username: 1,
-          coordinates: 1,
+          // coordinates: 1,
           email: 1,
           phone: 1,
           birthDate: 1,
