@@ -1,9 +1,12 @@
+import { JwtService } from '@app/auth';
 import { MAX_AGE, MIN_AGE, RabbitMQExchanges } from '@app/constants';
 import { RabbitmqService } from '@app/rabbitmq';
+import { IUser } from '@app/types';
 import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
@@ -20,6 +23,7 @@ export class UsersService {
   constructor(
     private readonly dal: UsersDal,
     private readonly rmq: RabbitmqService,
+    private readonly jwtService: JwtService,
   ) {}
 
   public async createUser(payload: CreateUserRequestDto) {
@@ -32,7 +36,17 @@ export class UsersService {
     if (userExists) {
       throw new ConflictException('User already exists');
     }
-    return this.dal.createUser(payload);
+    const user = await this.dal.createUser(payload);
+    return this.mapUserDbToResponseUser(user);
+  }
+
+  public async getTokensAndRefreshRT(user: Pick<IUser, 'id' | 'username'>) {
+    const jwt = await this.jwtService.getTokens({
+      sub: user.id,
+      username: user.username,
+    });
+    await this.updateUsersRefreshToken(user.id, jwt.rt);
+    return jwt;
   }
 
   public async loginWithPassword(payload: LoginWithPasswordDto) {
@@ -122,7 +136,13 @@ export class UsersService {
     userId: string,
     payload: UpdateUsersUsernameDto,
   ) {
-    return await this.dal.updateUser(userId, { username: payload.username });
+    const updatedUser = await this.dal.updateUser(userId, {
+      username: payload.username,
+    });
+    if (!updatedUser) {
+      throw new NotFoundException('User not found');
+    }
+    return this.mapUserDbToResponseUser(updatedUser);
   }
 
   public async updateUserLocation(userId: string, dto: UpdateUserLocationDto) {
@@ -135,5 +155,37 @@ export class UsersService {
       },
     );
     return dto;
+  }
+
+  public async getUserSelf(
+    userId: string,
+  ): Promise<
+    Pick<
+      IUser,
+      'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
+    >
+  > {
+    const user = await this.dal.findUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return this.mapUserDbToResponseUser(user);
+  }
+
+  public mapUserDbToResponseUser(
+    user: IUser,
+  ): Pick<
+    IUser,
+    'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
+  > {
+    return {
+      id: user.id,
+      birthDate: user.birthDate,
+      friendsIds: user.friendsIds,
+      email: user.email,
+      phone: user.phone,
+      username: user.username,
+    };
   }
 }

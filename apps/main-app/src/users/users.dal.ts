@@ -38,6 +38,10 @@ export class UsersDal {
     });
   }
 
+  public async findUserById(userId: string): Promise<IUser | null> {
+    return await this.db.models.users.findById(userId);
+  }
+
   public async updateUsersRefreshToken(userId: string, refreshToken: string) {
     return await this.db.models.users.findByIdAndUpdate(userId, {
       $set: {
