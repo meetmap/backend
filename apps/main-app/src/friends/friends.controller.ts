@@ -5,52 +5,80 @@ import {
   AcceptFriendshipRequestDto,
   RejectFriendshipRequestDto,
   RequestFriendshipDto,
+  SuccessResponse,
 } from './dto';
 import { FriendsService } from './friends.service';
+import { ApiTags, ApiOkResponse } from '@nestjs/swagger';
+import { GetUserLocationResponseDto } from 'apps/location-service/src/location/dto';
+import { UserResponseDto } from '../users/dto';
+import { UsersService } from '../users/users.service';
 
+@ApiTags('Friends')
 @Controller('friends')
 export class FreindsController {
   constructor(private readonly friendsService: FriendsService) {}
 
+  @ApiOkResponse({
+    type: SuccessResponse,
+    description: 'Request sent successfully',
+  })
   @Post('request')
   @UseAuthGuard()
   public async requestFriendship(
     @Body() dto: RequestFriendshipDto,
     @ExtractUser() user: IUser,
-  ) {
+  ): Promise<SuccessResponse> {
     return await this.friendsService.requestFriendship(user, dto);
   }
 
+  @ApiOkResponse({
+    type: SuccessResponse,
+    description: 'Accepted successfully',
+  })
   @Post('accept')
   @UseAuthGuard()
   public async acceptFriendshipRequest(
     @Body() dto: AcceptFriendshipRequestDto,
     @ExtractUser() user: IUser,
-  ) {
+  ): Promise<SuccessResponse> {
     return await this.friendsService.acceptFriendshipRequest(
       user,
       dto.friendId,
     );
   }
 
+  @ApiOkResponse({
+    type: SuccessResponse,
+    description: 'Reject freindship successfully',
+  })
   @Post('reject')
   @UseAuthGuard()
   public async rejectFriendshipRequest(
     @Body() dto: RejectFriendshipRequestDto,
     @ExtractUser() user: IUser,
-  ) {
+  ): Promise<SuccessResponse> {
     return await this.friendsService.rejectFriendshipRequest(
       user,
       dto.friendId,
     );
   }
 
+  @ApiOkResponse({
+    type: [GetUserLocationResponseDto],
+    description: 'Get friends location',
+  })
   @UseAuthGuard()
   @Get('location')
-  public async getFriendsLocation(@ExtractUser() user: IUser) {
+  public async getFriendsLocation(
+    @ExtractUser() user: IUser,
+  ): Promise<GetUserLocationResponseDto[]> {
     return this.friendsService.getFriendsLocation(user.id);
   }
 
+  @ApiOkResponse({
+    type: [UserResponseDto],
+    description: 'Array of users',
+  })
   @Get('/get/:userId/?')
   //   @UseAuthGuard()
   public async getUserFirends(
@@ -58,7 +86,12 @@ export class FreindsController {
     @Query('limit') limit: number,
     @Query('page') page: number,
     // @ExtractUser() user: IUser,
-  ) {
-    return await this.friendsService.getUserFriends(userId, limit, page);
+  ): Promise<UserResponseDto[]> {
+    const friends = await this.friendsService.getUserFriends(
+      userId,
+      limit,
+      page,
+    );
+    return friends.map((user) => UsersService.mapUserDbToResponseUser(user));
   }
 }

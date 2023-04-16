@@ -37,7 +37,7 @@ export class UsersService {
       throw new ConflictException('User already exists');
     }
     const user = await this.dal.createUser(payload);
-    return this.mapUserDbToResponseUser(user);
+    return UsersService.mapUserDbToResponseUser(user);
   }
 
   public async getTokensAndRefreshRT(user: Pick<IUser, 'id' | 'username'>) {
@@ -142,7 +142,7 @@ export class UsersService {
     if (!updatedUser) {
       throw new NotFoundException('User not found');
     }
-    return this.mapUserDbToResponseUser(updatedUser);
+    return UsersService.mapUserDbToResponseUser(updatedUser);
   }
 
   public async updateUserLocation(userId: string, dto: UpdateUserLocationDto) {
@@ -170,11 +170,14 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return this.mapUserDbToResponseUser(user);
+    return UsersService.mapUserDbToResponseUser(user);
   }
 
-  public mapUserDbToResponseUser(
-    user: IUser,
+  static mapUserDbToResponseUser(
+    user: Pick<
+      IUser,
+      'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
+    >,
   ): Pick<
     IUser,
     'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
