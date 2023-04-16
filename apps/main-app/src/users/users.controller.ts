@@ -33,7 +33,13 @@ export class UsersController {
 
   @Post('/create')
   public async createUser(@Body() payload: CreateUserRequestDto) {
-    return this.usersService.createUser(payload);
+    const user = await this.usersService.createUser(payload);
+    const tokens = await this.usersService.getTokensAndRefreshRT(user);
+
+    return {
+      user,
+      tokens,
+    };
   }
 
   @Post('/login')
@@ -47,12 +53,12 @@ export class UsersController {
     if (!user) {
       throw new ForbiddenException('Access denied');
     }
-    const jwt = await this.jwtService.getTokens({
-      sub: user.id,
-      username: user.username,
-    });
-    await this.usersService.updateUsersRefreshToken(user.id, jwt.rt);
-    return jwt;
+    const responseUser = this.usersService.mapUserDbToResponseUser(user);
+    const tokens = await this.usersService.getTokensAndRefreshRT(user);
+    return {
+      user: responseUser,
+      tokens,
+    };
   }
   @Get('/check-username/:username')
   public async usernameIsFree(@Query('username') username: string) {
@@ -94,5 +100,11 @@ export class UsersController {
     @ExtractUser() user: IUser,
   ) {
     return this.usersService.updateUserLocation(user.id, body);
+  }
+
+  @UseAuthGuard()
+  @Get('me')
+  public async getUserSelf(@ExtractUser() user: IUser) {
+    return this.usersService.getUserSelf(user.id);
   }
 }
