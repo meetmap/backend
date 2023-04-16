@@ -11,6 +11,8 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { Observable } from 'rxjs';
+import { ApiBearerAuth } from '@nestjs/swagger';
+
 @Injectable()
 export class IsAuthenticatedGuard implements CanActivate {
   constructor(
@@ -40,4 +42,7 @@ export class IsAuthenticatedGuard implements CanActivate {
 }
 
 export const UseAuthGuard = () =>
-  applyDecorators(UseGuards(IsAuthenticatedGuard));
+  applyDecorators(
+    ApiBearerAuth('Bearer token'),
+    UseGuards(IsAuthenticatedGuard),
+  );
