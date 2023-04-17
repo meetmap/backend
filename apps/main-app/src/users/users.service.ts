@@ -173,6 +173,18 @@ export class UsersService {
     return UsersService.mapUserDbToResponseUser(user);
   }
 
+  public async findUsers(
+    query: string,
+  ): Promise<
+    Pick<
+      IUser,
+      'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
+    >[]
+  > {
+    const users = await this.dal.findUsersByQueryUsername(query);
+    return users.map((user) => UsersService.mapUserDbToResponseUser(user));
+  }
+
   static mapUserDbToResponseUser(
     user: Pick<
       IUser,

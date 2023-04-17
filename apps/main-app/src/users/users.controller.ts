@@ -8,6 +8,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Param,
   Post,
   Put,
   Query,
@@ -150,5 +151,20 @@ export class UsersController {
     @ExtractUser() user: IUser,
   ): Promise<UserResponseDto> {
     return this.usersService.getUserSelf(user.id);
+  }
+
+  @ApiOkResponse({
+    type: [UserResponseDto],
+    description: 'Find users response',
+  })
+  @UseAuthGuard()
+  @Get('/find')
+  public async findUsers(
+    @Query('q') query: string,
+  ): Promise<UserResponseDto[]> {
+    if (!query) {
+      return [];
+    }
+    return this.usersService.findUsers(query);
   }
 }
