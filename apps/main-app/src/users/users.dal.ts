@@ -38,6 +38,14 @@ export class UsersDal {
     });
   }
 
+  public async findUsersByQueryUsername(query: string) {
+    return await this.db.models.users
+      .find({
+        username: new RegExp(query, 'i'),
+      })
+      .limit(15);
+  }
+
   public async findUserById(userId: string): Promise<IUser | null> {
     return await this.db.models.users.findById(userId);
   }
