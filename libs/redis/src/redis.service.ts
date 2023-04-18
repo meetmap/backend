@@ -32,6 +32,9 @@ export class RedisService<DataT = unknown> implements OnModuleInit {
   }
 
   public async getBulk(keys: string[]) {
+    if (!keys.length) {
+      return [];
+    }
     const result = await this._client.mGet(keys);
     return result.map((r) => (r ? this.deserialize(r) : null));
   }
