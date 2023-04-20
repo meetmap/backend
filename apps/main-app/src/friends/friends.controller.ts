@@ -19,7 +19,7 @@ export class FreindsController {
   constructor(private readonly friendsService: FriendsService) {}
 
   @ApiOkResponse({
-    type: SuccessResponse,
+    type: UserResponseDto,
     description: 'Request sent successfully',
   })
   @Post('request')
@@ -27,7 +27,7 @@ export class FreindsController {
   public async requestFriendship(
     @Body() dto: RequestFriendshipDto,
     @ExtractUser() user: IUser,
-  ): Promise<SuccessResponse> {
+  ): Promise<UserResponseDto> {
     return await this.friendsService.requestFriendship(user, dto.userId);
   }
 
@@ -56,7 +56,7 @@ export class FreindsController {
   }
 
   @ApiOkResponse({
-    type: SuccessResponse,
+    type: UserResponseDto,
     description: 'Accepted successfully',
   })
   @Post('accept')
@@ -64,7 +64,7 @@ export class FreindsController {
   public async acceptFriendshipRequest(
     @Body() dto: AcceptFriendshipRequestDto,
     @ExtractUser() user: IUser,
-  ): Promise<SuccessResponse> {
+  ): Promise<UserResponseDto> {
     return await this.friendsService.acceptFriendshipRequest(
       user,
       dto.friendId,
@@ -72,7 +72,7 @@ export class FreindsController {
   }
 
   @ApiOkResponse({
-    type: SuccessResponse,
+    type: UserResponseDto,
     description: 'Reject freindship successfully',
   })
   @Post('reject')
@@ -80,7 +80,7 @@ export class FreindsController {
   public async rejectFriendshipRequest(
     @Body() dto: RejectFriendshipRequestDto,
     @ExtractUser() user: IUser,
-  ): Promise<SuccessResponse> {
+  ): Promise<UserResponseDto> {
     return await this.friendsService.rejectFriendshipRequest(
       user,
       dto.friendId,

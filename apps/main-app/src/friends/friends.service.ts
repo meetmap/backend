@@ -24,7 +24,7 @@ export class FriendsService {
       throw new BadRequestException('Invalid user');
     }
     await this.dal.sendFriendshipRequest(user.id, recipientUser.id);
-    return { success: true };
+    return recipientUser;
   }
 
   public async getIncomingFriendshipRequests(user: IUser) {
@@ -41,7 +41,7 @@ export class FriendsService {
       throw new BadRequestException('Invalid user');
     }
     await this.dal.acceptFriendshipRequest(user.id, requesterUser.id);
-    return { success: true };
+    return requesterUser;
   }
   public async rejectFriendshipRequest(user: IUser, requesterId: string) {
     const requesterUser = await this.dal.getUserById(requesterId);
@@ -50,7 +50,7 @@ export class FriendsService {
     }
 
     await this.dal.rejectFriendshipRequest(user.id, requesterUser.id);
-    return { success: true };
+    return requesterUser;
   }
 
   public isValidFriend(user: IUser, friend: IUser | null): friend is IUser {
