@@ -16,6 +16,11 @@ export interface IUser {
   friendsIds: PopulatedDoc<IFriends>[];
 }
 
+export interface ISafeUser
+  extends Pick<
+    IUser,
+    'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
+  > {}
 export interface IUserWithPassword extends IUser {
   password: string;
 }

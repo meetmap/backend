@@ -14,7 +14,7 @@ import {
   MinDate,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IFriends, IUser } from '@app/types';
+import { IFriends, ISafeUser, IUser } from '@app/types';
 import { PopulatedDoc, Types } from 'mongoose';
 
 export class CreateUserRequestDto {
@@ -132,13 +132,7 @@ export class UpdateUserLocationDto {
   lng: number;
 }
 
-export class UserResponseDto
-  implements
-    Pick<
-      IUser,
-      'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
-    >
-{
+export class UserResponseDto implements ISafeUser {
   @ApiProperty({
     type: String,
     description: 'user id',

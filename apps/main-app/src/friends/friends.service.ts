@@ -1,6 +1,6 @@
 import { RabbitMQExchanges } from '@app/constants';
 import { RabbitmqService } from '@app/rabbitmq';
-import { IUser } from '@app/types';
+import { ISafeUser, IUser } from '@app/types';
 import {
   BadRequestException,
   Injectable,
@@ -8,6 +8,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { GetUserLocationResponseDto } from 'apps/location-service/src/location/dto';
+import { UsersService } from '../users/users.service';
 import { RequestFriendshipDto } from './dto';
 import { FreindsDal } from './friends.dal';
 
@@ -24,7 +25,7 @@ export class FriendsService {
       throw new BadRequestException('Invalid user');
     }
     await this.dal.sendFriendshipRequest(user.id, recipientUser.id);
-    return recipientUser;
+    return UsersService.mapUserDbToResponseUser(recipientUser);
   }
 
   public async getIncomingFriendshipRequests(user: IUser) {
@@ -41,7 +42,7 @@ export class FriendsService {
       throw new BadRequestException('Invalid user');
     }
     await this.dal.acceptFriendshipRequest(user.id, requesterUser.id);
-    return requesterUser;
+    return UsersService.mapUserDbToResponseUser(requesterUser);
   }
   public async rejectFriendshipRequest(user: IUser, requesterId: string) {
     const requesterUser = await this.dal.getUserById(requesterId);
@@ -50,10 +51,13 @@ export class FriendsService {
     }
 
     await this.dal.rejectFriendshipRequest(user.id, requesterUser.id);
-    return requesterUser;
+    return UsersService.mapUserDbToResponseUser(requesterUser);
   }
 
-  public isValidFriend(user: IUser, friend: IUser | null): friend is IUser {
+  public isValidFriend(
+    user: IUser,
+    friend: IUser | ISafeUser | null,
+  ): friend is IUser {
     if (!friend) {
       throw new NotFoundException(`User not found`);
     }

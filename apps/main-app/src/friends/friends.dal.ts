@@ -1,24 +1,50 @@
 import { MainAppDatabase } from '@app/database';
-import { IFriends, IUser } from '@app/types';
+import { IFriends, ISafeUser, IUser } from '@app/types';
 import {
   ConflictException,
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
 import * as mongoose from 'mongoose';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class FreindsDal {
   constructor(private readonly db: MainAppDatabase) {}
 
-  public async getUserByUsername(username: string): Promise<IUser | null> {
-    return await this.db.models.users.findOne({
-      username: username,
-    });
+  public async getUserByUsername(username: string): Promise<ISafeUser | null> {
+    const user = await this.db.models.users.findOne(
+      {
+        username: username,
+      },
+      {
+        id: true,
+        birthDate: true,
+        email: true,
+        friendsIds: true,
+        username: true,
+        phone: true,
+      },
+    );
+    if (user) {
+      return UsersService.mapUserDbToResponseUser(user);
+    }
+    return null;
   }
 
-  public async getUserById(userId: string): Promise<IUser | null> {
-    return await this.db.models.users.findById(userId);
+  public async getUserById(userId: string): Promise<ISafeUser | null> {
+    const user = await this.db.models.users.findById(userId, {
+      id: true,
+      birthDate: true,
+      email: true,
+      friendsIds: true,
+      username: true,
+      phone: true,
+    });
+    if (user) {
+      return UsersService.mapUserDbToResponseUser(user);
+    }
+    return null;
   }
 
   public async sendFriendshipRequest(requesterId: string, recipientId: string) {

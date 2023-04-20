@@ -1,7 +1,7 @@
 import { JwtService } from '@app/auth';
 import { MAX_AGE, MIN_AGE, RabbitMQExchanges } from '@app/constants';
 import { RabbitmqService } from '@app/rabbitmq';
-import { IUser } from '@app/types';
+import { ISafeUser, IUser } from '@app/types';
 import {
   BadRequestException,
   ConflictException,
@@ -157,14 +157,7 @@ export class UsersService {
     return dto;
   }
 
-  public async getUserSelf(
-    userId: string,
-  ): Promise<
-    Pick<
-      IUser,
-      'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
-    >
-  > {
+  public async getUserSelf(userId: string): Promise<ISafeUser> {
     const user = await this.dal.findUserById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -173,27 +166,12 @@ export class UsersService {
     return UsersService.mapUserDbToResponseUser(user);
   }
 
-  public async findUsers(
-    query: string,
-  ): Promise<
-    Pick<
-      IUser,
-      'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
-    >[]
-  > {
+  public async findUsers(query: string): Promise<ISafeUser[]> {
     const users = await this.dal.findUsersByQueryUsername(query);
     return users.map((user) => UsersService.mapUserDbToResponseUser(user));
   }
 
-  static mapUserDbToResponseUser(
-    user: Pick<
-      IUser,
-      'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
-    >,
-  ): Pick<
-    IUser,
-    'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
-  > {
+  static mapUserDbToResponseUser(user: IUser | ISafeUser): ISafeUser {
     return {
       id: user.id,
       birthDate: user.birthDate,
