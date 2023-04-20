@@ -18,13 +18,22 @@ export class FriendsService {
     private readonly rmq: RabbitmqService,
   ) {}
 
-  public async requestFriendship(user: IUser, payload: RequestFriendshipDto) {
-    const recipientUser = await this.dal.getUserByUsername(payload.username);
+  public async requestFriendship(user: IUser, userId: string) {
+    const recipientUser = await this.dal.getUserById(userId);
     if (!this.isValidFriend(user, recipientUser)) {
       throw new BadRequestException('Invalid user');
     }
     await this.dal.sendFriendshipRequest(user.id, recipientUser.id);
     return { success: true };
+  }
+
+  public async getIncomingFriendshipRequests(user: IUser) {
+    return await this.dal.getIncomingFriendshipRequests(user.id);
+  }
+
+  public async getOutcomingFriendshipRequests(user: IUser) {
+    console.log(user);
+    return await this.dal.getOutcomingFriendshipRequests(user.id);
   }
 
   public async acceptFriendshipRequest(user: IUser, requesterId: string) {
