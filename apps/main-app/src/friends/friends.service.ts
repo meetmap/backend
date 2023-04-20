@@ -32,7 +32,6 @@ export class FriendsService {
   }
 
   public async getOutcomingFriendshipRequests(user: IUser) {
-    console.log(user);
     return await this.dal.getOutcomingFriendshipRequests(user.id);
   }
 
