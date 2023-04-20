@@ -45,18 +45,23 @@ run-location-service:
 
 .PHONY: deploy-events-fetcher
 deploy-events-fetcher:
-	make build-events-fetcher && make push-image-events-fetcher && heroku container:release web -a meetmap-events-fetcher
+	make docker-login && make build-events-fetcher && make push-image-events-fetcher && heroku container:release web -a meetmap-events-fetcher
 
 .PHONY: deploy-main-app
 deploy-main-app:
-	make build-main-app && make push-image-main-app && heroku container:release web -a meetmap-main-app
+	make docker-login && make build-main-app && make push-image-main-app && heroku container:release web -a meetmap-main-app
 
 .PHONY: deploy-location-service
 deploy-location-service:
-	make build-location-service && make push-image-location-service && heroku container:release web -a meetmap-location-service
+	make docker-login && make build-location-service && make push-image-location-service && heroku container:release web -a meetmap-location-service
 
 .PHONY: heroku-login
 heroku-login:
 	heroku login && heroku container:login
+
+.PHONY: docker-login
+docker-login:
+	docker login --username=d4v1ds0n.p@gmail.com --password=`heroku auth:token` registry.heroku.com
+
 
 
