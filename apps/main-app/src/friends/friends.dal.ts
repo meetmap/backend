@@ -1,5 +1,5 @@
 import { MainAppDatabase } from '@app/database';
-import { IUser } from '@app/types';
+import { IFriends, IUser } from '@app/types';
 import {
   ConflictException,
   ForbiddenException,
@@ -141,22 +141,54 @@ export class FreindsDal {
   }
 
   public async getUserFriends(userId: string, limit: number, page: number) {
-    const response = await this.db.models.friends.aggregate<
-      Pick<
-        IUser,
-        'username' | 'email' | 'phone' | 'birthDate' | 'friendsIds' | 'id'
-      >
-    >([
+    const response =
+      await this.db.models.friends.aggregate<IUserFromFirendsAggregationResult>(
+        [
+          {
+            $match: {
+              status: 'friends',
+              requester: new mongoose.Types.ObjectId(userId),
+            },
+          },
+          ...this.getUserListFromFriendsAggregation('recipient'),
+        ],
+      );
+    return response; // response.map(({ friends }) => friends);
+  }
+
+  public async getIncomingFriendshipRequests(userId: string) {
+    return this.db.models.friends.aggregate<IUserFromFirendsAggregationResult>([
       {
         $match: {
-          status: 'friends',
+          status: 'requested',
+          recipient: new mongoose.Types.ObjectId(userId),
+        },
+      },
+      ...this.getUserListFromFriendsAggregation('requester'),
+    ]);
+  }
+
+  public async getOutcomingFriendshipRequests(userId: string) {
+    return this.db.models.friends.aggregate<IUserFromFirendsAggregationResult>([
+      {
+        $match: {
+          status: 'requested',
           requester: new mongoose.Types.ObjectId(userId),
         },
       },
+      ...this.getUserListFromFriendsAggregation('recipient'),
+    ]);
+  }
+
+  private getUserListFromFriendsAggregation(
+    from: keyof Pick<IFriends, 'requester' | 'recipient'>,
+  ) {
+    return [
       {
         $lookup: {
           from: 'users',
-          localField: 'recipient',
+          // localField: 'recipient',
+          localField: from,
           foreignField: '_id',
           as: 'friends',
         },
@@ -195,7 +227,12 @@ export class FreindsDal {
           },
         },
       },
-    ]);
-    return response; // response.map(({ friends }) => friends);
+    ];
   }
 }
+
+export interface IUserFromFirendsAggregationResult
+  extends Pick<
+    IUser,
+    'username' | 'email' | 'phone' | 'birthDate' | 'friendsIds' | 'id'
+  > {}

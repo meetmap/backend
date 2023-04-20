@@ -4,10 +4,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class RequestFriendshipDto {
   @ApiProperty({
     type: String,
-    description: 'Username',
+    description: 'userId',
   })
   @IsString()
-  username: string;
+  userId: string;
 }
 
 export class AcceptFriendshipRequestDto {
@@ -20,15 +20,6 @@ export class AcceptFriendshipRequestDto {
 }
 
 export class RejectFriendshipRequestDto {
-  @ApiProperty({
-    type: String,
-    description: 'friendId',
-  })
-  @IsString()
-  friendId: string;
-}
-
-export class GetFriendsRequestDto {
   @ApiProperty({
     type: String,
     description: 'friendId',

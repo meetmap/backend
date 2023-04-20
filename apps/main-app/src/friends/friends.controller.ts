@@ -28,7 +28,31 @@ export class FreindsController {
     @Body() dto: RequestFriendshipDto,
     @ExtractUser() user: IUser,
   ): Promise<SuccessResponse> {
-    return await this.friendsService.requestFriendship(user, dto);
+    return await this.friendsService.requestFriendship(user, dto.userId);
+  }
+
+  @ApiOkResponse({
+    type: [UserResponseDto],
+    description: 'All incoming requests',
+  })
+  @Get('incoming')
+  @UseAuthGuard()
+  public async getIncomingFriendshipRequests(
+    @ExtractUser() user: IUser,
+  ): Promise<UserResponseDto[]> {
+    return await this.friendsService.getIncomingFriendshipRequests(user);
+  }
+
+  @ApiOkResponse({
+    type: [UserResponseDto],
+    description: 'All outcoming requests',
+  })
+  @Get('outcoming')
+  @UseAuthGuard()
+  public async getOutcomingFriendshipRequests(
+    @ExtractUser() user: IUser,
+  ): Promise<UserResponseDto[]> {
+    return await this.friendsService.getOutcomingFriendshipRequests(user);
   }
 
   @ApiOkResponse({
