@@ -267,3 +267,32 @@ interface JsonLdData {
   eventStatus: string;
   eventAttendanceMode: string;
 }
+
+export interface IEventerTicketsResponse {
+  _id: string;
+  ticketTypes: IEventerTicketType[];
+}
+
+interface IEventerTicketType {
+  _id: string;
+  name: string;
+  originalName: string;
+  description: string;
+  demandPicture: boolean;
+  multiGuestPricing: Record<string, unknown>;
+  seatColor: string;
+  order: number;
+  areas: unknown[];
+  price: number;
+  saleRound: null;
+  roundAmount: number;
+  toDate: string;
+  remaining: number;
+  originalPrice: number;
+  saleRounds: unknown[];
+  isStandingOrder: boolean;
+  standingOrderBillingFrequency: {
+    amount: number;
+    type: string;
+  };
+}
