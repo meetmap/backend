@@ -1,6 +1,8 @@
-import { IEvent } from '@app/types';
+import { PriceSchema } from '@app/database/shared-models';
+import { EventType, IEvent } from '@app/types';
 import * as mongoose from 'mongoose';
 import { LocationSchema } from './location';
+import { TicketSchema } from './ticket';
 
 export const EventSchema = new mongoose.Schema<IEvent>(
   {
@@ -38,6 +40,15 @@ export const EventSchema = new mongoose.Schema<IEvent>(
     location: {
       type: LocationSchema,
       required: true,
+    },
+    eventType: {
+      type: mongoose.SchemaTypes.String,
+      enum: EventType,
+      required: true,
+    },
+    tickets: {
+      type: [TicketSchema],
+      requried: true,
     },
   },
   {
