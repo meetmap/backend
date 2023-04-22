@@ -1,6 +1,12 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { EventerFetcherDal } from './eventer-fetcher.dal';
-import { ICity, IEvent, IEventerFullEventResponse } from '@app/types';
+import {
+  EventType,
+  ICity,
+  IEvent,
+  IEventerFullEventResponse,
+  IEventerTicketsResponse,
+} from '@app/types';
 import { Cron } from '@nestjs/schedule';
 import * as mongoose from 'mongoose';
 
@@ -44,9 +50,11 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
     if (!event) {
       return null;
     }
+
+    const tickets = await this.dal.fetchEventerEventTickets(event.event._id);
     console.log('Event found!', event.event.linkName);
     const city = await this.extractCityFromEventerResponse(event);
-    const payload = this.mapEventerResponseToDbEvent(event, city);
+    const payload = this.mapEventerResponseToDbEvent(event, tickets, city);
     if (!payload) {
       return null;
     }
@@ -74,6 +82,7 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
 
   public mapEventerResponseToDbEvent(
     event: IEventerFullEventResponse,
+    tickets: IEventerTicketsResponse | null,
     city: ICity | null,
   ): Omit<IEvent, 'id' | 'createdAt' | 'updatedAt'> | null {
     const location = event.event.location;
@@ -97,6 +106,16 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
           coordinates: [location.longitude, location.latitude],
         },
       },
+      eventType: EventType.PARTNER_EVENT,
+      tickets: (tickets?.ticketTypes ?? []).map((ticket) => ({
+        amount: ticket.remaining,
+        description: ticket.description,
+        name: ticket.name,
+        price: {
+          amount: ticket.price,
+          currency: 'ILS',
+        },
+      })),
     };
   }
   public validateEventExpiry(event: IEvent | null): event is IEvent {

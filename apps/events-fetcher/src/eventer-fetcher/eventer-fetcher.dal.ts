@@ -7,6 +7,7 @@ import {
   IEventCache,
   IEventerFullEventResponse,
   IEventerSlideResponse,
+  IEventerTicketsResponse,
 } from '@app/types';
 import { Inject, Injectable } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
@@ -75,6 +76,34 @@ export class EventerFetcherDal {
       if (error instanceof AxiosError && error.response) {
         console.error({
           msg: 'Failed to fetch event',
+          reason: error.response.data.message,
+        });
+      } else {
+        console.error(error);
+      }
+      return null;
+    }
+  }
+
+  /**
+   *
+   * @param eventId eventer db id
+   */
+  public async fetchEventerEventTickets(
+    eventId: string,
+  ): Promise<IEventerTicketsResponse | null> {
+    try {
+      const response = await eventerAxios.get<IEventerTicketsResponse>(
+        `https://www.eventer.co.il/events/${eventId}/ticketTypes.js?isInEventerSite=true`,
+        {
+          timeout: 1000 * 5,
+        },
+      );
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response) {
+        console.error({
+          msg: 'Failed to fetch tickets',
           reason: error.response.data.message,
         });
       } else {
