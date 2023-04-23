@@ -8,6 +8,8 @@ import { RedisModule } from '@app/redis';
 import { EventerFetcherModule } from './eventer-fetcher/eventer-fetcher.module';
 import { EventsModule } from './events/events.module';
 import { InternalAxiosModule } from '@app/axios';
+import { RabbitmqModule } from '@app/rabbitmq';
+import { AuthModule } from '@app/auth';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { InternalAxiosModule } from '@app/axios';
       connectionStringEnvPath: 'EVENTS_FETCHER_DATABASE_URL',
       microserviceName: 'events-fetcher',
     }),
+    AuthModule,
+    // RabbitmqModule.forRoot(),
     InternalAxiosModule,
     EventerFetcherModule,
     EventsModule,
