@@ -1,4 +1,17 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
+import { IJwtPayload } from '@app/types/jwt';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Request } from 'express';
 import { GetEventsByLocationRequestDto } from './dto';
 import { EventsService } from './events.service';
 
@@ -24,5 +37,19 @@ export class EventsController {
   @Post('/location')
   public async getEventsByLocation(@Body() dto: GetEventsByLocationRequestDto) {
     return this.eventsService.getEventsByLocation(dto);
+  }
+
+  @UseMicroserviceAuthGuard()
+  @Post('/create')
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      fileFilter(req: Request, file) {},
+    }),
+  )
+  public async createEvent(
+    @UploadedFile() file: Express.Multer.File,
+    @ExtractJwtPayload() jwtPayload: IJwtPayload,
+  ) {
+    return;
   }
 }
