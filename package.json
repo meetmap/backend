@@ -24,12 +24,12 @@
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^3.6.0",
     "@nestjs/axios": "^2.0.0",
-    "@nestjs/common": "^8.0.0",
+    "@nestjs/common": "^9.4.0",
     "@nestjs/config": "^2.3.1",
-    "@nestjs/core": "^8.0.0",
+    "@nestjs/core": "^9.4.1",
     "@nestjs/microservices": "^9.4.0",
     "@nestjs/mongoose": "^9.2.2",
-    "@nestjs/platform-express": "^8.0.0",
+    "@nestjs/platform-express": "^9.4.1",
     "@nestjs/schedule": "^2.2.1",
     "@nestjs/swagger": "^6.3.0",
     "@prisma/client": "^4.12.0",
@@ -49,9 +49,9 @@
     "rxjs": "^7.2.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "^8.0.0",
-    "@nestjs/schematics": "^8.0.0",
-    "@nestjs/testing": "^8.0.0",
+    "@nestjs/cli": "^9.4.1",
+    "@nestjs/schematics": "^9.4.1",
+    "@nestjs/testing": "^9.4.1",
     "@types/": "nestjs/swagger",
     "@types/bcrypt": "^5.0.0",
     "@types/cron": "^2.0.1",
