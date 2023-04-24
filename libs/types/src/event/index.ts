@@ -3,7 +3,7 @@ import { ILocation } from '../location';
 export interface IEvent {
   id: string;
   slug: string;
-  link: string;
+  link?: string;
   title: string;
   picture?: string;
   description?: string;
@@ -18,6 +18,8 @@ export interface IEvent {
   endTime: Date;
 
   ageLimit: number;
+
+  creatorId?: string;
 
   location: ILocation;
 

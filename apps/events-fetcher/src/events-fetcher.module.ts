@@ -10,6 +10,7 @@ import { EventsModule } from './events/events.module';
 import { InternalAxiosModule } from '@app/axios';
 import { RabbitmqModule } from '@app/rabbitmq';
 import { AuthModule } from '@app/auth';
+import { S3UploaderModule } from '@app/s3-uploader';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuthModule } from '@app/auth';
       microserviceName: 'events-fetcher',
     }),
     AuthModule,
+    S3UploaderModule,
     // RabbitmqModule.forRoot(),
     InternalAxiosModule,
     EventerFetcherModule,

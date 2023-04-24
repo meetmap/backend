@@ -171,6 +171,14 @@ export class UsersService {
     return users.map((user) => UsersService.mapUserDbToResponseUser(user));
   }
 
+  public async getUserById(userId: string): Promise<ISafeUser> {
+    const user = await this.dal.findUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return UsersService.mapUserDbToResponseUser(user);
+  }
+
   static mapUserDbToResponseUser(user: IUser | ISafeUser): ISafeUser {
     return {
       id: user.id,
