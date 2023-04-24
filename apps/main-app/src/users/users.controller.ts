@@ -8,6 +8,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  NotFoundException,
   Param,
   Post,
   Put,
@@ -166,5 +167,20 @@ export class UsersController {
       return [];
     }
     return this.usersService.findUsers(query);
+  }
+
+  @ApiOkResponse({
+    type: UserResponseDto,
+    description: 'Find user response',
+  })
+  @UseAuthGuard()
+  @Get('/get/:userId')
+  public async getUserById(
+    @Param('userId') userId: string,
+  ): Promise<UserResponseDto> {
+    if (!userId) {
+      throw new BadRequestException('Invalid userId');
+    }
+    return this.usersService.getUserById(userId);
   }
 }

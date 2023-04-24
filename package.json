@@ -47,7 +47,8 @@
     "redis": "^4.6.5",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.2.0",
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.4.1",
@@ -106,7 +107,8 @@
       "^@app/axios(|/.*)$": "<rootDir>/libs/axios/src/$1",
       "^@app/constants(|/.*)$": "<rootDir>/libs/constants/src/$1",
       "^@app/auth(|/.*)$": "<rootDir>/libs/auth/src/$1",
-      "^@app/rabbitmq(|/.*)$": "<rootDir>/libs/rabbitmq/src/$1"
+      "^@app/rabbitmq(|/.*)$": "<rootDir>/libs/rabbitmq/src/$1",
+      "^@app/s3-uploader(|/.*)$": "<rootDir>/libs/s3-uploader/src/$1"
     }
   }
 }

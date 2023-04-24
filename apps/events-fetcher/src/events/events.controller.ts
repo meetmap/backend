@@ -3,8 +3,11 @@ import { IJwtPayload } from '@app/types/jwt';
 import {
   Body,
   Controller,
+  FileTypeValidator,
   Get,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Post,
   Query,
   UploadedFile,
@@ -12,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
-import { GetEventsByLocationRequestDto } from './dto';
+import { CreateEventRequestDto, GetEventsByLocationRequestDto } from './dto';
 import { EventsService } from './events.service';
 
 @Controller('events')
@@ -41,15 +44,28 @@ export class EventsController {
 
   @UseMicroserviceAuthGuard()
   @Post('/create')
-  @UseInterceptors(
-    FileInterceptor('photo', {
-      fileFilter(req: Request, file) {},
-    }),
-  )
+  @UseInterceptors(FileInterceptor('photo'))
   public async createEvent(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({
+            maxSize: 3.5 * 1024 * 1024, //3.5mb
+          }),
+          new FileTypeValidator({
+            fileType: 'image/*',
+          }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
     @ExtractJwtPayload() jwtPayload: IJwtPayload,
+    @Body() body: CreateEventRequestDto,
   ) {
-    return;
+    return await this.eventsService.createEvent(
+      body.rawEvent,
+      jwtPayload.sub,
+      file,
+    );
   }
 }

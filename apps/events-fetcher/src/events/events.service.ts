@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { ZodError } from 'zod';
 import { EventerFetcherService } from '../eventer-fetcher/eventer-fetcher.service';
-import { GetEventsByLocationRequestDto } from './dto';
+import { CreateEventSchema, GetEventsByLocationRequestDto } from './dto';
 import { EventsDal } from './events.dal';
+import * as path from 'path';
 
 @Injectable()
 export class EventsService {
@@ -39,5 +46,36 @@ export class EventsService {
     );
 
     return events;
+  }
+
+  public async createEvent(
+    body: string,
+    userId: string,
+    image: Express.Multer.File,
+  ) {
+    try {
+      const parsedJson = JSON.parse(body);
+      const eventData = CreateEventSchema.parse(parsedJson);
+      const event = await this.dal.createEvent(eventData, userId);
+      const imageUrl = await this.dal.uploadToPublicEventsAssestsBucket(
+        event.id.concat('-main-image').concat(path.extname(image.originalname)),
+        image.buffer,
+      );
+      const eventWithPicture = await this.dal.updatePictureForEvent(
+        event.id,
+        imageUrl,
+      );
+      return eventWithPicture;
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        throw new BadRequestException(error);
+      }
+      if (error instanceof ZodError) {
+        throw new BadRequestException(error);
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException('Something went wrong');
+      }
+    }
   }
 }
