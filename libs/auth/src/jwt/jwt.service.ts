@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import * as jwt from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
-import { IJwtPayload } from '@app/types/jwt';
+import { IJwtUserPayload } from '@app/types/jwt';
 
 interface IJwtOptions {
   secret: string;
@@ -29,13 +29,13 @@ export class JwtService {
     return at;
   }
 
-  async getTokens(payload: Pick<IJwtPayload, 'sub' | 'username'>) {
+  async getTokens(payload: Pick<IJwtUserPayload, 'sub' | 'username'>) {
     const at = await this.signAt(payload);
     const rt = await this.signRt(payload);
     return { rt, at };
   }
 
-  public async verifyRt(rt: string): Promise<IJwtPayload> {
+  public async verifyRt(rt: string): Promise<IJwtUserPayload> {
     return new Promise((res, rej) => {
       jwt.verify(
         rt,
@@ -47,13 +47,13 @@ export class JwtService {
           if (err) return rej(err);
           typeof dec === 'string'
             ? rej('Invalid jwt')
-            : res(dec as IJwtPayload);
+            : res(dec as IJwtUserPayload);
         },
       );
     });
   }
 
-  public async verifyAt(at: string): Promise<IJwtPayload> {
+  public async verifyAt(at: string): Promise<IJwtUserPayload> {
     return new Promise((res, rej) => {
       jwt.verify(
         at,
@@ -65,14 +65,14 @@ export class JwtService {
           if (err) return rej(err);
           typeof dec === 'string'
             ? rej('Invalid jwt')
-            : res(dec as IJwtPayload);
+            : res(dec as IJwtUserPayload);
         },
       );
     });
   }
 
   private async signRt(
-    payload: Pick<IJwtPayload, 'sub' | 'username'>,
+    payload: Pick<IJwtUserPayload, 'sub' | 'username'>,
   ): Promise<string> {
     return new Promise((res, rej) => {
       jwt.sign(
@@ -93,7 +93,7 @@ export class JwtService {
   }
 
   private async signAt(
-    payload: Pick<IJwtPayload, 'sub' | 'username'>,
+    payload: Pick<IJwtUserPayload, 'sub' | 'username'>,
   ): Promise<string> {
     return new Promise((res, rej) => {
       jwt.sign(

@@ -1,6 +1,6 @@
 import { RabbitMQExchanges } from '@app/constants';
 import { RabbitmqService } from '@app/rabbitmq';
-import { ISafeUser, IUser } from '@app/types';
+import { IMainAppSafeUser, IUser } from '@app/types';
 import {
   BadRequestException,
   Injectable,
@@ -56,7 +56,7 @@ export class FriendsService {
 
   public isValidFriend(
     user: IUser,
-    friend: IUser | ISafeUser | null,
+    friend: IUser | IMainAppSafeUser | null,
   ): friend is IUser {
     if (!friend) {
       throw new NotFoundException(`User not found`);

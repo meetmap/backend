@@ -1,7 +1,11 @@
 import { MicroServiceName } from '@app/types';
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EventsFetcherDb, MainAppDatabase } from './databases';
+import {
+  AuthServiceDatabase,
+  EventsFetcherDb,
+  MainAppDatabase,
+} from './databases';
 import { BaseDatabase } from './databases/types';
 
 export interface IDatabaseModuleConfig {
@@ -37,4 +41,5 @@ const microserviceDatabaseMap: Record<MicroServiceName, typeof BaseDatabase> = {
   'events-fetcher': EventsFetcherDb,
   'location-service': EventsFetcherDb,
   'main-app': MainAppDatabase,
+  'auth-service': AuthServiceDatabase,
 };

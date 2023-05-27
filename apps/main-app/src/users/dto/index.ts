@@ -14,21 +14,11 @@ import {
   MinDate,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IFriends, ISafeUser, IUser } from '@app/types';
+import { IFriends, IMainAppSafeUser, ISafeAuthUser, IUser } from '@app/types';
 import { PopulatedDoc, Types } from 'mongoose';
 
-export class CreateUserRequestDto {
-  @ApiProperty({
-    type: String,
-    description:
-      'At least 1 uppercase, 1 lowercase and 1 number, minimal length is 6',
-    example: 'Abc12dsaj',
-  })
-  @Matches(PASSWORD_REGEX, {
-    message:
-      'Password is not strong enough, it should containt at least 1 uppercase, 1 lowercase and 1 number, minimal length is 6',
-  })
-  password: string;
+export class UserRmqRequestDto implements ISafeAuthUser {
+  id: string;
 
   @ApiProperty({
     type: String,
@@ -64,6 +54,14 @@ export class CreateUserRequestDto {
   })
   @IsDateString()
   birthDate: Date;
+
+  @IsString()
+  @ApiProperty({
+    type: String,
+    description: 'userId in auth microservice',
+    example: '6436b4fa091dc0948e7566c5',
+  })
+  authUserId: string;
 }
 
 export class LoginWithPasswordDto {
@@ -132,7 +130,7 @@ export class UpdateUserLocationDto {
   lng: number;
 }
 
-export class UserResponseDto implements ISafeUser {
+export class UserResponseDto implements IMainAppSafeUser {
   @ApiProperty({
     type: String,
     description: 'user id',
@@ -151,7 +149,7 @@ export class UserResponseDto implements ISafeUser {
   })
   phone?: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     type: String,
     example: 'username',
   })
@@ -170,6 +168,14 @@ export class UserResponseDto implements ISafeUser {
     example: ['6436b4ff091dc0948e75671f', '6436b4fa091dc0948e7566c5'],
   })
   friendsIds: PopulatedDoc<IFriends, Types.ObjectId | undefined>[];
+
+  // @IsString()
+  // @ApiProperty({
+  //   type: String,
+  //   description: 'userId in auth microservice',
+  //   example: '6436b4fa091dc0948e7566c5',
+  // })
+  // authUserId: string;
 }
 
 export class TokensResponseDto {
@@ -199,7 +205,7 @@ export class LoginResponseDto {
   user: UserResponseDto;
 }
 
-export class RefreshRtResponseDto {
+export class RefreshAtResponseDto {
   @ApiProperty({
     type: String,
     description: 'Access token',

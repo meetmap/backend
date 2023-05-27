@@ -4,7 +4,7 @@ import {
   RabbitPayload,
   RabbitSubscribe,
 } from '@golevelup/nestjs-rabbitmq';
-import { RabbitMQExchanges, RabbitMQQueues } from '@app/constants';
+import { RabbitMQExchanges } from '@app/constants';
 import { LocationService } from './location.service';
 import {
   GetUsersLocationRequestDto,

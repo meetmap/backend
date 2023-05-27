@@ -6,8 +6,5 @@ export const RADIANS_PER_KILOMETER = 1 / 6371.01;
 
 export enum RabbitMQExchanges {
   LOCATION_EXCHANGE = 'location-exchange',
-}
-
-export enum RabbitMQQueues {
-  LOCATION_QUEUE = 'location-queue',
+  // AUTH_SERVICE_EXCHANGE = 'auth-service-exchange',
 }

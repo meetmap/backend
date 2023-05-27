@@ -1,7 +1,7 @@
 import { JwtService } from '@app/auth';
 import { MAX_AGE, MIN_AGE, RabbitMQExchanges } from '@app/constants';
 import { RabbitmqService } from '@app/rabbitmq';
-import { ISafeUser, IUser } from '@app/types';
+import { IMainAppSafeUser, IUser } from '@app/types';
 import {
   BadRequestException,
   ConflictException,
@@ -10,11 +10,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import {
-  CreateUserRequestDto,
   LoginWithPasswordDto,
   RefreshAccessTokenDto,
   UpdateUserLocationDto,
   UpdateUsersUsernameDto,
+  UserRmqRequestDto,
 } from './dto';
 import { UsersDal } from './users.dal';
 
@@ -26,139 +26,30 @@ export class UsersService {
     private readonly jwtService: JwtService,
   ) {}
 
-  public async createUser(payload: CreateUserRequestDto) {
-    if (!this.isValidBirthDate(payload.birthDate)) {
-      throw new BadRequestException(
-        `Invalid birth date, min age is ${MIN_AGE} years and max age is ${MAX_AGE} years`,
-      );
-    }
-    const userExists = await this.dal.findUserByEmail(payload.email);
-    if (userExists) {
-      throw new ConflictException('User already exists');
-    }
+  public async createUser(payload: UserRmqRequestDto) {
     const user = await this.dal.createUser(payload);
     return UsersService.mapUserDbToResponseUser(user);
   }
 
-  public async getTokensAndRefreshRT(user: Pick<IUser, 'id' | 'username'>) {
-    const jwt = await this.jwtService.getTokens({
-      sub: user.id,
-      username: user.username,
-    });
-    await this.updateUsersRefreshToken(user.id, jwt.rt);
-    return jwt;
+  public async updateUser(payload: UserRmqRequestDto) {
+    const user = await this.dal.updateUser(payload.authUserId, payload);
+    return user ? UsersService.mapUserDbToResponseUser(user) : null;
   }
 
-  public async loginWithPassword(payload: LoginWithPasswordDto) {
-    if (payload.username) {
-      return this.loginWithUsernameAndPassword(
-        payload.username,
-        payload.password,
-      );
-    }
-    if (payload.email) {
-      return this.loginWithEmailAndPassword(payload.email, payload.password);
-    }
-    if (payload.phone) {
-      return this.loginWithPhoneAndPassword(payload.phone, payload.password);
-    }
-  }
+  // public async updateUserLocation(userId: string, dto: UpdateUserLocationDto) {
+  //   this.rmq.amqp.publish(
+  //     RabbitMQExchanges.LOCATION_EXCHANGE,
+  //     'update-location',
+  //     {
+  //       userId: userId,
+  //       ...dto,
+  //     },
+  //   );
+  //   return dto;
+  // }
 
-  public async updateUsersRefreshToken(userId: string, refreshToken: string) {
-    return await this.dal.updateUsersRefreshToken(userId, refreshToken);
-  }
-  public async loginWithUsernameAndPassword(
-    username: string,
-    password: string,
-  ) {
-    const user = await this.dal.findUserByUsername(username);
-    if (!user) {
-      throw new UnauthorizedException('Username or password is wrong');
-    }
-    const isValidPassword = await this.dal.comparePassword(
-      password,
-      user.password,
-    );
-    if (!isValidPassword) {
-      throw new UnauthorizedException('Username or password is wrong');
-    }
-    return user;
-  }
-  public async loginWithEmailAndPassword(email: string, password: string) {
-    const user = await this.dal.findUserByEmail(email);
-    if (!user) {
-      throw new UnauthorizedException('Email or password is wrong');
-    }
-    const isValidPassword = await this.dal.comparePassword(
-      password,
-      user.password,
-    );
-
-    if (!isValidPassword) {
-      throw new UnauthorizedException('Email or password is wrong');
-    }
-    return user;
-  }
-  public async loginWithPhoneAndPassword(phone: string, password: string) {
-    const user = await this.dal.findUserByPhone(phone);
-    if (!user) {
-      throw new UnauthorizedException('Phone or password is wrong');
-    }
-    const isValidPassword = await this.dal.comparePassword(
-      password,
-      user.password,
-    );
-    if (!isValidPassword) {
-      throw new UnauthorizedException('Phone or password is wrong');
-    }
-    return user;
-  }
-
-  public async usernameIsFree(username: string) {
-    return !this.dal.findUserByUsername(username);
-  }
-
-  public async phoneIsFree(phone: string) {
-    return !this.dal.findUserByPhone(phone);
-  }
-
-  public isValidBirthDate(birthDate: Date | string) {
-    const parsedDate = new Date(birthDate);
-    const currentDate = new Date();
-    const minDate = new Date().setFullYear(currentDate.getFullYear() - MAX_AGE);
-    const maxDate = new Date().setFullYear(currentDate.getFullYear() - MIN_AGE);
-    if (+parsedDate >= +minDate && +parsedDate <= maxDate) {
-      return true;
-    }
-    return false;
-  }
-  public async updateUsersUsername(
-    userId: string,
-    payload: UpdateUsersUsernameDto,
-  ) {
-    const updatedUser = await this.dal.updateUser(userId, {
-      username: payload.username,
-    });
-    if (!updatedUser) {
-      throw new NotFoundException('User not found');
-    }
-    return UsersService.mapUserDbToResponseUser(updatedUser);
-  }
-
-  public async updateUserLocation(userId: string, dto: UpdateUserLocationDto) {
-    this.rmq.amqp.publish(
-      RabbitMQExchanges.LOCATION_EXCHANGE,
-      'update-location',
-      {
-        userId: userId,
-        ...dto,
-      },
-    );
-    return dto;
-  }
-
-  public async getUserSelf(userId: string): Promise<ISafeUser> {
-    const user = await this.dal.findUserById(userId);
+  public async getUserSelf(authUserId: string): Promise<IMainAppSafeUser> {
+    const user = await this.dal.findUserByAuthUserId(authUserId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -166,12 +57,22 @@ export class UsersService {
     return UsersService.mapUserDbToResponseUser(user);
   }
 
-  public async findUsers(query: string): Promise<ISafeUser[]> {
+  public async findUsers(query: string): Promise<IMainAppSafeUser[]> {
     const users = await this.dal.findUsersByQueryUsername(query);
     return users.map((user) => UsersService.mapUserDbToResponseUser(user));
   }
 
-  static mapUserDbToResponseUser(user: IUser | ISafeUser): ISafeUser {
+  public async getUserById(userId: string): Promise<IMainAppSafeUser> {
+    const user = await this.dal.findUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return UsersService.mapUserDbToResponseUser(user);
+  }
+
+  static mapUserDbToResponseUser(
+    user: IUser | IMainAppSafeUser,
+  ): IMainAppSafeUser {
     return {
       id: user.id,
       birthDate: user.birthDate,
@@ -179,6 +80,7 @@ export class UsersService {
       email: user.email,
       phone: user.phone,
       username: user.username,
+      // authUserId: user.authUserId,
     };
   }
 }

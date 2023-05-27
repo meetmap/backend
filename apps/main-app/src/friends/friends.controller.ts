@@ -1,4 +1,8 @@
-import { ExtractUser, UseAuthGuard } from '@app/auth/jwt';
+import {
+  ExtractUser,
+  UseAuthGuard,
+  UseMicroserviceAuthGuard,
+} from '@app/auth/jwt';
 import { IUser } from '@app/types';
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import {
@@ -23,11 +27,11 @@ export class FreindsController {
     description: 'Request sent successfully',
   })
   @Post('request')
-  @UseAuthGuard()
+  @UseMicroserviceAuthGuard()
   public async requestFriendship(
     @Body() dto: RequestFriendshipDto,
     @ExtractUser() user: IUser,
-  ): Promise<UserResponseDto> {
+  ): Promise<Omit<UserResponseDto, 'authUserId'>> {
     return await this.friendsService.requestFriendship(user, dto.userId);
   }
 
@@ -36,10 +40,10 @@ export class FreindsController {
     description: 'All incoming requests',
   })
   @Get('incoming')
-  @UseAuthGuard()
+  @UseMicroserviceAuthGuard()
   public async getIncomingFriendshipRequests(
     @ExtractUser() user: IUser,
-  ): Promise<UserResponseDto[]> {
+  ): Promise<Omit<UserResponseDto, 'authUserId'>[]> {
     return await this.friendsService.getIncomingFriendshipRequests(user);
   }
 
@@ -48,10 +52,10 @@ export class FreindsController {
     description: 'All outcoming requests',
   })
   @Get('outcoming')
-  @UseAuthGuard()
+  @UseMicroserviceAuthGuard()
   public async getOutcomingFriendshipRequests(
     @ExtractUser() user: IUser,
-  ): Promise<UserResponseDto[]> {
+  ): Promise<Omit<UserResponseDto, 'authUserId'>[]> {
     return await this.friendsService.getOutcomingFriendshipRequests(user);
   }
 
@@ -60,11 +64,11 @@ export class FreindsController {
     description: 'Accepted successfully',
   })
   @Post('accept')
-  @UseAuthGuard()
+  @UseMicroserviceAuthGuard()
   public async acceptFriendshipRequest(
     @Body() dto: AcceptFriendshipRequestDto,
     @ExtractUser() user: IUser,
-  ): Promise<UserResponseDto> {
+  ): Promise<Omit<UserResponseDto, 'authUserId'>> {
     return await this.friendsService.acceptFriendshipRequest(
       user,
       dto.friendId,
@@ -76,11 +80,11 @@ export class FreindsController {
     description: 'Reject freindship successfully',
   })
   @Post('reject')
-  @UseAuthGuard()
+  @UseMicroserviceAuthGuard()
   public async rejectFriendshipRequest(
     @Body() dto: RejectFriendshipRequestDto,
     @ExtractUser() user: IUser,
-  ): Promise<UserResponseDto> {
+  ): Promise<Omit<UserResponseDto, 'authUserId'>> {
     return await this.friendsService.rejectFriendshipRequest(
       user,
       dto.friendId,
@@ -91,7 +95,7 @@ export class FreindsController {
     type: [GetUserLocationResponseDto],
     description: 'Get friends location',
   })
-  @UseAuthGuard()
+  @UseMicroserviceAuthGuard()
   @Get('location')
   public async getFriendsLocation(
     @ExtractUser() user: IUser,
@@ -110,7 +114,7 @@ export class FreindsController {
     @Query('limit') limit: number,
     @Query('page') page: number,
     // @ExtractUser() user: IUser,
-  ): Promise<UserResponseDto[]> {
+  ): Promise<Omit<UserResponseDto, 'authUserId'>[]> {
     const friends = await this.friendsService.getUserFriends(
       userId,
       limit,
