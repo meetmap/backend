@@ -1,15 +1,16 @@
 import { MainAppDatabase } from '@app/database';
-import { IUser, IUserWithPassword } from '@app/types';
+import { IAuthUser, IMainAppUser, IUser } from '@app/types';
 import { ConflictException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import * as mongoose from 'mongoose';
 
 @Injectable()
 export class UsersDal {
   constructor(private readonly db: MainAppDatabase) {}
   public async createUser(
     payload: Pick<
-      IUserWithPassword,
-      'birthDate' | 'email' | 'username' | 'phone' | 'password'
+      IMainAppUser,
+      'birthDate' | 'email' | 'username' | 'phone' | 'authUserId'
     >,
   ) {
     return await this.db.models.users.create({
@@ -17,8 +18,30 @@ export class UsersDal {
       email: payload.email,
       username: payload.username,
       phone: payload.phone,
-      password: await this.hashPassword(payload.password),
+      friendsIds: [],
+      authUserId: payload.authUserId,
     });
+  }
+
+  public async updateUser(
+    authUserId: string,
+    payload: Partial<Pick<IMainAppUser, 'username' | 'phone' | 'email'>>,
+  ) {
+    return await this.db.models.users.findOneAndUpdate(
+      {
+        authUserId: authUserId,
+      },
+      {
+        $set: {
+          username: payload.username,
+          email: payload.email,
+          phone: payload.phone,
+        },
+      },
+      {
+        new: true,
+      },
+    );
   }
 
   public async comparePassword(password: string, hash?: string) {
@@ -50,41 +73,16 @@ export class UsersDal {
     return await this.db.models.users.findById(userId);
   }
 
+  public async findUserByAuthUserId(authUserId: string): Promise<IUser | null> {
+    return await this.db.models.users.findOne({
+      authUserId: authUserId,
+    });
+  }
+
   public async updateUsersRefreshToken(userId: string, refreshToken: string) {
     return await this.db.models.users.findByIdAndUpdate(userId, {
       $set: {
         refreshToken: refreshToken,
-      },
-    });
-  }
-
-  public async updateUser(
-    id: string,
-    payload: Partial<Pick<IUser, 'email' | 'phone' | 'password' | 'username'>>,
-  ) {
-    if (payload.email && (await this.findUserByEmail(payload.email))) {
-      throw new ConflictException(
-        `User with email ${payload.email} already exists`,
-      );
-    }
-    if (payload.username && (await this.findUserByUsername(payload.username))) {
-      throw new ConflictException(
-        `User with username ${payload.username} already exists`,
-      );
-    }
-    if (payload.phone && (await this.findUserByPhone(payload.phone))) {
-      throw new ConflictException(
-        `User with phone ${payload.phone} already exists`,
-      );
-    }
-    return this.db.models.users.findByIdAndUpdate(id, {
-      $set: {
-        password: payload.password
-          ? await this.hashPassword(payload.password)
-          : undefined,
-        email: payload.email,
-        phone: payload.phone,
-        username: payload.username,
       },
     });
   }

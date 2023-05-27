@@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { MainAppModule } from './main-app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { MicroServiceName } from '@app/types';
 
 async function bootstrap() {
   const app = await NestFactory.create(MainAppModule);
@@ -12,7 +13,7 @@ async function bootstrap() {
     .setVersion('latest')
     .addBearerAuth()
     .build();
-
+  app.setGlobalPrefix('main-app' satisfies MicroServiceName);
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 

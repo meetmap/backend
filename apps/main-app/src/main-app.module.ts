@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { RabbitMQExchanges } from '@app/constants';
 import { InternalAxiosModule } from '@app/axios';
+import { MainAppController } from './main-app.controller';
 
 @Module({
   imports: [
@@ -24,5 +25,6 @@ import { InternalAxiosModule } from '@app/axios';
     UsersModule,
     FriendsModule,
   ],
+  controllers: [MainAppController],
 })
 export class MainAppModule {}

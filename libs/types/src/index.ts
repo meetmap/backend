@@ -8,3 +8,4 @@ export * from './other';
 export * from './user';
 export * from './friends';
 export * from './user-location';
+export * from './events-api';

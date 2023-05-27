@@ -7,6 +7,7 @@ import { RabbitMQExchanges } from '@app/constants';
 import { ConfigModule } from '@nestjs/config';
 import { RabbitmqModule } from '@app/rabbitmq';
 import { InternalAxiosModule } from '@app/axios';
+import { LocationServiceController } from './location-service.controller';
 
 @Module({
   imports: [
@@ -16,5 +17,6 @@ import { InternalAxiosModule } from '@app/axios';
     RabbitmqModule.forRoot(),
     LocationModule,
   ],
+  controllers: [LocationServiceController],
 })
 export class LocationServiceModule {}

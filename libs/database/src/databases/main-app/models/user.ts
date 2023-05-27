@@ -1,9 +1,9 @@
-import { IUser } from '@app/types';
+import { IMainAppUser, IUser } from '@app/types';
 import * as mongoose from 'mongoose';
 
 import { PointSchema } from '@app/database/shared-models';
 
-export const UserSchema = new mongoose.Schema<IUser>(
+export const UserSchema = new mongoose.Schema<IMainAppUser>(
   {
     username: {
       type: mongoose.SchemaTypes.String,
@@ -14,16 +14,10 @@ export const UserSchema = new mongoose.Schema<IUser>(
       type: mongoose.SchemaTypes.Date,
       required: true,
     },
-    refreshToken: {
-      type: mongoose.SchemaTypes.String,
-    },
     email: {
       type: mongoose.SchemaTypes.String,
       unique: true,
       required: true,
-    },
-    password: {
-      type: mongoose.SchemaTypes.String,
     },
     phone: {
       type: mongoose.SchemaTypes.String,
@@ -36,6 +30,11 @@ export const UserSchema = new mongoose.Schema<IUser>(
         ref: 'User',
       },
     ],
+    authUserId: {
+      type: mongoose.SchemaTypes.String,
+      required: true,
+      unique: true,
+    },
   },
   {
     id: true,

@@ -1,5 +1,5 @@
 import { MainAppDatabase } from '@app/database';
-import { IFriends, ISafeUser, IUser } from '@app/types';
+import { IFriends, IMainAppSafeUser, IUser } from '@app/types';
 import {
   ConflictException,
   ForbiddenException,
@@ -12,7 +12,9 @@ import { UsersService } from '../users/users.service';
 export class FreindsDal {
   constructor(private readonly db: MainAppDatabase) {}
 
-  public async getUserByUsername(username: string): Promise<ISafeUser | null> {
+  public async getUserByUsername(
+    username: string,
+  ): Promise<Exclude<IMainAppSafeUser, 'authUserId'> | null> {
     const user = await this.db.models.users.findOne(
       {
         username: username,
@@ -32,7 +34,9 @@ export class FreindsDal {
     return null;
   }
 
-  public async getUserById(userId: string): Promise<ISafeUser | null> {
+  public async getUserById(
+    userId: string,
+  ): Promise<Exclude<IMainAppSafeUser, 'authUserId'> | null> {
     const user = await this.db.models.users.findById(userId, {
       id: true,
       birthDate: true,
@@ -168,7 +172,7 @@ export class FreindsDal {
 
   public async getUserFriends(userId: string, limit: number, page: number) {
     const response =
-      await this.db.models.friends.aggregate<IUserFromFirendsAggregationResult>(
+      await this.db.models.friends.aggregate<IUserFromFriendsAggregationResult>(
         [
           {
             $match: {
@@ -183,7 +187,7 @@ export class FreindsDal {
   }
 
   public async getIncomingFriendshipRequests(userId: string) {
-    return this.db.models.friends.aggregate<IUserFromFirendsAggregationResult>([
+    return this.db.models.friends.aggregate<IUserFromFriendsAggregationResult>([
       {
         $match: {
           status: 'requested',
@@ -195,7 +199,7 @@ export class FreindsDal {
   }
 
   public async getOutcomingFriendshipRequests(userId: string) {
-    return this.db.models.friends.aggregate<IUserFromFirendsAggregationResult>([
+    return this.db.models.friends.aggregate<IUserFromFriendsAggregationResult>([
       {
         $match: {
           status: 'requested',
@@ -257,8 +261,8 @@ export class FreindsDal {
   }
 }
 
-export interface IUserFromFirendsAggregationResult
+export interface IUserFromFriendsAggregationResult
   extends Pick<
-    IUser,
-    'username' | 'email' | 'phone' | 'birthDate' | 'friendsIds' | 'id'
+    IMainAppSafeUser,
+    'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
   > {}
