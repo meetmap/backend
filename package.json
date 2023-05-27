@@ -12,7 +12,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "node dist/apps/backend-startap/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -22,14 +22,15 @@
     "compose:dev": "docker-compose -f docker-compose.dev.yaml up"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.317.0",
     "@golevelup/nestjs-rabbitmq": "^3.6.0",
     "@nestjs/axios": "^2.0.0",
-    "@nestjs/common": "^8.0.0",
+    "@nestjs/common": "^9.4.0",
     "@nestjs/config": "^2.3.1",
-    "@nestjs/core": "^8.0.0",
+    "@nestjs/core": "^9.4.0",
     "@nestjs/microservices": "^9.4.0",
     "@nestjs/mongoose": "^9.2.2",
-    "@nestjs/platform-express": "^8.0.0",
+    "@nestjs/platform-express": "^9.4.0",
     "@nestjs/schedule": "^2.2.1",
     "@nestjs/swagger": "^6.3.0",
     "@prisma/client": "^4.12.0",
@@ -42,23 +43,28 @@
     "class-validator": "^0.14.0",
     "https": "^1.0.0",
     "jsonwebtoken": "^9.0.0",
+    "lodash": "^4.17.21",
     "mongoose": "^7.0.3",
     "redis": "^4.6.5",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.2.0",
+    "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@nestjs/cli": "^8.0.0",
-    "@nestjs/schematics": "^8.0.0",
-    "@nestjs/testing": "^8.0.0",
+    "@nestjs/cli": "^9.4.1",
+    "@nestjs/schematics": "^9.1.0",
+    "@nestjs/testing": "^9.4.0",
     "@types/": "nestjs/swagger",
+    "@types/amqplib": "^0.10.1",
     "@types/bcrypt": "^5.0.0",
     "@types/cron": "^2.0.1",
     "@types/express": "^4.17.13",
     "@types/jest": "27.5.0",
     "@types/jsonwebtoken": "^9.0.1",
+    "@types/lodash": "^4.14.194",
     "@types/mongoose": "^5.11.97",
+    "@types/multer": "^1.4.7",
     "@types/node": "^16.0.0",
     "@types/supertest": "^2.0.11",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
@@ -104,7 +110,9 @@
       "^@app/axios(|/.*)$": "<rootDir>/libs/axios/src/$1",
       "^@app/constants(|/.*)$": "<rootDir>/libs/constants/src/$1",
       "^@app/auth(|/.*)$": "<rootDir>/libs/auth/src/$1",
-      "^@app/rabbitmq(|/.*)$": "<rootDir>/libs/rabbitmq/src/$1"
+      "^@app/rabbitmq(|/.*)$": "<rootDir>/libs/rabbitmq/src/$1",
+      "^@app/s3-uploader(|/.*)$": "<rootDir>/libs/s3-uploader/src/$1",
+      "^@app/rmq-lib(|/.*)$": "<rootDir>/libs/rmq-lib/src/$1"
     }
   }
 }

@@ -11,7 +11,7 @@ export const EventSchema = new mongoose.Schema<IEvent>(
     },
     link: {
       type: mongoose.SchemaTypes.String,
-      required: true,
+      // required: true,
     },
     picture: {
       type: mongoose.SchemaTypes.String,
@@ -49,6 +49,9 @@ export const EventSchema = new mongoose.Schema<IEvent>(
     tickets: {
       type: [TicketSchema],
       requried: true,
+    },
+    creatorId: {
+      type: mongoose.SchemaTypes.ObjectId,
     },
   },
   {

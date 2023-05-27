@@ -92,6 +92,33 @@
       "compilerOptions": {
         "tsConfigPath": "libs/rabbitmq/tsconfig.lib.json"
       }
+    },
+    "s3-uploader": {
+      "type": "library",
+      "root": "libs/s3-uploader",
+      "entryFile": "index",
+      "sourceRoot": "libs/s3-uploader/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/s3-uploader/tsconfig.lib.json"
+      }
+    },
+    "auth-service": {
+      "type": "application",
+      "root": "apps/auth-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/auth-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/auth-service/tsconfig.app.json"
+      }
+    },
+    "rmq-lib": {
+      "type": "library",
+      "root": "libs/rmq-lib",
+      "entryFile": "index",
+      "sourceRoot": "libs/rmq-lib/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/rmq-lib/tsconfig.lib.json"
+      }
     }
   },
   "compilerOptions": {

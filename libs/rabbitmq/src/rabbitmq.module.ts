@@ -1,10 +1,11 @@
 import { DynamicModule } from '@nestjs/common';
 import { Module } from '@nestjs/common';
 import { RabbitmqService } from './rabbitmq.service';
-import { RabbitMQModule, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+// import { RabbitMQModule, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { ConfigService } from '@nestjs/config';
-import { RabbitMQExchanges } from '@app/constants';
 import { deserializeMessage, serializeMessage } from './serialization';
+import { RMQConstants } from '@app/constants';
+import { RmqLibModule } from '@app/rmq-lib';
 
 // @Module({
 //   providers: [RabbitmqService],
@@ -15,19 +16,19 @@ export class RabbitmqModule {
     return {
       module: RabbitmqModule,
       imports: [
-        RabbitMQModule.forRootAsync(RabbitMQModule, {
+        RmqLibModule.forRootAsync(RmqLibModule, {
           useFactory(configService: ConfigService) {
             const connectionString =
               configService.getOrThrow<string>('RABBIT_MQ_URL');
             return {
               uri: connectionString,
-              exchanges: [
-                {
+              exchanges: Object.values(RMQConstants.exchanges).map(
+                (exchange) => ({
                   createExchangeIfNotExists: true,
-                  name: RabbitMQExchanges.LOCATION_EXCHANGE,
-                  type: 'direct',
-                },
-              ],
+                  name: exchange.name,
+                  type: 'topic',
+                }),
+              ),
               enableControllerDiscovery: true,
               serializer: serializeMessage,
               deserializer: deserializeMessage,
