@@ -1,28 +1,28 @@
 .PHONY: build-events-fetcher
 build-events-fetcher:
-	docker buildx build --platform linux/amd64 -t meetmap:events-fetcher -f apps/events-fetcher/Dockerfile . && docker tag meetmap:events-fetcher registry.heroku.com/meetmap-events-fetcher/web && docker push registry.heroku.com/meetmap-events-fetcher/web
+	docker buildx build --platform linux/amd64 -t meetmap:events-fetcher -f apps/events-fetcher/Dockerfile . && docker tag meetmap:events-fetcher 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-events-fetcher:latest
 
 .PHONY: push-image-events-fetcher
 push-image-events-fetcher:
-	docker tag meetmap:events-fetcher registry.heroku.com/meetmap-events-fetcher/web && docker push registry.heroku.com/meetmap-events-fetcher/web
+	docker push 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-events-fetcher:latest
 
 
 .PHONY: build-location-service
 build-location-service:
-	docker buildx build --platform linux/amd64 -t meetmap:location-service -f apps/location-service/Dockerfile .
+	docker buildx build --platform linux/amd64 -t meetmap:location-service -f apps/location-service/Dockerfile . && docker tag meetmap:location-service 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-location-service:latest
 
 .PHONY: push-image-location-service
 push-image-location-service:
-	docker tag meetmap:location-service registry.heroku.com/meetmap-location-service/web && docker push registry.heroku.com/meetmap-location-service/web
+	docker push 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-location-service:latest
 
 
 .PHONY: build-main-app
 build-main-app:
-	docker buildx build --platform linux/amd64 -t meetmap:main-app -f apps/main-app/Dockerfile .
+	docker buildx build --platform linux/amd64 -t meetmap:main-app -f apps/main-app/Dockerfile . && docker tag meetmap:main-app 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-main-app:latest
 
 .PHONY: push-image-main-app
 push-image-main-app:
-	docker tag meetmap:main-app registry.heroku.com/meetmap-main-app/web && docker push registry.heroku.com/meetmap-main-app/web
+	docker push 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-main-app:latest
 
 
 .PHONY: build-microservices
@@ -45,23 +45,29 @@ run-location-service:
 
 .PHONY: deploy-events-fetcher
 deploy-events-fetcher:
-	make docker-login && make build-events-fetcher && make push-image-events-fetcher && heroku container:release web -a meetmap-events-fetcher
+	make registry-login && \
+	make build-events-fetcher && \
+	make push-image-events-fetcher && \
+	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service events-fetcher --force-new-deployment
 
 .PHONY: deploy-main-app
 deploy-main-app:
-	make docker-login && make build-main-app && make push-image-main-app && heroku container:release web -a meetmap-main-app
+	make registry-login && \
+	make build-main-app && \
+	make push-image-main-app && \
+	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service main-app --force-new-deployment
 
 .PHONY: deploy-location-service
 deploy-location-service:
-	make docker-login && make build-location-service && make push-image-location-service && heroku container:release web -a meetmap-location-service
+	make registry-login && \
+	make build-location-service && \
+	make push-image-location-service && \
+	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service location-service --force-new-deployment
 
-.PHONY: heroku-login
-heroku-login:
-	heroku login && heroku container:login
 
-.PHONY: docker-login
-docker-login:
-	docker login --username=d4v1ds0n.p@gmail.com --password=`heroku auth:token` registry.heroku.com
+.PHONY: registry-login
+registry-login:
+	aws ecr get-login-password --region eu-west-1 --profile meetmap | docker login --username AWS --password-stdin 970180171170.dkr.ecr.eu-west-1.amazonaws.com
 
 
 

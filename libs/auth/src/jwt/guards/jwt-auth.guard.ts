@@ -1,5 +1,5 @@
 import { JwtService } from '@app/auth/jwt/jwt.service';
-import { MainAppDatabase } from '@app/database';
+import { AuthServiceDatabase, MainAppDatabase } from '@app/database';
 import {
   applyDecorators,
   CanActivate,
@@ -17,7 +17,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 export class IsAuthenticatedGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly database: MainAppDatabase,
+    private readonly database: AuthServiceDatabase,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {

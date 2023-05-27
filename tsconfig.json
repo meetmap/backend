@@ -65,6 +65,12 @@
       ],
       "@app/s3-uploader/*": [
         "libs/s3-uploader/src/*"
+      ],
+      "@app/rmq-lib": [
+        "libs/rmq-lib/src"
+      ],
+      "@app/rmq-lib/*": [
+        "libs/rmq-lib/src/*"
       ]
     }
   }

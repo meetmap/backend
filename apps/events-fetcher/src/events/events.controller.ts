@@ -1,5 +1,5 @@
 import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
-import { IJwtPayload } from '@app/types/jwt';
+import { IJwtUserPayload } from '@app/types/jwt';
 import {
   Body,
   Controller,
@@ -59,7 +59,7 @@ export class EventsController {
       }),
     )
     file: Express.Multer.File,
-    @ExtractJwtPayload() jwtPayload: IJwtPayload,
+    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
     @Body() body: CreateEventRequestDto,
   ) {
     return await this.eventsService.createEvent(

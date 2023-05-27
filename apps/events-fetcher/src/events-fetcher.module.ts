@@ -11,6 +11,7 @@ import { InternalAxiosModule } from '@app/axios';
 import { RabbitmqModule } from '@app/rabbitmq';
 import { AuthModule } from '@app/auth';
 import { S3UploaderModule } from '@app/s3-uploader';
+import { EventsFetcherController } from './events-fetcher.controller';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { S3UploaderModule } from '@app/s3-uploader';
     EventerFetcherModule,
     EventsModule,
   ],
-  controllers: [],
+  controllers: [EventsFetcherController],
   providers: [],
 })
 export class EventsFetcherModule {}
