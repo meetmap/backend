@@ -2,6 +2,7 @@ import { AuthServiceDatabase } from '@app/database';
 import { IAuthUser, IAuthUserWithPassword, ISafeAuthUser } from '@app/types';
 import { ConflictException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import * as mongoose from 'mongoose';
 
 @Injectable()
@@ -19,6 +20,7 @@ export class AuthDal {
       phone: payload.phone,
       password: await this.hashPassword(payload.password),
       birthDate: payload.birthDate,
+      cid: randomUUID(),
     });
   }
 

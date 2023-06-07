@@ -13,6 +13,7 @@ export interface IUser {
   createdAt: Date;
   updatedAt: Date;
   authUserId: string;
+  cid: string;
   // coordinates?: IPoint;
   friendsIds: PopulatedDoc<IFriends>[];
 }
@@ -30,12 +31,13 @@ export interface IMainAppUser
     | 'createdAt'
     | 'updatedAt'
     | 'phone'
+    | 'cid'
   > {}
 
 export interface IMainAppSafeUser
   extends Pick<
     IMainAppUser,
-    'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
+    'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id' | 'cid'
     // | 'authUserId'
   > {}
 
@@ -52,18 +54,20 @@ export interface IAuthUser
     | 'updatedAt'
     | 'birthDate'
     | 'authUserId'
+    | 'cid'
   > {}
 
 export interface ISafeAuthUser
   extends Pick<
     IAuthUser,
-    'id' | 'phone' | 'email' | 'username' | 'birthDate' | 'authUserId'
+    'id' | 'phone' | 'email' | 'username' | 'birthDate' | 'cid'
   > {}
 
 export interface IAuthUserWithPassword extends IAuthUser {
   password: string;
 }
 
-// export interface IUserWithPassword extends IUser {
-//   password: string;
-// }
+export interface ILocationServiceUser
+  extends Pick<IUser, 'id' | 'authUserId' | 'cid'> {
+  friendsCids: string[];
+}

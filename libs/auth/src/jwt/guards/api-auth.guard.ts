@@ -12,7 +12,9 @@ import {
 import { Request } from 'express';
 import { Observable } from 'rxjs';
 import { ApiBearerAuth } from '@nestjs/swagger';
-
+/**
+ * @deprecated Probably we don't need it since we are using rmq bus
+ */
 @Injectable()
 export class IsApiAuthenticatedGuard implements CanActivate {
   constructor(

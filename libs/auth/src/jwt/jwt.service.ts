@@ -24,12 +24,12 @@ export class JwtService {
     };
   }
   async getAt(refreshToken: string) {
-    const { sub, username } = await this.verifyRt(refreshToken);
-    const at = await this.signAt({ sub, username });
+    const { sub, username, cid } = await this.verifyRt(refreshToken);
+    const at = await this.signAt({ sub, username, cid });
     return at;
   }
 
-  async getTokens(payload: Pick<IJwtUserPayload, 'sub' | 'username'>) {
+  async getTokens(payload: Pick<IJwtUserPayload, 'sub' | 'username' | 'cid'>) {
     const at = await this.signAt(payload);
     const rt = await this.signRt(payload);
     return { rt, at };
@@ -72,7 +72,7 @@ export class JwtService {
   }
 
   private async signRt(
-    payload: Pick<IJwtUserPayload, 'sub' | 'username'>,
+    payload: Pick<IJwtUserPayload, 'sub' | 'username' | 'cid'>,
   ): Promise<string> {
     return new Promise((res, rej) => {
       jwt.sign(
@@ -93,7 +93,7 @@ export class JwtService {
   }
 
   private async signAt(
-    payload: Pick<IJwtUserPayload, 'sub' | 'username'>,
+    payload: Pick<IJwtUserPayload, 'sub' | 'username' | 'cid'>,
   ): Promise<string> {
     return new Promise((res, rej) => {
       jwt.sign(

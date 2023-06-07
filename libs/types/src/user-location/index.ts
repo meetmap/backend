@@ -1,5 +1,5 @@
 export interface IUserLocation {
-  userId: string;
+  cid: string;
   location: ICoordinates;
 }
 
