@@ -1,37 +1,39 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import {
-  RabbitRPC,
-  RabbitPayload,
-  RabbitSubscribe,
-} from '@golevelup/nestjs-rabbitmq';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { RabbitMQExchanges } from '@app/constants';
 import { LocationService } from './location.service';
 import {
-  GetUsersLocationRequestDto,
   GetUserLocationResponseDto,
   UpdateUserLocationRequestDto,
-} from './dto';
+} from '@app/dto/location-service/location.dto';
+import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
+import { IJwtUserPayload } from '@app/types/jwt';
+import { ApiOkResponse } from '@nestjs/swagger';
 @Controller('location')
 export class LocationController {
   constructor(private readonly locationService: LocationService) {}
 
-  @RabbitRPC({
-    exchange: RabbitMQExchanges.LOCATION_EXCHANGE,
-    routingKey: 'update-location',
+  @Post('/update')
+  @UseMicroserviceAuthGuard()
+  @ApiOkResponse({
+    type: GetUserLocationResponseDto,
+    description: 'Update self location',
   })
   public async updateUserLocation(
-    @RabbitPayload() payload: UpdateUserLocationRequestDto,
+    @Body() payload: UpdateUserLocationRequestDto,
+    @ExtractJwtPayload() jwt: IJwtUserPayload,
   ): Promise<GetUserLocationResponseDto> {
-    return this.locationService.updateUserLocation(payload);
+    return this.locationService.updateUserLocation(jwt.cid, payload);
   }
 
-  @RabbitRPC({
-    exchange: RabbitMQExchanges.LOCATION_EXCHANGE,
-    routingKey: 'get-users-location',
+  @ApiOkResponse({
+    type: [GetUserLocationResponseDto],
+    description: 'Get friends location',
   })
-  public async getUsersLocation(
-    @RabbitPayload() dto: GetUsersLocationRequestDto,
+  @UseMicroserviceAuthGuard()
+  @Get('/friends')
+  public async getFriendsLocation(
+    @ExtractJwtPayload() jwt: IJwtUserPayload,
   ): Promise<GetUserLocationResponseDto[]> {
-    return await this.locationService.getUsersLocation(dto);
+    return await this.locationService.getFriendsLocation(jwt.cid);
   }
 }

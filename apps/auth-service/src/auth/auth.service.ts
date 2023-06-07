@@ -1,5 +1,11 @@
 import { JwtService } from '@app/auth';
 import { MAX_AGE, MIN_AGE, RMQConstants } from '@app/constants';
+import {
+  CreateUserRequestDto,
+  LoginWithPasswordDto,
+  UpdateUsersUsernameRequestDto,
+} from '@app/dto/auth-service/auth.dto';
+import { UserRmqRequestDto } from '@app/dto/main-app/users.dto';
 import { RabbitmqService } from '@app/rabbitmq';
 import { ISafeAuthUser, IMainAppSafeUser, IUser } from '@app/types';
 import {
@@ -10,11 +16,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthDal } from './auth.dal';
-import {
-  CreateUserRequestDto,
-  LoginWithPasswordDto,
-  UpdateUsersUsernameDto,
-} from './dto';
 
 @Injectable()
 export class AuthService {
@@ -38,16 +39,19 @@ export class AuthService {
     const safeUser = AuthService.mapUserDbToResponseUser(user);
     this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
-      RMQConstants.exchanges.USERS.queues.USER_SERVICE.routes.USER_CREATED,
-      safeUser,
+      RMQConstants.exchanges.USERS.routes.USER_CREATED,
+      this.mapUserDbToRmqRequest(user) satisfies UserRmqRequestDto,
     );
     return safeUser;
   }
 
-  public async getTokensAndRefreshRT(user: Pick<IUser, 'id' | 'username'>) {
+  public async getTokensAndRefreshRT(
+    user: Pick<IUser, 'id' | 'username' | 'cid'>,
+  ) {
     const jwt = await this.jwtService.getTokens({
       sub: user.id,
       username: user.username,
+      cid: user.cid,
     });
     await this.updateUsersRefreshToken(user.id, jwt.rt);
     return jwt;
@@ -138,7 +142,7 @@ export class AuthService {
   }
   public async updateUsersUsername(
     userId: string,
-    payload: UpdateUsersUsernameDto,
+    payload: UpdateUsersUsernameRequestDto,
   ) {
     const updatedUser = await this.dal.updateUser(userId, {
       username: payload.username,
@@ -149,8 +153,8 @@ export class AuthService {
     const safeUser = AuthService.mapUserDbToResponseUser(updatedUser);
     this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
-      RMQConstants.exchanges.USERS.queues.USER_SERVICE.routes.USER_UPDATED,
-      safeUser,
+      RMQConstants.exchanges.USERS.routes.USER_UPDATED,
+      this.mapUserDbToRmqRequest(updatedUser) satisfies UserRmqRequestDto,
     );
     return safeUser;
   }
@@ -171,6 +175,18 @@ export class AuthService {
     );
   }
 
+  private mapUserDbToRmqRequest(user: ISafeAuthUser): UserRmqRequestDto {
+    return {
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      username: user.username,
+      birthDate: user.birthDate,
+      cid: user.cid,
+      authUserId: user.id,
+    };
+  }
+
   static mapUserDbToResponseUser(user: ISafeAuthUser): ISafeAuthUser {
     return {
       id: user.id,
@@ -178,7 +194,7 @@ export class AuthService {
       phone: user.phone,
       username: user.username,
       birthDate: user.birthDate,
-      authUserId: user.id,
+      cid: user.cid,
     };
   }
 }

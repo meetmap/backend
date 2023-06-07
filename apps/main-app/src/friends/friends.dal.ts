@@ -26,6 +26,7 @@ export class FreindsDal {
         friendsIds: true,
         username: true,
         phone: true,
+        cid: true,
       },
     );
     if (user) {
@@ -34,17 +35,23 @@ export class FreindsDal {
     return null;
   }
 
-  public async getUserById(
-    userId: string,
+  public async getUserByCId(
+    cid: string,
   ): Promise<Exclude<IMainAppSafeUser, 'authUserId'> | null> {
-    const user = await this.db.models.users.findById(userId, {
-      id: true,
-      birthDate: true,
-      email: true,
-      friendsIds: true,
-      username: true,
-      phone: true,
-    });
+    const user = await this.db.models.users.findOne(
+      {
+        cid,
+      },
+      {
+        id: true,
+        birthDate: true,
+        email: true,
+        friendsIds: true,
+        username: true,
+        phone: true,
+        cid: true,
+      },
+    );
     if (user) {
       return UsersService.mapUserDbToResponseUser(user);
     }
@@ -248,6 +255,7 @@ export class FreindsDal {
           phone: 1,
           birthDate: 1,
           friendsIds: 1,
+          cid: 1,
         },
       },
       {
@@ -264,5 +272,5 @@ export class FreindsDal {
 export interface IUserFromFriendsAggregationResult
   extends Pick<
     IMainAppSafeUser,
-    'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id'
+    'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id' | 'cid'
   > {}
