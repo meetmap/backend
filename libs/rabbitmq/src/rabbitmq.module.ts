@@ -1,11 +1,11 @@
 import { DynamicModule } from '@nestjs/common';
 import { Module } from '@nestjs/common';
 import { RabbitmqService } from './rabbitmq.service';
-// import { RabbitMQModule, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { RabbitMQModule, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { ConfigService } from '@nestjs/config';
 import { deserializeMessage, serializeMessage } from './serialization';
 import { RMQConstants } from '@app/constants';
-import { RmqLibModule } from '@app/rmq-lib';
+// import { RmqLibModule } from '@app/rmq-lib';
 
 // @Module({
 //   providers: [RabbitmqService],
@@ -16,7 +16,7 @@ export class RabbitmqModule {
     return {
       module: RabbitmqModule,
       imports: [
-        RmqLibModule.forRootAsync(RmqLibModule, {
+        RabbitMQModule.forRootAsync(RabbitMQModule, {
           useFactory(configService: ConfigService) {
             const connectionString =
               configService.getOrThrow<string>('RABBIT_MQ_URL');

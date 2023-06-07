@@ -6,6 +6,7 @@ export interface IJwtUserPayload extends JwtPayload {
   sub: string;
   username: string;
   expiresAt: string;
+  cid: string;
 }
 
 export interface IJwtApipayload extends JwtPayload {

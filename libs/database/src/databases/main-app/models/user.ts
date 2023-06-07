@@ -35,6 +35,11 @@ export const UserSchema = new mongoose.Schema<IMainAppUser>(
       required: true,
       unique: true,
     },
+    cid: {
+      type: mongoose.SchemaTypes.String,
+      required: true,
+      unique: true,
+    },
   },
   {
     id: true,

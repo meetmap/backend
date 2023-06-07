@@ -1,21 +1,16 @@
-import {
-  ExtractUser,
-  UseAuthGuard,
-  UseMicroserviceAuthGuard,
-} from '@app/auth/jwt';
+import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import { IUser } from '@app/types';
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import {
-  AcceptFriendshipRequestDto,
-  RejectFriendshipRequestDto,
-  RequestFriendshipDto,
-  SuccessResponse,
-} from './dto';
 import { FriendsService } from './friends.service';
 import { ApiTags, ApiOkResponse } from '@nestjs/swagger';
-import { GetUserLocationResponseDto } from 'apps/location-service/src/location/dto';
-import { UserResponseDto } from '../users/dto';
+
 import { UsersService } from '../users/users.service';
+import {
+  RequestFriendshipDto,
+  UpdateFriendshipRequestDto,
+} from '@app/dto/main-app/friends.dto';
+import { UserResponseDto } from '@app/dto/main-app/users.dto';
+import { IJwtUserPayload } from '@app/types/jwt';
 
 @ApiTags('Friends')
 @Controller('friends')
@@ -30,9 +25,12 @@ export class FreindsController {
   @UseMicroserviceAuthGuard()
   public async requestFriendship(
     @Body() dto: RequestFriendshipDto,
-    @ExtractUser() user: IUser,
-  ): Promise<Omit<UserResponseDto, 'authUserId'>> {
-    return await this.friendsService.requestFriendship(user, dto.userId);
+    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
+  ): Promise<UserResponseDto> {
+    return await this.friendsService.requestFriendship(
+      jwtPayload.cid,
+      dto.userCId,
+    );
   }
 
   @ApiOkResponse({
@@ -42,9 +40,11 @@ export class FreindsController {
   @Get('incoming')
   @UseMicroserviceAuthGuard()
   public async getIncomingFriendshipRequests(
-    @ExtractUser() user: IUser,
+    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
   ): Promise<Omit<UserResponseDto, 'authUserId'>[]> {
-    return await this.friendsService.getIncomingFriendshipRequests(user);
+    return await this.friendsService.getIncomingFriendshipRequests(
+      jwtPayload.cid,
+    );
   }
 
   @ApiOkResponse({
@@ -54,9 +54,11 @@ export class FreindsController {
   @Get('outcoming')
   @UseMicroserviceAuthGuard()
   public async getOutcomingFriendshipRequests(
-    @ExtractUser() user: IUser,
+    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
   ): Promise<Omit<UserResponseDto, 'authUserId'>[]> {
-    return await this.friendsService.getOutcomingFriendshipRequests(user);
+    return await this.friendsService.getOutcomingFriendshipRequests(
+      jwtPayload.cid,
+    );
   }
 
   @ApiOkResponse({
@@ -66,12 +68,12 @@ export class FreindsController {
   @Post('accept')
   @UseMicroserviceAuthGuard()
   public async acceptFriendshipRequest(
-    @Body() dto: AcceptFriendshipRequestDto,
-    @ExtractUser() user: IUser,
+    @Body() dto: UpdateFriendshipRequestDto,
+    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
   ): Promise<Omit<UserResponseDto, 'authUserId'>> {
     return await this.friendsService.acceptFriendshipRequest(
-      user,
-      dto.friendId,
+      jwtPayload.cid,
+      dto.friendCId,
     );
   }
 
@@ -82,41 +84,41 @@ export class FreindsController {
   @Post('reject')
   @UseMicroserviceAuthGuard()
   public async rejectFriendshipRequest(
-    @Body() dto: RejectFriendshipRequestDto,
-    @ExtractUser() user: IUser,
+    @Body() dto: UpdateFriendshipRequestDto,
+    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
   ): Promise<Omit<UserResponseDto, 'authUserId'>> {
     return await this.friendsService.rejectFriendshipRequest(
-      user,
-      dto.friendId,
+      jwtPayload.cid,
+      dto.friendCId,
     );
   }
 
-  @ApiOkResponse({
-    type: [GetUserLocationResponseDto],
-    description: 'Get friends location',
-  })
-  @UseMicroserviceAuthGuard()
-  @Get('location')
-  public async getFriendsLocation(
-    @ExtractUser() user: IUser,
-  ): Promise<GetUserLocationResponseDto[]> {
-    return this.friendsService.getFriendsLocation(user.id);
-  }
+  // @ApiOkResponse({
+  //   type: [GetUserLocationResponseDto],
+  //   description: 'Get friends location',
+  // })
+  // @UseMicroserviceAuthGuard()
+  // @Get('location')
+  // public async getFriendsLocation(
+  //   @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
+  // ): Promise<GetUserLocationResponseDto[]> {
+  //   return this.friendsService.getFriendsLocation(user.id);
+  // }
 
   @ApiOkResponse({
     type: [UserResponseDto],
     description: 'Array of users',
   })
-  @Get('/get/:userId/?')
+  @Get('/get/:userCId/?')
   //   @UseAuthGuard()
   public async getUserFirends(
-    @Param('userId') userId: string,
+    @Param('userCId') userCId: string,
     @Query('limit') limit: number,
     @Query('page') page: number,
     // @ExtractUser() user: IUser,
   ): Promise<Omit<UserResponseDto, 'authUserId'>[]> {
     const friends = await this.friendsService.getUserFriends(
-      userId,
+      userCId,
       limit,
       page,
     );

@@ -1,5 +1,6 @@
 import { JwtService } from '@app/auth';
 import { MAX_AGE, MIN_AGE, RabbitMQExchanges } from '@app/constants';
+import { UserRmqRequestDto } from '@app/dto/main-app/users.dto';
 import { RabbitmqService } from '@app/rabbitmq';
 import { IMainAppSafeUser, IUser } from '@app/types';
 import {
@@ -9,13 +10,6 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import {
-  LoginWithPasswordDto,
-  RefreshAccessTokenDto,
-  UpdateUserLocationDto,
-  UpdateUsersUsernameDto,
-  UserRmqRequestDto,
-} from './dto';
 import { UsersDal } from './users.dal';
 
 @Injectable()
@@ -32,8 +26,13 @@ export class UsersService {
   }
 
   public async updateUser(payload: UserRmqRequestDto) {
-    const user = await this.dal.updateUser(payload.authUserId, payload);
+    const user = await this.dal.updateUser(payload.cid, payload);
     return user ? UsersService.mapUserDbToResponseUser(user) : null;
+  }
+
+  public async deleteUser(cid: string) {
+    const userId = await this.dal.deleteUser(cid);
+    return userId;
   }
 
   // public async updateUserLocation(userId: string, dto: UpdateUserLocationDto) {
@@ -48,8 +47,8 @@ export class UsersService {
   //   return dto;
   // }
 
-  public async getUserSelf(authUserId: string): Promise<IMainAppSafeUser> {
-    const user = await this.dal.findUserByAuthUserId(authUserId);
+  public async getUserSelf(cid: string): Promise<IMainAppSafeUser> {
+    const user = await this.dal.findUserByCorrelationId(cid);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -62,8 +61,8 @@ export class UsersService {
     return users.map((user) => UsersService.mapUserDbToResponseUser(user));
   }
 
-  public async getUserById(userId: string): Promise<IMainAppSafeUser> {
-    const user = await this.dal.findUserById(userId);
+  public async getUserByCId(cid: string): Promise<IMainAppSafeUser> {
+    const user = await this.dal.findUserByCId(cid);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -80,6 +79,7 @@ export class UsersService {
       email: user.email,
       phone: user.phone,
       username: user.username,
+      cid: user.cid,
       // authUserId: user.authUserId,
     };
   }

@@ -5,7 +5,9 @@ import {
   AuthServiceDatabase,
   EventsFetcherDb,
   MainAppDatabase,
+  LocationServiceDatabase,
 } from './databases';
+
 import { BaseDatabase } from './databases/types';
 
 export interface IDatabaseModuleConfig {
@@ -39,7 +41,7 @@ export class DatabaseModule {
 
 const microserviceDatabaseMap: Record<MicroServiceName, typeof BaseDatabase> = {
   'events-fetcher': EventsFetcherDb,
-  'location-service': EventsFetcherDb,
+  'location-service': LocationServiceDatabase,
   'main-app': MainAppDatabase,
   'auth-service': AuthServiceDatabase,
 };
