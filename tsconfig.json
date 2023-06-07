@@ -71,6 +71,12 @@
       ],
       "@app/rmq-lib/*": [
         "libs/rmq-lib/src/*"
+      ],
+      "@app/dto": [
+        "libs/dto/src"
+      ],
+      "@app/dto/*": [
+        "libs/dto/src/*"
       ]
     }
   }

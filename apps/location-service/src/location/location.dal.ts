@@ -1,3 +1,4 @@
+import { LocationServiceDatabase } from '@app/database';
 import { RedisService } from '@app/redis';
 import { ICoordinates, IUserLocation } from '@app/types';
 import { Inject, Injectable } from '@nestjs/common';
@@ -7,13 +8,18 @@ export class LocationDal {
   constructor(
     @Inject(RedisService.name)
     private readonly redisClient: RedisService<IUserLocation>,
+    private readonly db: LocationServiceDatabase,
   ) {}
 
-  public async updateUserLocation(userId: string, coordinates: ICoordinates) {
+  public async getUserByCId(cid: string) {
+    return await this.db.models.users.findOne({ cid });
+  }
+
+  public async updateUserLocation(cid: string, coordinates: ICoordinates) {
     this.redisClient.set(
-      userId,
+      cid,
       {
-        userId: userId,
+        cid: cid,
         location: {
           lat: coordinates.lat,
           lng: coordinates.lng,
@@ -24,20 +30,30 @@ export class LocationDal {
       },
     );
     return {
-      userId: userId,
+      cid: cid,
       location: {
         lat: coordinates.lat,
         lng: coordinates.lng,
       },
     };
   }
-  public async getUserLocation(userId: string): Promise<IUserLocation | null> {
-    return this.redisClient.get(userId);
+  public async getUserLocation(userCId: string): Promise<IUserLocation | null> {
+    return this.redisClient.get(userCId);
+  }
+
+  public async getUserFriendsCIds(cid: string) {
+    const user = await this.db.models.users.findOne({
+      cid,
+    });
+    if (!user) {
+      return null;
+    }
+    return user.friendsCids;
   }
 
   public async getUsersLocationBulk(
     userIds: string[],
-  ): Promise<{ location: ICoordinates | null; userId: string }[]> {
+  ): Promise<{ location: ICoordinates | null; cid: string }[]> {
     const response = await this.redisClient.getBulk(userIds);
 
     return response.map((loc, index) => ({
@@ -47,7 +63,7 @@ export class LocationDal {
             lng: loc.location.lng,
           }
         : null,
-      userId: userIds[index],
+      cid: userIds[index],
     }));
   }
 }

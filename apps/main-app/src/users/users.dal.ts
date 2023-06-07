@@ -10,7 +10,7 @@ export class UsersDal {
   public async createUser(
     payload: Pick<
       IMainAppUser,
-      'birthDate' | 'email' | 'username' | 'phone' | 'authUserId'
+      'birthDate' | 'email' | 'username' | 'phone' | 'authUserId' | 'cid'
     >,
   ) {
     return await this.db.models.users.create({
@@ -20,16 +20,17 @@ export class UsersDal {
       phone: payload.phone,
       friendsIds: [],
       authUserId: payload.authUserId,
+      cid: payload.cid,
     });
   }
 
   public async updateUser(
-    authUserId: string,
+    cid: string,
     payload: Partial<Pick<IMainAppUser, 'username' | 'phone' | 'email'>>,
   ) {
     return await this.db.models.users.findOneAndUpdate(
       {
-        authUserId: authUserId,
+        cid: cid,
       },
       {
         $set: {
@@ -42,6 +43,37 @@ export class UsersDal {
         new: true,
       },
     );
+  }
+
+  public async deleteUser(cid: string) {
+    //delete user
+    const user = await this.db.models.users.findOneAndDelete({
+      cid: cid,
+    });
+    if (!user) {
+      return;
+    }
+    //pull out this user from friends list of every friend
+    await this.db.models.users.updateMany(
+      {
+        friendsIds: user.id,
+      },
+      {
+        $pull: {
+          friendsIds: user.id,
+        },
+      },
+    );
+    //delete all friends recordings where this user
+    await this.db.models.friends.deleteMany({
+      $or: [
+        { recipient: user.id },
+        {
+          requester: user.id,
+        },
+      ],
+    });
+    return user.id;
   }
 
   public async comparePassword(password: string, hash?: string) {
@@ -73,17 +105,13 @@ export class UsersDal {
     return await this.db.models.users.findById(userId);
   }
 
-  public async findUserByAuthUserId(authUserId: string): Promise<IUser | null> {
-    return await this.db.models.users.findOne({
-      authUserId: authUserId,
-    });
+  public async findUserByCId(cid: string): Promise<IUser | null> {
+    return await this.db.models.users.findOne({ cid });
   }
 
-  public async updateUsersRefreshToken(userId: string, refreshToken: string) {
-    return await this.db.models.users.findByIdAndUpdate(userId, {
-      $set: {
-        refreshToken: refreshToken,
-      },
+  public async findUserByCorrelationId(cid: string): Promise<IUser | null> {
+    return await this.db.models.users.findOne({
+      cid: cid,
     });
   }
 

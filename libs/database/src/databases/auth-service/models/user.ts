@@ -28,6 +28,11 @@ export const UserSchema = new mongoose.Schema<IAuthUser>(
       type: mongoose.SchemaTypes.Date,
       required: true,
     },
+    cid: {
+      type: mongoose.SchemaTypes.String,
+      required: true,
+      unique: true,
+    },
   },
   {
     id: true,

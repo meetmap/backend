@@ -1,5 +1,16 @@
 import { ExtractUser, JwtService, UseAuthGuard } from '@app/auth/jwt';
 import { RabbitMQExchanges, RMQConstants } from '@app/constants';
+import {
+  AuthUserResponseDto,
+  CreateUserRequestDto,
+  EntityIsFreeResponseDto,
+  LoginResponseDto,
+  LoginWithPasswordDto,
+  RefreshAccessTokenRequestDto,
+  RefreshAtResponseDto,
+  UpdateUsersUsernameRequestDto,
+} from '@app/dto/auth-service/auth.dto';
+import { UserResponseDto } from '@app/dto/main-app/users.dto';
 import { IAuthUser, ISafeAuthUser } from '@app/types';
 import { RabbitPayload, RabbitRPC } from '@golevelup/nestjs-rabbitmq';
 import {
@@ -16,18 +27,6 @@ import {
 import { ApiOkResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
-import {
-  CreateUserRequestDto,
-  EntityIsFreeResponseDto,
-  GetUserByIdBulkRmqRequestDto,
-  GetUserByIdRmqRequestDto,
-  LoginResponseDto,
-  LoginWithPasswordDto,
-  RefreshAccessTokenDto,
-  RefreshAtResponseDto,
-  UpdateUsersUsernameDto,
-  UserResponseDto,
-} from './dto';
 
 @Controller('auth')
 export class AuthController {
@@ -82,7 +81,9 @@ export class AuthController {
     description: 'Username is free to use',
   })
   @Get('/check-username/:username')
-  public async usernameIsFree(@Query('username') username: string) {
+  public async usernameIsFree(
+    @Query('username') username: string,
+  ): Promise<EntityIsFreeResponseDto> {
     const usernameIsFree = await this.authService.usernameIsFree(username);
 
     return { free: usernameIsFree };
@@ -92,22 +93,24 @@ export class AuthController {
     description: 'Phone is free to use',
   })
   @Get('/check-phone/:phone')
-  public async phoneIsFree(@Query('phone') phone: string) {
+  public async phoneIsFree(
+    @Query('phone') phone: string,
+  ): Promise<EntityIsFreeResponseDto> {
     const usernameIsFree = await this.authService.phoneIsFree(phone);
 
     return { free: usernameIsFree };
   }
 
   @ApiOkResponse({
-    type: UserResponseDto,
+    type: AuthUserResponseDto,
     description: 'User updated response',
   })
   @UseAuthGuard()
   @Put('username')
   public async updateUsersUsername(
-    @Body() payload: UpdateUsersUsernameDto,
+    @Body() payload: UpdateUsersUsernameRequestDto,
     @ExtractUser() user: IAuthUser,
-  ): Promise<UserResponseDto> {
+  ): Promise<AuthUserResponseDto> {
     return this.authService.updateUsersUsername(user.id, payload);
   }
 
@@ -117,7 +120,7 @@ export class AuthController {
   })
   @Post('refresh')
   public async refreshAccessToken(
-    @Body() dto: RefreshAccessTokenDto,
+    @Body() dto: RefreshAccessTokenRequestDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<RefreshAtResponseDto> {
     const jwtPayload = await this.jwtService.verifyRt(dto.refreshToken);
@@ -125,28 +128,4 @@ export class AuthController {
     res.setHeader('Authorization', `Bearer ${accessToken}`);
     return { accessToken };
   }
-
-  // @RabbitRPC({
-  //   exchange: RMQConstants.exchanges.AUTH_SERVICE.name,
-  //   queue: RMQConstants.exchanges.AUTH_SERVICE.queues.USER.name,
-  //   routingKey:
-  //     RMQConstants.exchanges.AUTH_SERVICE.queues.USER.routes.GET_USER.name,
-  // })
-  // public async getUserById(
-  //   @RabbitPayload() payload: GetUserByIdRmqRequestDto,
-  // ): Promise<ISafeAuthUser | null> {
-  //   return this.authService.getUserById(payload.userId);
-  // }
-
-  // @RabbitRPC({
-  //   exchange: RMQConstants.exchanges.AUTH_SERVICE.name,
-  //   queue: RMQConstants.exchanges.AUTH_SERVICE.queues.USER.name,
-  //   routingKey:
-  //     RMQConstants.exchanges.AUTH_SERVICE.queues.USER.routes.GET_USERS.name,
-  // })
-  // public async getUserByIdBulk(
-  //   @RabbitPayload() payload: GetUserByIdBulkRmqRequestDto,
-  // ): Promise<(ISafeAuthUser | null)[]> {
-  //   return this.authService.getUserByIdBulk(payload.userIds);
-  // }
 }

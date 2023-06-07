@@ -3,6 +3,11 @@ import { NestFactory } from '@nestjs/core';
 import { MainAppModule } from './main-app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { MicroServiceName } from '@app/types';
+import {
+  getMicroservicePath,
+  getMicroserviceUrl,
+  SERVER_PREFIX,
+} from '@app/constants';
 
 async function bootstrap() {
   const app = await NestFactory.create(MainAppModule);
@@ -12,10 +17,17 @@ async function bootstrap() {
     .setDescription('Main App microservice')
     .setVersion('latest')
     .addBearerAuth()
+    .addServer(SERVER_PREFIX)
     .build();
   app.setGlobalPrefix('main-app' satisfies MicroServiceName);
+  app.enableCors({ origin: '*' });
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+
+  SwaggerModule.setup(
+    getMicroservicePath('main-app').concat('/api'),
+    app,
+    document,
+  );
 
   app.useGlobalPipes(new ValidationPipe());
   const PORT = process.env.PORT ?? 3001;

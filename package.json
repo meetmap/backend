@@ -112,7 +112,8 @@
       "^@app/auth(|/.*)$": "<rootDir>/libs/auth/src/$1",
       "^@app/rabbitmq(|/.*)$": "<rootDir>/libs/rabbitmq/src/$1",
       "^@app/s3-uploader(|/.*)$": "<rootDir>/libs/s3-uploader/src/$1",
-      "^@app/rmq-lib(|/.*)$": "<rootDir>/libs/rmq-lib/src/$1"
+      "^@app/rmq-lib(|/.*)$": "<rootDir>/libs/rmq-lib/src/$1",
+      "^@app/dto(|/.*)$": "<rootDir>/libs/dto/src/$1"
     }
   }
 }

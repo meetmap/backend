@@ -1,7 +1,6 @@
 import { JwtService } from '@app/auth';
 import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import { InternalAxiosService } from '@app/axios';
-import { ISafeAuthUser, IUser } from '@app/types';
 import {
   BadRequestException,
   Body,
@@ -12,22 +11,28 @@ import {
   Query,
 } from '@nestjs/common';
 import { Response } from 'express';
-import {
-  UpdateUserLocationDto,
-  UserResponseDto,
-  UserRmqRequestDto,
-} from './dto';
 import { UsersService } from './users.service';
 import { ApiTags, ApiOkResponse } from '@nestjs/swagger';
 import { RMQConstants } from '@app/constants';
+// import {
+//   Nack,
+//   RabbitPayload,
+//   RabbitRequest,
+//   RabbitSubscribe,
+//   RequestOptions,
+// } from '@app/rmq-lib';
+import { IJwtUserPayload } from '@app/types/jwt';
+import {
+  UserResponseDto,
+  UserRmqRequestDto,
+} from '@app/dto/main-app/users.dto';
 import {
   Nack,
   RabbitPayload,
   RabbitRequest,
   RabbitSubscribe,
   RequestOptions,
-} from '@app/rmq-lib';
-import { IJwtUserPayload } from '@app/types/jwt';
+} from '@golevelup/nestjs-rabbitmq';
 
 @ApiTags('Users')
 @Controller('/users')
@@ -41,10 +46,11 @@ export class UsersController {
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.USERS.name,
     routingKey: [
-      RMQConstants.exchanges.USERS.queues.USER_SERVICE.routes.USER_CREATED,
-      RMQConstants.exchanges.USERS.queues.USER_SERVICE.routes.USER_UPDATED,
+      RMQConstants.exchanges.USERS.routes.USER_CREATED,
+      RMQConstants.exchanges.USERS.routes.USER_UPDATED,
+      RMQConstants.exchanges.USERS.routes.USER_DELETED,
     ],
-    queue: RMQConstants.exchanges.USERS.queues.USER_SERVICE.name,
+    queue: RMQConstants.exchanges.USERS.queues.USER_SERVICE,
   })
   public async handleUser(
     @RabbitPayload() payload: UserRmqRequestDto,
@@ -55,22 +61,20 @@ export class UsersController {
       handler: this.handleUser.name,
       routingKey: routingKey,
       msg: {
-        authUserId: payload.authUserId,
+        cid: payload.cid,
       },
     });
 
-    if (
-      routingKey ===
-      RMQConstants.exchanges.USERS.queues.USER_SERVICE.routes.USER_CREATED
-    ) {
+    if (routingKey === RMQConstants.exchanges.USERS.routes.USER_CREATED) {
       await this.usersService.createUser(payload);
       return;
     }
-    if (
-      routingKey ===
-      RMQConstants.exchanges.USERS.queues.USER_SERVICE.routes.USER_UPDATED
-    ) {
+    if (routingKey === RMQConstants.exchanges.USERS.routes.USER_UPDATED) {
       await this.usersService.updateUser(payload);
+      return;
+    }
+    if (routingKey === RMQConstants.exchanges.USERS.routes.USER_DELETED) {
+      await this.usersService.deleteUser(payload.cid);
       return;
     } else {
       return new Nack(true);
@@ -99,7 +103,7 @@ export class UsersController {
   public async getUserSelf(
     @ExtractJwtPayload() jwt: IJwtUserPayload,
   ): Promise<UserResponseDto> {
-    return this.usersService.getUserSelf(jwt.sub);
+    return this.usersService.getUserSelf(jwt.cid);
   }
 
   @ApiOkResponse({
@@ -122,13 +126,13 @@ export class UsersController {
     description: 'Find user response',
   })
   @UseMicroserviceAuthGuard()
-  @Get('/get/:userId')
+  @Get('/get/:userCId')
   public async getUserById(
-    @Param('userId') userId: string,
+    @Param('userCId') userCId: string,
   ): Promise<UserResponseDto> {
-    if (!userId) {
+    if (!userCId) {
       throw new BadRequestException('Invalid userId');
     }
-    return this.usersService.getUserById(userId);
+    return this.usersService.getUserByCId(userCId);
   }
 }
