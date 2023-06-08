@@ -82,6 +82,10 @@ deploy-auth-service:
 	make push-image-auth-service && \
 	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service auth-service --force-new-deployment
 
+.PHONY: deploy-all
+make deploy-all:
+	make deploy-main-app make deploy-location-service make deploy-auth-service make deploy-events-fetcher
+
 .PHONY: registry-login
 registry-login:
 	aws ecr get-login-password --region eu-west-1 --profile meetmap | docker login --username AWS --password-stdin 970180171170.dkr.ecr.eu-west-1.amazonaws.com

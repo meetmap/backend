@@ -40,7 +40,6 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly internalAxios: InternalAxiosService,
   ) {}
 
   @RabbitSubscribe({
