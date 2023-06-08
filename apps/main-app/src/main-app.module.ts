@@ -18,7 +18,7 @@ import { MainAppController } from './main-app.controller';
       microserviceName: 'main-app',
     }),
     RabbitmqModule.forRoot(),
-    InternalAxiosModule,
+    // InternalAxiosModule,
     AuthModule,
     UsersModule,
     FriendsModule,

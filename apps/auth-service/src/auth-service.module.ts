@@ -17,7 +17,7 @@ import { AuthModule } from './auth/auth.module';
       microserviceName: 'auth-service',
     }),
     RabbitmqModule.forRoot(),
-    InternalAxiosModule,
+    // InternalAxiosModule,
     LibAuthModule,
     AuthModule,
   ],
