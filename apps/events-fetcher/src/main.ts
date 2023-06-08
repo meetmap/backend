@@ -7,13 +7,24 @@ import { EventsFetcherModule } from './events-fetcher.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(EventsFetcherModule);
+  const PORT = process.env.PORT ?? 3000;
 
   const config = new DocumentBuilder()
     .setTitle('Events Fetcher App')
     .setDescription('Events Fetcher microservice')
     .setVersion('latest')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        description: 'Default JWT Authorization',
+        type: 'http',
+        in: 'header',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+      'microserviceAuth',
+    )
     .addServer(SERVER_PREFIX)
+    .addServer(`http://localhost:${PORT}`)
     .build();
   app.setGlobalPrefix('events-fetcher' satisfies MicroServiceName);
   app.enableCors({ origin: '*' });
@@ -27,7 +38,6 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe());
 
-  const PORT = process.env.PORT ?? 3000;
   await app.listen(PORT);
   console.log('App is running on port:', PORT);
 }

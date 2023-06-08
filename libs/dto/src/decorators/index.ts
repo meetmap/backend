@@ -8,10 +8,13 @@ import {
   IsBoolean,
   IsDateString,
   IsEmail,
+  IsEnum,
   IsNumber,
   IsOptional,
   IsPhoneNumber,
   IsString,
+  Max,
+  Min,
 } from 'class-validator';
 
 export type FieldDecorator<T = {}> = (
@@ -37,9 +40,11 @@ export const EmailField: FieldDecorator = (
     }),
   );
 
-export const OpenApiField /* : FieldDecorator<ApiPropertyOptions> */ = ({
-  optional = false,
+export const OpenApiField: FieldDecorator<ApiPropertyOptions> = ({
+  optional,
   ...options
+}: {
+  optional: false;
 }) => {
   return applyDecorators(
     ...(optional
@@ -54,10 +59,11 @@ export const PhoneField: FieldDecorator = (
   applyDecorators(
     IsPhoneNumber(),
     OpenApiField({
+      optional,
       type: String,
-      description: 'Email',
-      title: 'Email',
-      example: 'd4v1ds0n.p@gmail.com',
+      description: 'Phone',
+      title: 'Phone',
+      example: '0534759131',
     }),
   );
 
@@ -65,6 +71,8 @@ export const StringField: FieldDecorator<{
   description?: string;
   title?: string;
   example?: string;
+  required?: boolean;
+  enum?: ApiPropertyOptions['enum'];
 }> = ({ optional, ...options } = { optional: false }) =>
   applyDecorators(
     IsString(),
@@ -73,18 +81,27 @@ export const StringField: FieldDecorator<{
       type: String,
       ...options,
     }),
+    ...(options.enum ? [IsEnum(options.enum)] : []),
   );
 
 export const NumberField: FieldDecorator<{
   description?: string;
   title?: string;
   example?: string;
-}> = ({ optional, ...options } = { optional: false }) =>
+  min?: number;
+  max?: number;
+}> = ({ optional, min, max, description, ...options } = { optional: false }) =>
   applyDecorators(
     IsNumber(),
+    ...([min && Min(min), max && Max(max)].filter(
+      Boolean,
+    ) as PropertyDecorator[]),
     OpenApiField({
       optional,
       type: Number,
+      description: `${description ?? ''} ${min ? 'min: ' + min : ''} ${
+        max ? 'max: ' + max : ''
+      }`,
       ...options,
     }),
   );
@@ -114,9 +131,10 @@ export const DateField: FieldDecorator<{ description?: string }> = (
     IsDateString(),
   );
 
-export const IdField: FieldDecorator = () =>
+export const IdField: FieldDecorator = ({ optional } = { optional: false }) =>
   applyDecorators(
     StringField({
+      optional,
       description: 'id',
       example: '6436b4fa091dc0948e7566c5',
     }),

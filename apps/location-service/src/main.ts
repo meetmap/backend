@@ -8,12 +8,24 @@ import { LocationServiceModule } from './location-service.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(LocationServiceModule);
+  const PORT = process.env.PORT ?? 3002;
+
   const config = new DocumentBuilder()
     .setTitle('Location Service')
     .setDescription('Location microservice')
     .setVersion('latest')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        description: 'Default JWT Authorization',
+        type: 'http',
+        in: 'header',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+      'microserviceAuth',
+    )
     .addServer(SERVER_PREFIX)
+    .addServer(`http://localhost:${PORT}`)
     .build();
   app.setGlobalPrefix('location-service' satisfies MicroServiceName);
   app.enableCors({ origin: '*' });
@@ -26,7 +38,6 @@ async function bootstrap() {
   );
 
   app.useGlobalPipes(new ValidationPipe());
-  const PORT = process.env.PORT ?? 3002;
   await app.listen(PORT);
   console.log('App is running on port:', PORT);
 }

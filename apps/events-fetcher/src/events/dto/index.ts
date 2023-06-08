@@ -2,24 +2,10 @@ import { z } from 'zod';
 import { IsNumber, IsString, Max, Min } from 'class-validator';
 import { EventType } from '@app/types';
 
-export class GetEventsByLocationRequestDto {
-  @IsNumber()
-  latitude: number;
-  @IsNumber()
-  longitude: number;
-  /**
-   * @description in kilometeres
-   */
-  @IsNumber()
-  @Min(1)
-  @Max(90)
-  radius: number;
-}
-
-export class CreateEventRequestDto {
-  @IsString()
-  rawEvent: string;
-}
+// export class CreateEventRequestDto {
+//   @IsString()
+//   rawEvent: string;
+// }
 
 // const eventType = ["PARTNER_EVENT","USER_PRIVATE",'USER_PUBLIC'] as( keyof typeof EventType)[]
 

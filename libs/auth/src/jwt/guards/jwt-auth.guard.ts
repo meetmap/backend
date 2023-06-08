@@ -43,6 +43,6 @@ export class IsAuthenticatedGuard implements CanActivate {
 
 export const UseAuthGuard = () =>
   applyDecorators(
-    ApiBearerAuth('Bearer token'),
+    ApiBearerAuth('microserviceAuth'),
     UseGuards(IsAuthenticatedGuard),
   );

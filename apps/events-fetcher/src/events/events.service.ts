@@ -6,9 +6,10 @@ import {
 } from '@nestjs/common';
 import { ZodError } from 'zod';
 import { EventerFetcherService } from '../eventer-fetcher/eventer-fetcher.service';
-import { CreateEventSchema, GetEventsByLocationRequestDto } from './dto';
+import { CreateEventSchema } from './dto';
 import { EventsDal } from './events.dal';
 import * as path from 'path';
+import { GetEventsByLocationRequestDto } from '@app/dto/events-fetcher/events.dto';
 
 @Injectable()
 export class EventsService {
