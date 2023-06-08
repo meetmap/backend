@@ -7,13 +7,24 @@ import { AuthServiceModule } from './auth-service.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AuthServiceModule);
+  const PORT = process.env.PORT ?? 3003;
 
   const config = new DocumentBuilder()
     .setTitle('Auth Service App')
     .setDescription('Auth microservice')
     .setVersion('latest')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        description: 'Default JWT Authorization',
+        type: 'http',
+        in: 'header',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+      'microserviceAuth',
+    )
     .addServer(SERVER_PREFIX)
+    .addServer(`http://localhost:${PORT}`)
     .build();
   app.setGlobalPrefix('auth-service' satisfies MicroServiceName);
   app.enableCors({ origin: '*' });
@@ -27,7 +38,6 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe());
 
-  const PORT = process.env.PORT ?? 3003;
   await app.listen(PORT);
   console.log('App is running on port:', PORT);
 }
