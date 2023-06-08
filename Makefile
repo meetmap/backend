@@ -16,6 +16,17 @@ push-image-location-service:
 	docker push 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-location-service:latest
 
 
+.PHONY: build-auth-service
+build-auth-service:
+	docker buildx build --platform linux/amd64 -t meetmap:auth-service -f apps/auth-service/Dockerfile . && docker tag meetmap:auth-service 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-auth-service:latest
+
+.PHONY: push-image-auth-service
+push-image-auth-service:
+	docker push 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-auth-service:latest
+
+
+
+
 .PHONY: build-main-app
 build-main-app:
 	docker buildx build --platform linux/amd64 -t meetmap:main-app -f apps/main-app/Dockerfile . && docker tag meetmap:main-app 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-main-app:latest
@@ -64,6 +75,12 @@ deploy-location-service:
 	make push-image-location-service && \
 	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service location-service --force-new-deployment
 
+.PHONY: deploy-auth-service
+deploy-auth-service:
+	make registry-login && \
+	make build-auth-service && \
+	make push-image-auth-service && \
+	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service auth-service --force-new-deployment
 
 .PHONY: registry-login
 registry-login:

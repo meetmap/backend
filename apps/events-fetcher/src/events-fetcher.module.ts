@@ -26,7 +26,7 @@ import { EventsFetcherController } from './events-fetcher.controller';
     AuthModule,
     S3UploaderModule,
     // RabbitmqModule.forRoot(),
-    InternalAxiosModule,
+    // InternalAxiosModule,
     EventerFetcherModule,
     EventsModule,
   ],

@@ -19,7 +19,7 @@ import { AuthModule } from '@app/auth';
     }),
     AuthModule,
     RedisModule,
-    InternalAxiosModule,
+    // InternalAxiosModule,
     RabbitmqModule.forRoot(),
     UsersModule,
     LocationModule,
