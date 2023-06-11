@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EventsFetcherModule } from './events-fetcher.module';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(EventsFetcherModule);
@@ -23,9 +24,21 @@ async function bootstrap() {
       },
       'microserviceAuth',
     )
+    .addBearerAuth(
+      {
+        description: 'Dashboard JWT Authorization',
+        type: 'http',
+        in: 'header',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+      'dashboardAuth',
+    )
     .addServer(SERVER_PREFIX)
     .addServer(`http://localhost:${PORT}`)
     .build();
+
+  app.use(cookieParser());
   app.setGlobalPrefix('events-fetcher' satisfies MicroServiceName);
   app.enableCors({ origin: '*' });
   const document = SwaggerModule.createDocument(app, config);

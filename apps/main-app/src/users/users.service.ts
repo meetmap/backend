@@ -17,7 +17,6 @@ export class UsersService {
   constructor(
     private readonly dal: UsersDal,
     private readonly rmq: RabbitmqService,
-    private readonly jwtService: JwtService,
   ) {}
 
   public async createUser(payload: UserRmqRequestDto) {

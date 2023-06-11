@@ -19,8 +19,7 @@ export interface IEvent {
 
   ageLimit: number;
 
-  creatorId?: string;
-
+  creator?: ICreator;
   location: ILocation;
 
   eventType: EventType;
@@ -29,6 +28,15 @@ export interface IEvent {
 
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface ICreator {
+  type: CreatorType;
+  creatorCId: string;
+}
+export enum CreatorType {
+  USER = 'user',
+  TICKETING_PLATFOFRM = 'ticketing-platform',
 }
 
 export enum EventType {

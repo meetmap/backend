@@ -72,6 +72,16 @@ export class AuthService {
     }
   }
 
+  public async refreshAccessToken(refreshToken: string) {
+    const jwtPayload = await this.jwtService.verifyRt(refreshToken);
+    const user = await this.dal.findUserById(jwtPayload.sub);
+    if (!user || user.refreshToken !== refreshToken) {
+      throw new UnauthorizedException('Invalid token');
+    }
+    const at = await this.jwtService.getAt(refreshToken);
+    return at;
+  }
+
   public async updateUsersRefreshToken(userId: string, refreshToken: string) {
     return await this.dal.updateUsersRefreshToken(userId, refreshToken);
   }

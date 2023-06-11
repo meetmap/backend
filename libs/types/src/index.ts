@@ -9,3 +9,4 @@ export * from './user';
 export * from './friends';
 export * from './user-location';
 export * from './events-api';
+export * from './ticketing-platform';
