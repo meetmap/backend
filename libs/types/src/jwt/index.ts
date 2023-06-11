@@ -9,12 +9,12 @@ export interface IJwtUserPayload extends JwtPayload {
   cid: string;
 }
 
-export interface IJwtApipayload extends JwtPayload {
-  [key: string]: unknown;
-  sub: string;
-  companyId: string;
-  expiresAt: string;
-}
+// export interface IJwtApipayload extends JwtPayload {
+//   [key: string]: unknown;
+//   sub: string;
+//   companyId: string;
+//   expiresAt: string;
+// }
 
 export interface IJwtDashboardPayload extends JwtPayload {
   [key: string]: unknown;

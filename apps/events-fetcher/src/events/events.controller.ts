@@ -80,7 +80,7 @@ export class EventsController {
   @UseMicroserviceAuthGuard()
   @Post('/create')
   @UseInterceptors(FileInterceptor('photo'))
-  public async createEvent(
+  public async createUserEvent(
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -97,7 +97,7 @@ export class EventsController {
     @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
     @Body() body: CreateEventRequestDto,
   ): Promise<EventResponseDto> {
-    return await this.eventsService.createEvent(
+    return await this.eventsService.userCreateEvent(
       body.rawEvent,
       jwtPayload.sub,
       file,

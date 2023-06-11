@@ -12,7 +12,6 @@ import {
 async function bootstrap() {
   const app = await NestFactory.create(MainAppModule);
   const PORT = process.env.PORT ?? 3001;
-
   const config = new DocumentBuilder()
     .setTitle('Main App')
     .setDescription('Main App microservice')

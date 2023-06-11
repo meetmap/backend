@@ -7,6 +7,7 @@ import {
   DateField,
   EmailField,
   IdField,
+  PasswordField,
   PhoneField,
   StringField,
 } from '../decorators';
@@ -58,15 +59,16 @@ export class LoginResponseDto {
 }
 
 export class CreateUserRequestDto {
-  @StringField({
-    description:
-      'At least 1 uppercase, 1 lowercase and 1 number, minimal length is 6',
-    example: 'Abc12dsaj',
-  })
-  @Matches(PASSWORD_REGEX, {
-    message:
-      'Password is not strong enough, it should containt at least 1 uppercase, 1 lowercase and 1 number, minimal length is 6',
-  })
+  // @StringField({
+  //   description:
+  //     'At least 1 uppercase, 1 lowercase and 1 number, minimal length is 6',
+  //   example: 'Abc12dsaj',
+  // })
+  // @Matches(PASSWORD_REGEX, {
+  //   message:
+  //     'Password is not strong enough, it should containt at least 1 uppercase, 1 lowercase and 1 number, minimal length is 6',
+  // })
+  @PasswordField()
   password: string;
 
   @EmailField()

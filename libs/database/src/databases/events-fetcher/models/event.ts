@@ -1,6 +1,7 @@
 import { PriceSchema } from '@app/database/shared-models';
 import { EventType, IEvent } from '@app/types';
 import * as mongoose from 'mongoose';
+import { CreatorSchema } from './creator-schema';
 import { LocationSchema } from './location';
 import { TicketSchema } from './ticket';
 
@@ -50,8 +51,8 @@ export const EventSchema = new mongoose.Schema<IEvent>(
       type: [TicketSchema],
       requried: true,
     },
-    creatorId: {
-      type: mongoose.SchemaTypes.ObjectId,
+    creator: {
+      type: CreatorSchema,
     },
   },
   {

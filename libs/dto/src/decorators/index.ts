@@ -1,3 +1,4 @@
+import { PASSWORD_REGEX } from '@app/constants';
 import { applyDecorators } from '@nestjs/common';
 import {
   ApiProperty,
@@ -13,6 +14,7 @@ import {
   IsOptional,
   IsPhoneNumber,
   IsString,
+  Matches,
   Max,
   Min,
 } from 'class-validator';
@@ -64,6 +66,22 @@ export const PhoneField: FieldDecorator = (
       description: 'Phone',
       title: 'Phone',
       example: '0534759131',
+    }),
+  );
+
+export const PasswordField: FieldDecorator = (
+  { optional } = { optional: false },
+) =>
+  applyDecorators(
+    Matches(PASSWORD_REGEX, {
+      message:
+        'Password is not strong enough, it should containt at least 1 uppercase, 1 lowercase and 1 number, minimal length is 6',
+    }),
+    StringField({
+      optional,
+      description:
+        'At least 1 uppercase, 1 lowercase and 1 number, minimal length is 6',
+      example: 'Abc12dsaj',
     }),
   );
 

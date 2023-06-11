@@ -1,7 +1,14 @@
 import { RADIANS_PER_KILOMETER } from '@app/constants';
 import { EventsFetcherDb } from '@app/database';
 import { S3UploaderService } from '@app/s3-uploader';
-import { EventType, ICity, IEvent, ILocation, ITicket } from '@app/types';
+import {
+  CreatorType,
+  EventType,
+  ICity,
+  IEvent,
+  ILocation,
+  ITicket,
+} from '@app/types';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { z } from 'zod';
 import { CreateEventSchema } from './dto';
@@ -76,9 +83,13 @@ export class EventsDal {
     });
   }
 
-  public async createEvent(
+  /**
+   *
+   * @description without picture
+   */
+  public async createUserEvent(
     payload: z.infer<typeof CreateEventSchema>,
-    creatorId: string,
+    creatorCId: string,
   ) {
     const city = await this.getCityByEventCoordinates({
       lat: payload.location.lat,
@@ -86,7 +97,10 @@ export class EventsDal {
     });
     const createdEvent = await this.db.models.event.create({
       ageLimit: payload.ageLimit,
-      creatorId: creatorId,
+      creator: {
+        creatorCId: creatorCId,
+        type: CreatorType.USER,
+      } satisfies IEvent['creator'],
       description: payload.description,
       eventType: EventType[payload.eventType] ?? EventType.USER_PUBLIC,
       title: payload.title,
@@ -110,7 +124,7 @@ export class EventsDal {
         },
         description: ticket.description,
       })) as ITicket[],
-    });
+    } as IEvent);
     return createdEvent;
   }
 

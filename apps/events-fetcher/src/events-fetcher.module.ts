@@ -12,6 +12,7 @@ import { RabbitmqModule } from '@app/rabbitmq';
 import { AuthModule } from '@app/auth';
 import { S3UploaderModule } from '@app/s3-uploader';
 import { EventsFetcherController } from './events-fetcher.controller';
+import { TicketingPlatofrmsModule } from './ticketing-platofrms/ticketing-platofrms.module';
 
 @Module({
   imports: [
@@ -23,12 +24,15 @@ import { EventsFetcherController } from './events-fetcher.controller';
       connectionStringEnvPath: 'EVENTS_FETCHER_DATABASE_URL',
       microserviceName: 'events-fetcher',
     }),
-    AuthModule,
+    AuthModule.init({
+      microserviceName: 'events-fetcher',
+    }),
     S3UploaderModule,
     // RabbitmqModule.forRoot(),
     // InternalAxiosModule,
     EventerFetcherModule,
     EventsModule,
+    TicketingPlatofrmsModule,
   ],
   controllers: [EventsFetcherController],
   providers: [],

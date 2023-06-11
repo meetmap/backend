@@ -123,8 +123,9 @@ export class AuthController {
     @Body() dto: RefreshAccessTokenRequestDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<RefreshAtResponseDto> {
-    const jwtPayload = await this.jwtService.verifyRt(dto.refreshToken);
-    const accessToken = await this.jwtService.getAt(dto.refreshToken);
+    const accessToken = await this.authService.refreshAccessToken(
+      dto.refreshToken,
+    );
     res.setHeader('Authorization', `Bearer ${accessToken}`);
     return { accessToken };
   }
