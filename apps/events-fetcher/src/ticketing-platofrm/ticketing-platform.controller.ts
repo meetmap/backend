@@ -11,6 +11,8 @@ import {
   LoginPlatformResponseDto,
   RefreshDashboardAtResponseDto,
   RevokeApiKeyRequestDto,
+  ApiKeyResponseDto,
+  UploadEventRequestDto,
 } from '@app/dto/events-fetcher/ticketing-platform.dto';
 import { ITicketingPlatform } from '@app/types';
 import {
@@ -24,12 +26,15 @@ import {
   Res,
   Req,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiOkResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { TicketingPlatformService } from './ticketing-platform.service';
 import ms from 'ms';
+import { EventResponseDto } from '@app/dto/events-fetcher/events.dto';
+import { ExtractApiPlatform, UseApiAuthGuard } from '@app/auth/api-auth';
 @Controller('ticketing-platform')
 export class TicketingPlatformController {
   constructor(
@@ -152,5 +157,52 @@ export class TicketingPlatformController {
     @ExtractPlatform() platform: ITicketingPlatform,
   ): Promise<void> {
     return this.ticketingPlatformService.revokeApiKey(platform.id, payload);
+  }
+
+  @ApiOkResponse({
+    type: [ApiKeyResponseDto],
+  })
+  @Get('/api-key')
+  @UseDashboardAuthGuard()
+  public async getPlatformApiKeys(
+    @ExtractPlatform() platform: ITicketingPlatform,
+  ): Promise<ApiKeyResponseDto[]> {
+    return this.ticketingPlatformService.getPlatformApiKeys(platform.id);
+  }
+
+  @ApiOkResponse({
+    type: [EventResponseDto],
+  })
+  @Get('/events')
+  @UseApiAuthGuard()
+  public async getEvents(
+    @ExtractApiPlatform() platform: ITicketingPlatform,
+  ): Promise<EventResponseDto[]> {
+    throw new BadRequestException();
+  }
+
+  @ApiOkResponse({
+    type: EventResponseDto,
+  })
+  @Get('/events/:id')
+  @UseApiAuthGuard()
+  public async getEvent(
+    @Param('id') id: string,
+    @ExtractApiPlatform() platform: ITicketingPlatform,
+  ): Promise<EventResponseDto> {
+    throw new BadRequestException();
+  }
+
+  @ApiOkResponse({
+    type: EventResponseDto,
+  })
+  @Post('/upload-event')
+  @UseApiAuthGuard()
+  public async uploadEvent(
+    @ExtractApiPlatform() platform: ITicketingPlatform,
+    @Body()
+    payload: UploadEventRequestDto,
+  ): Promise<EventResponseDto> {
+    throw new BadRequestException();
   }
 }

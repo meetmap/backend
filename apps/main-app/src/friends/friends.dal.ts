@@ -1,5 +1,5 @@
 import { MainAppDatabase } from '@app/database';
-import { IFriends, IMainAppSafeUser, IUser } from '@app/types';
+import { IFriends, IMainAppSafePartialUser, IMainAppUser } from '@app/types';
 import {
   ConflictException,
   ForbiddenException,
@@ -14,7 +14,7 @@ export class FreindsDal {
 
   public async getUserByUsername(
     username: string,
-  ): Promise<Exclude<IMainAppSafeUser, 'authUserId'> | null> {
+  ): Promise<IMainAppSafePartialUser | null> {
     const user = await this.db.models.users.findOne(
       {
         username: username,
@@ -30,14 +30,14 @@ export class FreindsDal {
       },
     );
     if (user) {
-      return UsersService.mapUserDbToResponseUser(user);
+      return UsersService.mapUserDbToResponsePartialUser(user);
     }
     return null;
   }
 
-  public async getUserByCId(
+  public async getUserByCid(
     cid: string,
-  ): Promise<Exclude<IMainAppSafeUser, 'authUserId'> | null> {
+  ): Promise<IMainAppSafePartialUser | null> {
     const user = await this.db.models.users.findOne(
       {
         cid,
@@ -53,7 +53,7 @@ export class FreindsDal {
       },
     );
     if (user) {
-      return UsersService.mapUserDbToResponseUser(user);
+      return UsersService.mapUserDbToResponsePartialUser(user);
     }
     return null;
   }
@@ -271,6 +271,6 @@ export class FreindsDal {
 
 export interface IUserFromFriendsAggregationResult
   extends Pick<
-    IMainAppSafeUser,
+    IMainAppUser,
     'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id' | 'cid'
   > {}

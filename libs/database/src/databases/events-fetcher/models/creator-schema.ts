@@ -4,7 +4,7 @@ import * as mongoose from 'mongoose';
 
 export const CreatorSchema = new mongoose.Schema<ICreator>(
   {
-    creatorCId: {
+    creatorCid: {
       type: mongoose.SchemaTypes.String,
       required: true,
     },

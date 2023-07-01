@@ -1,6 +1,6 @@
 import { MainAppDatabase } from '@app/database';
-import { IAuthUser, IMainAppUser, IUser } from '@app/types';
-import { ConflictException, Injectable } from '@nestjs/common';
+import { IMainAppUser } from '@app/types';
+import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as mongoose from 'mongoose';
 
@@ -10,7 +10,14 @@ export class UsersDal {
   public async createUser(
     payload: Pick<
       IMainAppUser,
-      'birthDate' | 'email' | 'username' | 'phone' | 'authUserId' | 'cid'
+      | 'birthDate'
+      | 'email'
+      | 'username'
+      | 'phone'
+      // | 'authUserId'
+      | 'cid'
+      | 'fbId'
+      | 'name'
     >,
   ) {
     return await this.db.models.users.create({
@@ -19,14 +26,60 @@ export class UsersDal {
       username: payload.username,
       phone: payload.phone,
       friendsIds: [],
-      authUserId: payload.authUserId,
+      // authUserId: payload.authUserId,
       cid: payload.cid,
+      fbId: payload.fbId,
+      name: payload.name,
     });
+  }
+
+  public async getFriendsCids(userId: string) {
+    const response = await this.db.models.friends.aggregate<{ cid: string }>([
+      {
+        $match: {
+          status: 'friends',
+          requester: new mongoose.Types.ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'recipient',
+          foreignField: '_id',
+          as: 'friends',
+        },
+      },
+      {
+        $unwind: {
+          path: '$friends',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          friends: 1,
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: '$friends',
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          cid: 1,
+        },
+      },
+    ]);
+    return response.map(({ cid }) => cid); // response.map(({ friends }) => friends);
   }
 
   public async updateUser(
     cid: string,
-    payload: Partial<Pick<IMainAppUser, 'username' | 'phone' | 'email'>>,
+    payload: Partial<
+      Pick<IMainAppUser, 'username' | 'phone' | 'email' | 'name'>
+    >,
   ) {
     return await this.db.models.users.findOneAndUpdate(
       {
@@ -37,6 +90,7 @@ export class UsersDal {
           username: payload.username,
           email: payload.email,
           phone: payload.phone,
+          name: payload.name,
         },
       },
       {
@@ -101,15 +155,17 @@ export class UsersDal {
       .limit(15);
   }
 
-  public async findUserById(userId: string): Promise<IUser | null> {
+  public async findUserById(userId: string): Promise<IMainAppUser | null> {
     return await this.db.models.users.findById(userId);
   }
 
-  public async findUserByCId(cid: string): Promise<IUser | null> {
+  public async findUserByCid(cid: string): Promise<IMainAppUser | null> {
     return await this.db.models.users.findOne({ cid });
   }
 
-  public async findUserByCorrelationId(cid: string): Promise<IUser | null> {
+  public async findUserByCorrelationId(
+    cid: string,
+  ): Promise<IMainAppUser | null> {
     return await this.db.models.users.findOne({
       cid: cid,
     });

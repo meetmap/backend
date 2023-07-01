@@ -4,6 +4,7 @@ import { MainAppModule } from './main-app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { MicroServiceName } from '@app/types';
 import {
+  CORS_ORIGINS,
   getMicroservicePath,
   getMicroserviceUrl,
   SERVER_PREFIX,
@@ -31,7 +32,7 @@ async function bootstrap() {
     .build();
 
   app.setGlobalPrefix('main-app' satisfies MicroServiceName);
-  app.enableCors({ origin: '*' });
+  app.enableCors({ origin: CORS_ORIGINS });
   const document = SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup(

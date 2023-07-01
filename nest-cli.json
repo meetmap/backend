@@ -128,6 +128,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/dto/tsconfig.lib.json"
       }
+    },
+    "auth-providers": {
+      "type": "library",
+      "root": "libs/auth-providers",
+      "entryFile": "index",
+      "sourceRoot": "libs/auth-providers/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/auth-providers/tsconfig.lib.json"
+      }
     }
   },
   "compilerOptions": {

@@ -1,6 +1,8 @@
 import {
+  CreatorType,
   EventType,
   ICity,
+  ICreator,
   IEvent,
   ILocation,
   IPoint,
@@ -10,7 +12,13 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { PopulatedDoc, Types } from 'mongoose';
 import { z } from 'zod';
-import { DateField, IdField, NumberField, StringField } from '../decorators';
+import {
+  DateField,
+  IdField,
+  NestedField,
+  NumberField,
+  StringField,
+} from '../decorators';
 
 export class GetEventsByLocationRequestDto {
   @NumberField()
@@ -28,7 +36,7 @@ export class GetEventsByLocationRequestDto {
   radius: number;
 }
 
-export class PointDto implements IPoint {
+export class PointResponseDto implements IPoint {
   @StringField({
     enum: ['Point'],
   })
@@ -42,15 +50,13 @@ export class PointDto implements IPoint {
   coordinates: [number, number];
 }
 
-export class LocationDto implements ILocation {
+export class LocationResponseDto implements ILocation {
   @StringField()
   country: string;
   @IdField({ optional: true })
   cityId?: PopulatedDoc<ICity, Types.ObjectId | undefined>;
-  @ApiProperty({
-    type: PointDto,
-  })
-  coordinates: PointDto;
+  @NestedField(PointResponseDto)
+  coordinates: PointResponseDto;
 }
 
 export class PriceDto implements IPrice {
@@ -65,15 +71,18 @@ export class TicketDto implements ITicket {
   name: string;
   @StringField({ optional: true })
   description?: string | undefined;
-  @ApiProperty({
-    type: PriceDto,
-  })
-  price: IPrice;
+  @NestedField(PriceDto)
+  price: PriceDto;
   @NumberField({
     min: -1,
     description: `-1 means Infinity; 0 means OOS; `,
   })
   amount: number;
+}
+
+export class CreatorResponseDto implements ICreator {
+  type: CreatorType;
+  creatorCid: string;
 }
 
 export class EventResponseDto implements IEvent {
@@ -97,20 +106,20 @@ export class EventResponseDto implements IEvent {
   endTime: Date;
   @NumberField()
   ageLimit: number;
-  @IdField({ optional: true })
-  creatorId?: string | undefined;
-  @ApiProperty({
-    type: LocationDto,
+  @NestedField(CreatorResponseDto, {
+    optional: true,
   })
-  location: LocationDto;
+  creator?: CreatorResponseDto;
+  // @IdField({ optional: true })
+  // creatorId?: string | undefined;
+  @NestedField(LocationResponseDto)
+  location: LocationResponseDto;
   @StringField({
     enum: EventType,
   })
   eventType: EventType;
-  @ApiProperty({
-    type: [TicketDto],
-  })
-  tickets: ITicket[];
+  @NestedField([TicketDto])
+  tickets: TicketDto[];
   @DateField()
   createdAt: Date;
   @DateField()

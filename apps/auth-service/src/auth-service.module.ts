@@ -1,4 +1,5 @@
 import { AuthModule as LibAuthModule } from '@app/auth';
+import { AuthProvidersModule } from '@app/auth-providers';
 import { InternalAxiosModule } from '@app/axios';
 import { DatabaseModule } from '@app/database';
 import { RabbitmqModule } from '@app/rabbitmq';
@@ -21,6 +22,7 @@ import { AuthModule } from './auth/auth.module';
     LibAuthModule.init({
       microserviceName: 'auth-service',
     }),
+    AuthProvidersModule,
     AuthModule,
   ],
   controllers: [AuthServiceController],

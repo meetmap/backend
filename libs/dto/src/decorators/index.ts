@@ -5,6 +5,7 @@ import {
   ApiPropertyOptional,
   ApiPropertyOptions,
 } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
@@ -17,6 +18,7 @@ import {
   Matches,
   Max,
   Min,
+  ValidateNested,
 } from 'class-validator';
 
 export type FieldDecorator<T = {}> = (
@@ -124,6 +126,27 @@ export const NumberField: FieldDecorator<{
     }),
   );
 
+export const NestedField = (
+  type: Function | Function[],
+  {
+    optional,
+    description,
+    example,
+  }: { description?: string; optional?: boolean; example?: string | any } = {
+    optional: false,
+  },
+) => {
+  return applyDecorators(
+    ValidateNested({ each: Array.isArray(type) }),
+    Type(() => (Array.isArray(type) ? type[0] : type)),
+    OpenApiField({
+      optional,
+      type: type,
+      example,
+      description,
+    }),
+  );
+};
 export const BooleanField: FieldDecorator = (
   { optional } = { optional: false },
 ) =>

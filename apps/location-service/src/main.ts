@@ -1,4 +1,8 @@
-import { getMicroservicePath, SERVER_PREFIX } from '@app/constants';
+import {
+  CORS_ORIGINS,
+  getMicroservicePath,
+  SERVER_PREFIX,
+} from '@app/constants';
 import { MicroServiceName } from '@app/types';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
@@ -28,7 +32,7 @@ async function bootstrap() {
     .addServer(`http://localhost:${PORT}`)
     .build();
   app.setGlobalPrefix('location-service' satisfies MicroServiceName);
-  app.enableCors({ origin: '*' });
+  app.enableCors({ origin: CORS_ORIGINS });
   const document = SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup(

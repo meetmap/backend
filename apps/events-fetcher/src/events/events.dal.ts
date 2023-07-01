@@ -89,7 +89,7 @@ export class EventsDal {
    */
   public async createUserEvent(
     payload: z.infer<typeof CreateEventSchema>,
-    creatorCId: string,
+    creatorCid: string,
   ) {
     const city = await this.getCityByEventCoordinates({
       lat: payload.location.lat,
@@ -98,7 +98,7 @@ export class EventsDal {
     const createdEvent = await this.db.models.event.create({
       ageLimit: payload.ageLimit,
       creator: {
-        creatorCId: creatorCId,
+        creatorCid: creatorCid,
         type: CreatorType.USER,
       } satisfies IEvent['creator'],
       description: payload.description,

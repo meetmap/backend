@@ -51,13 +51,13 @@ export class EventsService {
 
   public async userCreateEvent(
     body: string,
-    userCId: string,
+    userCid: string,
     image: Express.Multer.File,
   ) {
     try {
       const parsedJson = JSON.parse(body);
       const eventData = CreateEventSchema.parse(parsedJson);
-      const event = await this.dal.createUserEvent(eventData, userCId);
+      const event = await this.dal.createUserEvent(eventData, userCid);
       const imageUrl = await this.dal.uploadToPublicEventsAssestsBucket(
         event.id.concat('-main-image').concat(path.extname(image.originalname)),
         image.buffer,

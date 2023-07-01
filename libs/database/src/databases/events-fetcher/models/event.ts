@@ -1,5 +1,5 @@
 import { PriceSchema } from '@app/database/shared-models';
-import { EventType, IEvent } from '@app/types';
+import { CreatorType, EventType, IEvent } from '@app/types';
 import * as mongoose from 'mongoose';
 import { CreatorSchema } from './creator-schema';
 import { LocationSchema } from './location';

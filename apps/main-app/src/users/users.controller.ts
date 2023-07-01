@@ -1,5 +1,8 @@
-import { JwtService } from '@app/auth';
-import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
+import {
+  ExtractJwtPayload,
+  UseMicroserviceAuthGuard,
+  JwtService,
+} from '@app/auth/jwt';
 import { InternalAxiosService } from '@app/axios';
 import {
   BadRequestException,
@@ -23,6 +26,7 @@ import { RMQConstants } from '@app/constants';
 // } from '@app/rmq-lib';
 import { IJwtUserPayload } from '@app/types/jwt';
 import {
+  UserPartialResponseDto,
   UserResponseDto,
   UserRmqRequestDto,
 } from '@app/dto/main-app/users.dto';
@@ -45,9 +49,9 @@ export class UsersController {
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.USERS.name,
     routingKey: [
-      RMQConstants.exchanges.USERS.routes.USER_CREATED,
-      RMQConstants.exchanges.USERS.routes.USER_UPDATED,
-      RMQConstants.exchanges.USERS.routes.USER_DELETED,
+      RMQConstants.exchanges.USERS.routingKeys.USER_CREATED,
+      RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
+      RMQConstants.exchanges.USERS.routingKeys.USER_DELETED,
     ],
     queue: RMQConstants.exchanges.USERS.queues.USER_SERVICE,
   })
@@ -64,15 +68,15 @@ export class UsersController {
       },
     });
 
-    if (routingKey === RMQConstants.exchanges.USERS.routes.USER_CREATED) {
+    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_CREATED) {
       await this.usersService.createUser(payload);
       return;
     }
-    if (routingKey === RMQConstants.exchanges.USERS.routes.USER_UPDATED) {
+    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED) {
       await this.usersService.updateUser(payload);
       return;
     }
-    if (routingKey === RMQConstants.exchanges.USERS.routes.USER_DELETED) {
+    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_DELETED) {
       await this.usersService.deleteUser(payload.cid);
       return;
     } else {
@@ -106,14 +110,14 @@ export class UsersController {
   }
 
   @ApiOkResponse({
-    type: [UserResponseDto],
+    type: [UserPartialResponseDto],
     description: 'Find users response',
   })
   @UseMicroserviceAuthGuard()
   @Get('/find')
   public async findUsers(
     @Query('q') query: string,
-  ): Promise<UserResponseDto[]> {
+  ): Promise<UserPartialResponseDto[]> {
     if (!query) {
       return [];
     }
@@ -125,13 +129,13 @@ export class UsersController {
     description: 'Find user response',
   })
   @UseMicroserviceAuthGuard()
-  @Get('/get/:userCId')
+  @Get('/get/:userCid')
   public async getUserById(
-    @Param('userCId') userCId: string,
+    @Param('userCid') userCid: string,
   ): Promise<UserResponseDto> {
-    if (!userCId) {
+    if (!userCid) {
       throw new BadRequestException('Invalid userId');
     }
-    return this.usersService.getUserByCId(userCId);
+    return this.usersService.getUserByCid(userCid);
   }
 }
