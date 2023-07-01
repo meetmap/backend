@@ -19,26 +19,72 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@app/redis": ["libs/redis/src"],
-      "@app/redis/*": ["libs/redis/src/*"],
-      "@app/types": ["libs/types/src"],
-      "@app/types/*": ["libs/types/src/*"],
-      "@app/database": ["libs/database/src"],
-      "@app/database/*": ["libs/database/src/*"],
-      "@app/axios": ["libs/axios/src"],
-      "@app/axios/*": ["libs/axios/src/*"],
-      "@app/constants": ["libs/constants/src"],
-      "@app/constants/*": ["libs/constants/src/*"],
-      "@app/auth": ["libs/auth/src"],
-      "@app/auth/*": ["libs/auth/src/*"],
-      "@app/rabbitmq": ["libs/rabbitmq/src"],
-      "@app/rabbitmq/*": ["libs/rabbitmq/src/*"],
-      "@app/s3-uploader": ["libs/s3-uploader/src"],
-      "@app/s3-uploader/*": ["libs/s3-uploader/src/*"],
-      "@app/rmq-lib": ["libs/rmq-lib/src"],
-      "@app/rmq-lib/*": ["libs/rmq-lib/src/*"],
-      "@app/dto": ["libs/dto/src"],
-      "@app/dto/*": ["libs/dto/src/*"]
+      "@app/redis": [
+        "libs/redis/src"
+      ],
+      "@app/redis/*": [
+        "libs/redis/src/*"
+      ],
+      "@app/types": [
+        "libs/types/src"
+      ],
+      "@app/types/*": [
+        "libs/types/src/*"
+      ],
+      "@app/database": [
+        "libs/database/src"
+      ],
+      "@app/database/*": [
+        "libs/database/src/*"
+      ],
+      "@app/axios": [
+        "libs/axios/src"
+      ],
+      "@app/axios/*": [
+        "libs/axios/src/*"
+      ],
+      "@app/constants": [
+        "libs/constants/src"
+      ],
+      "@app/constants/*": [
+        "libs/constants/src/*"
+      ],
+      "@app/auth": [
+        "libs/auth/src"
+      ],
+      "@app/auth/*": [
+        "libs/auth/src/*"
+      ],
+      "@app/rabbitmq": [
+        "libs/rabbitmq/src"
+      ],
+      "@app/rabbitmq/*": [
+        "libs/rabbitmq/src/*"
+      ],
+      "@app/s3-uploader": [
+        "libs/s3-uploader/src"
+      ],
+      "@app/s3-uploader/*": [
+        "libs/s3-uploader/src/*"
+      ],
+      "@app/rmq-lib": [
+        "libs/rmq-lib/src"
+      ],
+      "@app/rmq-lib/*": [
+        "libs/rmq-lib/src/*"
+      ],
+      "@app/dto": [
+        "libs/dto/src"
+      ],
+      "@app/dto/*": [
+        "libs/dto/src/*"
+      ],
+      "@app/auth-providers": [
+        "libs/auth-providers/src"
+      ],
+      "@app/auth-providers/*": [
+        "libs/auth-providers/src/*"
+      ]
     }
   }
 }

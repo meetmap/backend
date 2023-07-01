@@ -3,12 +3,19 @@ import {
   ISafeApiKey,
   IApiKey,
   ISafeTicketingPlatform,
+  IEvent,
+  EventType,
+  ICreator,
+  ILocation,
+  ITicket,
 } from '@app/types';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   DateField,
   EmailField,
   IdField,
+  NestedField,
+  NumberField,
   PasswordField,
   StringField,
 } from '../decorators';
@@ -147,4 +154,69 @@ export class ApiKeyResponseDto implements ISafeApiKey {
     optional: true,
   })
   expires?: Date | undefined;
+}
+
+export class EventLocationDto {
+  @NumberField()
+  lat: number;
+  @NumberField()
+  lng: number;
+}
+
+export class TicketRequestDto {
+  @StringField()
+  name: string;
+  @NumberField({
+    max: 100000,
+  })
+  price: number;
+  @NumberField({
+    min: -1,
+    max: 1000000,
+  })
+  amount: number;
+  @StringField({
+    optional: true,
+  })
+  description?: string;
+}
+
+export class UploadEventRequestDto
+  implements
+    Pick<
+      IEvent,
+      | 'link'
+      | 'title'
+      | 'picture'
+      | 'description'
+      | 'startTime'
+      | 'endTime'
+      | 'ageLimit'
+      // | 'tickets'
+    >
+{
+  @StringField({
+    optional: true,
+  })
+  link?: string | undefined;
+  @StringField() title: string;
+  @StringField({
+    optional: true,
+  })
+  picture?: string | undefined;
+  @StringField({
+    optional: true,
+  })
+  description?: string | undefined;
+  @DateField()
+  startTime: Date;
+  @DateField()
+  endTime: Date;
+  @NumberField()
+  ageLimit: number;
+  @NestedField(EventLocationDto)
+  location: EventLocationDto;
+
+  @NestedField([TicketRequestDto])
+  tickets: TicketRequestDto[];
 }

@@ -1,18 +1,18 @@
 import { ExtractUser, JwtService, UseAuthGuard } from '@app/auth/jwt';
-import { RabbitMQExchanges, RMQConstants } from '@app/constants';
 import {
   AuthUserResponseDto,
   CreateUserRequestDto,
   EntityIsFreeResponseDto,
+  LinkFacebookRequestDto,
   LoginResponseDto,
+  LoginWithAuthProviderRequestDto,
   LoginWithPasswordDto,
   RefreshAccessTokenRequestDto,
   RefreshAtResponseDto,
+  SignUpWithAuthProviderRequestDto,
   UpdateUsersUsernameRequestDto,
 } from '@app/dto/auth-service/auth.dto';
-import { UserResponseDto } from '@app/dto/main-app/users.dto';
-import { IAuthUser, ISafeAuthUser } from '@app/types';
-import { RabbitPayload, RabbitRPC } from '@golevelup/nestjs-rabbitmq';
+import { IAuthUser } from '@app/types';
 import {
   BadRequestException,
   Body,
@@ -128,5 +128,56 @@ export class AuthController {
     );
     res.setHeader('Authorization', `Bearer ${accessToken}`);
     return { accessToken };
+  }
+
+  @ApiOkResponse({
+    type: LoginResponseDto,
+    description: 'User created response',
+  })
+  @Post('/facebook/signup')
+  public async signUpWithFacebook(
+    @Body() payload: SignUpWithAuthProviderRequestDto,
+  ): Promise<LoginResponseDto> {
+    const user = await this.authService.signUpWithFacebook(payload);
+    const tokens = await this.authService.getTokensAndRefreshRT(user);
+
+    return {
+      user,
+      tokens,
+    };
+  }
+
+  @ApiOkResponse({
+    type: LoginResponseDto,
+    description: 'User logged in response',
+  })
+  @Post('/facebook/signin')
+  public async loginWithFacebook(
+    @Body() payload: LoginWithAuthProviderRequestDto,
+  ): Promise<LoginResponseDto> {
+    const user = await this.authService.loginWithFacebook(payload);
+    const tokens = await this.authService.getTokensAndRefreshRT(user);
+
+    return {
+      user,
+      tokens,
+    };
+  }
+
+  @ApiOkResponse({
+    type: LoginResponseDto,
+    description: 'User logged in response',
+  })
+  @Post('/facebook/link')
+  @UseAuthGuard()
+  public async linkFacebook(
+    @Body() payload: LinkFacebookRequestDto,
+    @ExtractUser() user: IAuthUser,
+  ): Promise<AuthUserResponseDto> {
+    const dbUser = await this.authService.linkFacebook(user, payload.token);
+    if (!dbUser) {
+      throw new ForbiddenException('User not found');
+    }
+    return dbUser;
   }
 }

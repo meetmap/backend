@@ -1,10 +1,12 @@
 import { PopulatedDoc } from 'mongoose';
 import { IFriends } from '../friends';
-import { IPoint } from '../location';
-
+//common user
 export interface IUser {
   id: string;
   username: string;
+  //@todo name
+  name?: string;
+  profilePicture?: string;
   phone?: string;
   email: string;
   password?: string;
@@ -12,17 +14,19 @@ export interface IUser {
   birthDate: Date;
   createdAt: Date;
   updatedAt: Date;
-  authUserId: string;
+  // authUserId: string;
   cid: string;
-  // coordinates?: IPoint;
   friendsIds: PopulatedDoc<IFriends>[];
+  //facebook
+  fbId?: string;
+  fbToken?: string;
 }
-
+//main-app
 export interface IMainAppUser
   extends Pick<
     IUser,
     | 'id'
-    | 'authUserId'
+    // | 'authUserId'
     | 'birthDate'
     | 'friendsIds'
     | 'email'
@@ -32,15 +36,28 @@ export interface IMainAppUser
     | 'updatedAt'
     | 'phone'
     | 'cid'
+    | 'name'
+    | 'profilePicture'
+    | 'fbId'
   > {}
 
-export interface IMainAppSafeUser
+export interface IMainAppSafePartialUser
   extends Pick<
     IMainAppUser,
-    'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id' | 'cid'
-    // | 'authUserId'
+    | 'birthDate'
+    | 'email'
+    | 'phone'
+    | 'username'
+    | 'id'
+    | 'cid'
+    | 'name'
+    | 'profilePicture'
+    | 'fbId'
   > {}
-
+export interface IMainAppSafeUser extends IMainAppSafePartialUser {
+  friendsCids: string[];
+}
+//auth-service
 export interface IAuthUser
   extends Pick<
     IUser,
@@ -53,21 +70,33 @@ export interface IAuthUser
     | 'createdAt'
     | 'updatedAt'
     | 'birthDate'
-    | 'authUserId'
+    // | 'authUserId'
     | 'cid'
+    | 'fbId'
+    | 'fbToken'
+    | 'name'
   > {}
 
 export interface ISafeAuthUser
   extends Pick<
     IAuthUser,
-    'id' | 'phone' | 'email' | 'username' | 'birthDate' | 'cid'
+    | 'id'
+    | 'phone'
+    | 'email'
+    | 'username'
+    | 'birthDate'
+    | 'cid'
+    | 'name'
+    | 'fbId'
   > {}
 
 export interface IAuthUserWithPassword extends IAuthUser {
   password: string;
 }
 
+//location-service
+
 export interface ILocationServiceUser
-  extends Pick<IUser, 'id' | 'authUserId' | 'cid'> {
+  extends Pick<IUser, 'id' | /* 'authUserId' |  */ 'cid'> {
   friendsCids: string[];
 }

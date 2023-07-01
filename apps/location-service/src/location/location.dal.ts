@@ -11,7 +11,7 @@ export class LocationDal {
     private readonly db: LocationServiceDatabase,
   ) {}
 
-  public async getUserByCId(cid: string) {
+  public async getUserByCid(cid: string) {
     return await this.db.models.users.findOne({ cid });
   }
 
@@ -37,11 +37,11 @@ export class LocationDal {
       },
     };
   }
-  public async getUserLocation(userCId: string): Promise<IUserLocation | null> {
-    return this.redisClient.get(userCId);
+  public async getUserLocation(userCid: string): Promise<IUserLocation | null> {
+    return this.redisClient.get(userCid);
   }
 
-  public async getUserFriendsCIds(cid: string) {
+  public async getUserFriendsCids(cid: string) {
     const user = await this.db.models.users.findOne({
       cid,
     });

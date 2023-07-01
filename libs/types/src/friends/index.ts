@@ -1,9 +1,9 @@
 import { PopulatedDoc } from 'mongoose';
-import { IUser } from '../user';
+import { IMainAppUser } from '../user';
 
 export interface IFriends {
-  requester: PopulatedDoc<IUser>;
-  recipient: PopulatedDoc<IUser>;
+  requester: PopulatedDoc<IMainAppUser>;
+  recipient: PopulatedDoc<IMainAppUser>;
   status: FriendshipStatus;
 }
 

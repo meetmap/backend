@@ -2,12 +2,12 @@ import { IdField } from '../decorators';
 
 export class RequestFriendshipDto {
   @IdField()
-  userCId: string;
+  userCid: string;
 }
 
 export class UpdateFriendshipRequestDto {
   @IdField()
-  friendCId: string;
+  friendCid: string;
 }
 
 export class UpdateFriendshipRMQRequestDto {

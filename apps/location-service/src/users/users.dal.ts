@@ -7,10 +7,10 @@ export class UsersDal {
   constructor(private readonly db: LocationServiceDatabase) {}
 
   public async createUser(
-    payload: Pick<ILocationServiceUser, 'authUserId' | 'cid'>,
+    payload: Pick<ILocationServiceUser, /* 'authUserId' |  */ 'cid'>,
   ) {
     return await this.db.models.users.create({
-      authUserId: payload.authUserId,
+      // authUserId: payload.authUserId,
       cid: payload.cid,
     });
   }

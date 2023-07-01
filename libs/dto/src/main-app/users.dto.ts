@@ -1,10 +1,13 @@
-import { IFriends, IMainAppSafeUser, ISafeAuthUser } from '@app/types';
-import { ApiProperty } from '@nestjs/swagger';
-import { PopulatedDoc, Types } from 'mongoose';
+import {
+  IMainAppSafePartialUser,
+  IMainAppSafeUser,
+  ISafeAuthUser,
+} from '@app/types';
 import {
   DateField,
   EmailField,
   IdField,
+  NestedField,
   PhoneField,
   StringField,
 } from '../decorators';
@@ -35,13 +38,24 @@ export class UserRmqRequestDto implements ISafeAuthUser {
   })
   birthDate: Date;
 
-  @StringField({
-    description: 'userId in auth microservice',
-    example: '6436b4fa091dc0948e7566c5',
-  })
-  authUserId: string;
+  // @StringField({
+  //   description: 'userId in auth microservice',
+  //   example: '6436b4fa091dc0948e7566c5',
+  // })
+  // authUserId: string;
   @IdField()
   cid: string;
+
+  @StringField({
+    optional: true,
+    description: 'Facebook id (optional)',
+  })
+  fbId?: string;
+  @StringField({
+    optional: true,
+    description: 'User name (optional)',
+  })
+  name?: string;
 }
 
 export class UserResponseDto implements IMainAppSafeUser {
@@ -63,12 +77,11 @@ export class UserResponseDto implements IMainAppSafeUser {
   })
   birthDate: Date;
 
-  @ApiProperty({
-    type: [String],
-    description: 'ids of friends or friends(users) array',
+  @NestedField([String], {
+    description: 'Cids of friends or friends(users) array',
     example: ['6436b4ff091dc0948e75671f', '6436b4fa091dc0948e7566c5'],
   })
-  friendsIds: PopulatedDoc<IFriends, Types.ObjectId | undefined>[];
+  friendsCids: string[];
 
   @IdField()
   cid: string;
@@ -78,4 +91,27 @@ export class UserResponseDto implements IMainAppSafeUser {
   //     example: '6436b4fa091dc0948e7566c5',
   //   })
   //   authUserId: string;
+}
+
+export class UserPartialResponseDto implements IMainAppSafePartialUser {
+  @IdField()
+  id: string;
+  @EmailField()
+  email: string;
+
+  @PhoneField({ optional: true })
+  phone?: string;
+
+  @StringField({
+    title: 'Username',
+  })
+  username: string;
+
+  @DateField({
+    description: 'Birth date',
+  })
+  birthDate: Date;
+
+  @IdField()
+  cid: string;
 }

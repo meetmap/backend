@@ -84,7 +84,7 @@ export class TicketingPlatformDal {
       id: platformId,
     });
     await this.db.models.event.deleteMany({
-      'creator.creatorCId': platformId,
+      'creator.creatorCid': platformId,
       'creator.type': CreatorType.TICKETING_PLATFOFRM,
     });
     return platformId;

@@ -1,8 +1,5 @@
 import { ICity, IEvent, ITicketingPlatform } from '@app/types';
 import * as mongoose from 'mongoose';
-import { LocationSchema } from './location';
-import { PolygonSchema } from '../../../shared-models/poylgon';
-import { ApiKeySchema } from './apiKey';
 
 export const TicketingPlatformSchema = new mongoose.Schema<ITicketingPlatform>(
   {

@@ -1,3 +1,4 @@
+import './mongoose-defaults';
 import { MicroServiceName } from '@app/types';
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';

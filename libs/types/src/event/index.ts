@@ -32,7 +32,7 @@ export interface IEvent {
 
 export interface ICreator {
   type: CreatorType;
-  creatorCId: string;
+  creatorCid: string;
 }
 export enum CreatorType {
   USER = 'user',
