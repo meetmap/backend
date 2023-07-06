@@ -4,6 +4,7 @@ import {
   ICity,
   ICreator,
   IEvent,
+  IEventStats,
   ILocation,
   IPoint,
   IPrice,
@@ -85,7 +86,61 @@ export class CreatorResponseDto implements ICreator {
   creatorCid: string;
 }
 
-export class EventResponseDto implements IEvent {
+export class EventResponseDto
+  implements
+    Pick<
+      IEvent,
+      | 'id'
+      | 'slug'
+      | 'title'
+      | 'picture'
+      | 'startTime'
+      | 'endTime'
+      | 'ageLimit'
+      | 'creator'
+      | 'location'
+      | 'eventType'
+    >
+{
+  @IdField()
+  id: string;
+  @StringField()
+  slug: string;
+  @StringField()
+  title: string;
+  @StringField({ optional: true })
+  picture?: string | undefined;
+
+  @DateField()
+  startTime: Date;
+  @DateField()
+  endTime: Date;
+  @NumberField()
+  ageLimit: number;
+  @NestedField(CreatorResponseDto, {
+    optional: true,
+  })
+  creator?: CreatorResponseDto;
+  @NestedField(LocationResponseDto)
+  location: LocationResponseDto;
+  @StringField({
+    enum: EventType,
+  })
+  eventType: EventType;
+}
+
+export class EventStatsResponseDto implements IEventStats {
+  @NumberField()
+  likes: number;
+
+  @NumberField()
+  saves: number;
+
+  @NumberField()
+  willGo: number;
+}
+
+export class SingleEventResponseDto implements IEvent {
   @IdField()
   id: string;
   @StringField()
@@ -110,8 +165,6 @@ export class EventResponseDto implements IEvent {
     optional: true,
   })
   creator?: CreatorResponseDto;
-  // @IdField({ optional: true })
-  // creatorId?: string | undefined;
   @NestedField(LocationResponseDto)
   location: LocationResponseDto;
   @StringField({
@@ -120,6 +173,8 @@ export class EventResponseDto implements IEvent {
   eventType: EventType;
   @NestedField([TicketDto])
   tickets: TicketDto[];
+  @NestedField(EventStatsResponseDto, {})
+  stats: EventStatsResponseDto;
   @DateField()
   createdAt: Date;
   @DateField()

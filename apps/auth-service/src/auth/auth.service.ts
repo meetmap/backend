@@ -8,7 +8,7 @@ import {
   SignUpWithAuthProviderRequestDto,
   UpdateUsersUsernameRequestDto,
 } from '@app/dto/auth-service/auth.dto';
-import { UserRmqRequestDto } from '@app/dto/main-app/users.dto';
+import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
 import { RabbitmqService } from '@app/rabbitmq';
 import { IAuthUser, ISafeAuthUser } from '@app/types';
 import {

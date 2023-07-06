@@ -1,18 +1,29 @@
+import { RMQConstants } from '@app/constants';
 import {
   UserPartialResponseDto,
   UserResponseDto,
-  UserRmqRequestDto,
 } from '@app/dto/main-app/users.dto';
+import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
 import { RabbitmqService } from '@app/rabbitmq';
-import { IMainAppSafePartialUser, IMainAppSafeUser, IUser } from '@app/types';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  IMainAppSafePartialUser,
+  IMainAppSafeUser,
+  IMainAppUser,
+  IRmqUser,
+  IUser,
+} from '@app/types';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UsersDal } from './users.dal';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly dal: UsersDal,
-    private readonly rmq: RabbitmqService,
+    private readonly rmqService: RabbitmqService,
   ) {}
 
   public async createUser(
@@ -40,7 +51,7 @@ export class UsersService {
   }
 
   public async getUserSelf(cid: string): Promise<UserResponseDto> {
-    const user = await this.dal.findUserByCorrelationId(cid);
+    const user = await this.dal.findUserByCid(cid);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -66,6 +77,48 @@ export class UsersService {
     return UsersService.mapUserDbToResponseUser(user, friendsCids);
   }
 
+  public async updateUserProfilePicture(
+    cid: string,
+    photo: Express.Multer.File,
+  ) {
+    const user = await this.dal.findUserByCid(cid);
+    if (!user) {
+      throw new ForbiddenException('User not found');
+    }
+    const friendsCids = await this.dal.getFriendsCids(user.id);
+
+    const url = await this.dal.uploadUserProfilePicture(cid, photo);
+    // user.profilePicture = url
+    const updatedUser: IUser = {
+      ...user.toJSON(),
+      friendsIds: [],
+      profilePicture: url,
+    };
+
+    const result = await this.rmqService.amqp.publish(
+      RMQConstants.exchanges.USERS.name,
+      RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
+      UsersService.mapDbUserToRmqUser(updatedUser),
+    );
+
+    return UsersService.mapUserDbToResponseUser(updatedUser, friendsCids);
+  }
+
+  static mapDbUserToRmqUser(user: IMainAppUser): IRmqUser {
+    return {
+      birthDate: user.birthDate,
+      cid: user.cid,
+      email: user.email,
+      id: user.id,
+      username: user.username,
+      description: user.description,
+      phone: user.phone,
+      fbId: user.fbId,
+      name: user.name,
+      profilePicture: user.profilePicture,
+    };
+  }
+
   static mapUserDbToResponseUser(
     user: IUser | IMainAppSafeUser,
     friendsCids: string[],
@@ -78,6 +131,10 @@ export class UsersService {
       phone: user.phone,
       username: user.username,
       cid: user.cid,
+      description: user.description,
+      fbId: user.fbId,
+      name: user.name,
+      profilePicture: user.profilePicture,
       // authUserId: user.authUserId,
     };
   }
@@ -92,6 +149,10 @@ export class UsersService {
       phone: user.phone,
       username: user.username,
       cid: user.cid,
+      description: user.description,
+      fbId: user.fbId,
+      name: user.name,
+      profilePicture: user.profilePicture,
       // authUserId: user.authUserId,
     };
   }

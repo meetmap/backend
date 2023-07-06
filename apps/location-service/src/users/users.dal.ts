@@ -7,12 +7,38 @@ export class UsersDal {
   constructor(private readonly db: LocationServiceDatabase) {}
 
   public async createUser(
-    payload: Pick<ILocationServiceUser, /* 'authUserId' |  */ 'cid'>,
+    payload: Pick<
+      ILocationServiceUser,
+      'cid' | 'username' | 'profilePicture' | 'name'
+    >,
   ) {
     return await this.db.models.users.create({
       // authUserId: payload.authUserId,
       cid: payload.cid,
+      profilePicture: payload.profilePicture,
+      name: payload.name,
+      username: payload.username,
     });
+  }
+
+  public async updateUser(
+    cid: string,
+    payload: Pick<ILocationServiceUser, 'profilePicture' | 'name' | 'username'>,
+  ) {
+    return await this.db.models.users.findOneAndUpdate(
+      {
+        cid: cid,
+      },
+      {
+        $set: {
+          profilePicture: payload.profilePicture,
+          name: payload.name,
+          username: payload.username,
+          cid: cid,
+        },
+      },
+      { new: true, upsert: true },
+    );
   }
 
   public async deleteUser(cid: string) {

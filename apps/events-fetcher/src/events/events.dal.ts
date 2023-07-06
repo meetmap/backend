@@ -6,13 +6,15 @@ import {
   EventType,
   ICity,
   IEvent,
+  IEventsServiceUser,
+  IEventStats,
   ILocation,
   ITicket,
 } from '@app/types';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import * as mongoose from 'mongoose';
 import { z } from 'zod';
 import { CreateEventSchema } from './dto';
-
 @Injectable()
 export class EventsDal {
   constructor(
@@ -22,6 +24,106 @@ export class EventsDal {
 
   public async getEventById(eventId: string): Promise<IEvent | null> {
     return this.db.models.event.findById(eventId);
+  }
+
+  public async getUsersLikedEvent(eventId: string) {
+    return await this.db.models.eventsUsers.aggregate<IEventsServiceUser>([
+      {
+        $match: {
+          isUserLike: true,
+          event: new mongoose.Types.ObjectId(eventId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userCId',
+          foreignField: 'cid',
+          as: 'user',
+        },
+      },
+      { $unwind: '$user' },
+      { $replaceRoot: { newRoot: '$user' } },
+    ]);
+  }
+
+  public async userAction(
+    userCId: string,
+    eventId: string,
+    action: 'like' | 'will-go' | 'save',
+  ) {
+    return await this.db.models.eventsUsers.findOneAndUpdate(
+      {
+        userCId,
+        event: eventId,
+      },
+      {
+        $set: {
+          isUserLike: action === 'like' ? true : undefined,
+          isUserSave: action === 'save' ? true : undefined,
+          isUserWillGo: action === 'will-go' ? true : undefined,
+        },
+      },
+      {
+        new: true,
+        upsert: true,
+      },
+    );
+  }
+
+  public async cancelUserAction(
+    userCId: string,
+    eventId: string,
+    action: 'like' | 'will-go' | 'save',
+  ) {
+    return await this.db.models.eventsUsers.findOneAndUpdate(
+      {
+        userCId,
+        event: eventId,
+      },
+      {
+        $set: {
+          isUserLike: action === 'like' ? false : undefined,
+          isUserSave: action === 'save' ? false : undefined,
+          isUserWillGo: action === 'will-go' ? false : undefined,
+        },
+      },
+      {
+        new: true,
+        upsert: true,
+      },
+    );
+  }
+
+  public async getEventStats(eventId: string): Promise<IEventStats> {
+    const stats = await this.db.models.eventsUsers.aggregate([
+      {
+        $match: {
+          event: new mongoose.Types.ObjectId(eventId),
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          saves: { $sum: { $cond: [{ $eq: ['$isUserSave', true] }, 1, 0] } },
+          likes: { $sum: { $cond: [{ $eq: ['$isUserLike', true] }, 1, 0] } },
+          willGo: { $sum: { $cond: [{ $eq: ['$isUserWillGo', true] }, 1, 0] } },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+        },
+      },
+    ]);
+    if (Array.isArray(stats)) {
+      return {
+        likes: 0,
+        willGo: 0,
+        saves: 0,
+      };
+    }
+    return stats satisfies IEventStats;
   }
   public async getEventsByKeywords(keywords: string): Promise<IEvent[]> {
     const regex = new RegExp(keywords, 'i');

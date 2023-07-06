@@ -1,10 +1,9 @@
-import { DynamicModule } from '@nestjs/common';
-import { Module } from '@nestjs/common';
-import { RabbitmqService } from './rabbitmq.service';
-import { RabbitMQModule, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { ConfigService } from '@nestjs/config';
-import { deserializeMessage, serializeMessage } from './serialization';
 import { RMQConstants } from '@app/constants';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { DynamicModule } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { RabbitmqService } from './rabbitmq.service';
+import { deserializeMessage, serializeMessage } from './serialization';
 // import { RmqLibModule } from '@app/rmq-lib';
 
 // @Module({
@@ -26,7 +25,7 @@ export class RabbitmqModule {
                 (exchange) => ({
                   createExchangeIfNotExists: true,
                   name: exchange.name,
-                  type: 'topic',
+                  type: exchange.type,
                 }),
               ),
               enableControllerDiscovery: true,

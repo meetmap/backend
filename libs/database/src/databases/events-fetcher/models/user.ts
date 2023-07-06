@@ -1,16 +1,12 @@
-import { ILocationServiceUser } from '@app/types';
+import { IEventsServiceUser } from '@app/types';
 import * as mongoose from 'mongoose';
 
-export const UserSchema = new mongoose.Schema<ILocationServiceUser>(
+export const UserSchema = new mongoose.Schema<IEventsServiceUser>(
   {
     cid: {
       type: mongoose.SchemaTypes.String,
       required: true,
       unique: true,
-    },
-    friendsCids: {
-      type: [mongoose.SchemaTypes.String],
-      default: [],
     },
     profilePicture: {
       type: mongoose.SchemaTypes.String,
@@ -21,6 +17,13 @@ export const UserSchema = new mongoose.Schema<ILocationServiceUser>(
       unique: true,
     },
     name: {
+      type: mongoose.SchemaTypes.String,
+    },
+    birthDate: {
+      type: mongoose.SchemaTypes.Date,
+      required: true,
+    },
+    description: {
       type: mongoose.SchemaTypes.String,
     },
   },

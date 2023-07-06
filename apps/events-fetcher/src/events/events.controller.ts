@@ -2,25 +2,29 @@ import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import {
   CreateEventRequestDto,
   EventResponseDto,
+  EventStatsResponseDto,
   GetEventsByLocationRequestDto,
+  SingleEventResponseDto,
 } from '@app/dto/events-fetcher/events.dto';
+import { EventsServiceUserResponseDto } from '@app/dto/events-fetcher/users.dto';
 import { IJwtUserPayload } from '@app/types/jwt';
 import {
   Body,
   Controller,
+  Delete,
   FileTypeValidator,
   Get,
   MaxFileSizeValidator,
   Param,
   ParseFilePipe,
+  Patch,
   Post,
   Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOkResponse } from '@nestjs/swagger';
-import { Request } from 'express';
+import { ApiConsumes, ApiOkResponse } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 
 @Controller('events')
@@ -37,17 +41,13 @@ export class EventsController {
     return this.eventsService.getEventsByKeywords(keywords);
   }
 
-  // @Get('/:slug')
-  // public async getEventBySlug(@Param('slug') slug: string) {
-  //   return this.eventsService.getEventBySlug(slug);
-  // }
   @ApiOkResponse({
-    type: EventResponseDto,
+    type: SingleEventResponseDto,
   })
   @Get('/:eventId')
   public async getEventById(
     @Param('eventId') eventId: string,
-  ): Promise<EventResponseDto> {
+  ): Promise<SingleEventResponseDto> {
     return this.eventsService.getEventById(eventId);
   }
 
@@ -61,22 +61,10 @@ export class EventsController {
     return this.eventsService.getEventsByLocation(dto);
   }
 
+  @ApiOkResponse({
+    type: EventResponseDto,
+  })
   @ApiConsumes('multipart/form-data')
-  // @ApiBody({
-  //   schema: {
-  //     type: 'object',
-  //     properties: {
-  //       rawEvent: { type: 'string' },
-  //       photo: {
-  //         type: 'string',
-  //         description: "fileType: 'image/*'; maxSize: 3.5mb",
-  //         // format: 'binary',
-  //         format: 'binary',
-  //         pattern: 'image/*',
-  //       },
-  //     },
-  //   },
-  // })
   @UseMicroserviceAuthGuard()
   @Post('/create')
   @UseInterceptors(FileInterceptor('photo'))
@@ -102,5 +90,119 @@ export class EventsController {
       jwtPayload.sub,
       file,
     );
+  }
+  //like event
+  @ApiOkResponse({
+    type: EventStatsResponseDto,
+  })
+  @Patch('/like/:eventId')
+  @UseMicroserviceAuthGuard()
+  public async likeEvent(
+    @Param('eventId') eventId: string,
+    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
+  ): Promise<EventStatsResponseDto> {
+    const stats = await this.eventsService.userAction(
+      jwtPayload.cid,
+      eventId,
+      'like',
+    );
+    return stats;
+  }
+  @ApiOkResponse({
+    type: EventStatsResponseDto,
+  })
+  @Delete('/like/:eventId')
+  @UseMicroserviceAuthGuard()
+  public async cancelLikeEvent(
+    @Param('eventId') eventId: string,
+    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
+  ): Promise<EventStatsResponseDto> {
+    const stats = await this.eventsService.cancelUserAction(
+      jwtPayload.cid,
+      eventId,
+      'like',
+    );
+    return stats;
+  }
+  //save event
+  @ApiOkResponse({
+    type: EventStatsResponseDto,
+  })
+  @Patch('/save/:eventId')
+  @UseMicroserviceAuthGuard()
+  public async saveEvent(
+    @Param('eventId') eventId: string,
+    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
+  ): Promise<EventStatsResponseDto> {
+    const stats = await this.eventsService.userAction(
+      jwtPayload.cid,
+      eventId,
+      'save',
+    );
+    return stats;
+  }
+  @ApiOkResponse({
+    type: EventStatsResponseDto,
+  })
+  @Delete('/save/:eventId')
+  @UseMicroserviceAuthGuard()
+  public async cancelSaveEvent(
+    @Param('eventId') eventId: string,
+    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
+  ): Promise<EventStatsResponseDto> {
+    const stats = await this.eventsService.cancelUserAction(
+      jwtPayload.cid,
+      eventId,
+      'save',
+    );
+    return stats;
+  }
+
+  //will-go
+  @ApiOkResponse({
+    type: EventStatsResponseDto,
+  })
+  @Patch('/will-go/:eventId')
+  @UseMicroserviceAuthGuard()
+  public async willGoEvent(
+    @Param('eventId') eventId: string,
+    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
+  ): Promise<EventStatsResponseDto> {
+    const stats = await this.eventsService.userAction(
+      jwtPayload.cid,
+      eventId,
+      'will-go',
+    );
+    return stats;
+  }
+
+  @ApiOkResponse({
+    type: EventStatsResponseDto,
+  })
+  @Delete('/will-go/:eventId')
+  @UseMicroserviceAuthGuard()
+  public async cancelWillGoEvent(
+    @Param('eventId') eventId: string,
+    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
+  ): Promise<EventStatsResponseDto> {
+    const stats = await this.eventsService.cancelUserAction(
+      jwtPayload.cid,
+      eventId,
+      'will-go',
+    );
+    return stats;
+  }
+
+  @Get('/likes/:eventId')
+  @ApiOkResponse({
+    type: [EventsServiceUserResponseDto],
+  })
+  @UseMicroserviceAuthGuard()
+  public async getEventLikes(
+    @Param('eventId') eventId: string,
+    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
+  ): Promise<EventsServiceUserResponseDto[]> {
+    const usersLiked = await this.eventsService.getEventLikes(eventId);
+    return usersLiked;
   }
 }

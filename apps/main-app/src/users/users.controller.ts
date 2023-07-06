@@ -1,9 +1,9 @@
 import {
   ExtractJwtPayload,
-  UseMicroserviceAuthGuard,
   JwtService,
+  UseMicroserviceAuthGuard,
 } from '@app/auth/jwt';
-import { InternalAxiosService } from '@app/axios';
+import { RMQConstants } from '@app/constants';
 import {
   BadRequestException,
   Body,
@@ -13,10 +13,8 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { ApiTags, ApiOkResponse } from '@nestjs/swagger';
-import { RMQConstants } from '@app/constants';
 // import {
 //   Nack,
 //   RabbitPayload,
@@ -24,12 +22,14 @@ import { RMQConstants } from '@app/constants';
 //   RabbitSubscribe,
 //   RequestOptions,
 // } from '@app/rmq-lib';
-import { IJwtUserPayload } from '@app/types/jwt';
+import { UploadedImage, UseFileInterceptor } from '@app/dto/decorators';
 import {
+  UpdateUserProfilePictureRequestDto,
   UserPartialResponseDto,
   UserResponseDto,
-  UserRmqRequestDto,
 } from '@app/dto/main-app/users.dto';
+import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common';
+import { IJwtUserPayload } from '@app/types/jwt';
 import {
   Nack,
   RabbitPayload,
@@ -83,7 +83,7 @@ export class UsersController {
       return new Nack(true);
     }
   }
-
+  //@todo on update users profile picture send an event without updating db
   // @ApiOkResponse({
   //   type: UpdateUserLocationDto,
   //   description: 'Update user location dto',
@@ -137,5 +137,22 @@ export class UsersController {
       throw new BadRequestException('Invalid userId');
     }
     return this.usersService.getUserByCid(userCid);
+  }
+
+  @ApiOkResponse({
+    type: UserResponseDto,
+  })
+  @UseMicroserviceAuthGuard()
+  @Post('/profile/picture')
+  @ApiConsumes('multipart/form-data')
+  @UseFileInterceptor('photo')
+  public async updateUserProfilePicture(
+    @ExtractJwtPayload() jwt: IJwtUserPayload,
+    @UploadedImage()
+    file: Express.Multer.File,
+    @Body() payload: UpdateUserProfilePictureRequestDto,
+  ): Promise<UserResponseDto> {
+    return await this.usersService.updateUserProfilePicture(jwt.cid, file);
+    // return this.usersService.getUserByCid(userCid);
   }
 }
