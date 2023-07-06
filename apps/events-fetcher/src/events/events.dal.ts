@@ -23,7 +23,11 @@ export class EventsDal {
   ) {}
 
   public async getEventById(eventId: string): Promise<IEvent | null> {
-    return this.db.models.event.findById(eventId);
+    const event = await this.db.models.event.findById(eventId);
+    if (!event) {
+      return null;
+    }
+    return event.toObject();
   }
 
   public async getUsersLikedEvent(eventId: string) {
@@ -52,7 +56,7 @@ export class EventsDal {
     eventId: string,
     action: 'like' | 'will-go' | 'save',
   ) {
-    return await this.db.models.eventsUsers.findOneAndUpdate(
+    const response = await this.db.models.eventsUsers.findOneAndUpdate(
       {
         userCId,
         event: eventId,
@@ -69,6 +73,7 @@ export class EventsDal {
         upsert: true,
       },
     );
+    return response.toObject();
   }
 
   public async cancelUserAction(
@@ -76,7 +81,7 @@ export class EventsDal {
     eventId: string,
     action: 'like' | 'will-go' | 'save',
   ) {
-    return await this.db.models.eventsUsers.findOneAndUpdate(
+    const response = await this.db.models.eventsUsers.findOneAndUpdate(
       {
         userCId,
         event: eventId,
@@ -93,6 +98,7 @@ export class EventsDal {
         upsert: true,
       },
     );
+    return response.toObject();
   }
 
   public async getEventStats(eventId: string): Promise<IEventStats> {
