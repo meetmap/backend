@@ -27,6 +27,10 @@ export class FreindsDal {
         username: true,
         phone: true,
         cid: true,
+        description: true,
+        fbId: true,
+        name: true,
+        profilePicture: true,
       },
     );
     if (user) {
@@ -50,6 +54,10 @@ export class FreindsDal {
         username: true,
         phone: true,
         cid: true,
+        description: true,
+        fbId: true,
+        name: true,
+        profilePicture: true,
       },
     );
     if (user) {
@@ -60,13 +68,10 @@ export class FreindsDal {
 
   public async sendFriendshipRequest(requesterId: string, recipientId: string) {
     if (
-      (await this.db.models.friends.findOne({
+      await this.db.models.friends.findOne({
         requester: requesterId,
         recipient: recipientId,
-      })) && {
-        requester: recipientId,
-        recipient: requesterId,
-      }
+      })
     ) {
       throw new ConflictException('Friendship request was already sent');
     }
@@ -256,6 +261,10 @@ export class FreindsDal {
           birthDate: 1,
           friendsIds: 1,
           cid: 1,
+          description: 1,
+          fbId: 1,
+          name: 1,
+          profilePicture: 1,
         },
       },
       {
@@ -272,5 +281,15 @@ export class FreindsDal {
 export interface IUserFromFriendsAggregationResult
   extends Pick<
     IMainAppUser,
-    'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id' | 'cid'
+    | 'birthDate'
+    | 'friendsIds'
+    | 'email'
+    | 'phone'
+    | 'username'
+    | 'id'
+    | 'cid'
+    | 'description'
+    | 'fbId'
+    | 'name'
+    | 'profilePicture'
   > {}

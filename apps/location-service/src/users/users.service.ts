@@ -1,4 +1,4 @@
-import { UserRmqRequestDto } from '@app/dto/main-app/users.dto';
+import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
 import { Injectable } from '@nestjs/common';
 import { UsersDal } from './users.dal';
 
@@ -8,6 +8,10 @@ export class UsersService {
 
   public async handleCreateUser(payload: UserRmqRequestDto) {
     await this.dal.createUser(payload);
+  }
+  //@todo change schema back if u don't really need it (fetch users from main service, here fetch only location and permissions for tracking)
+  public async handleUpdateUser(payload: UserRmqRequestDto) {
+    await this.dal.updateUser(payload.cid, payload);
   }
 
   public async handleDeleteUser(payload: UserRmqRequestDto) {

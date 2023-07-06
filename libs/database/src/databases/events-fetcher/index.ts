@@ -1,8 +1,14 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as mongoose from 'mongoose';
 import { BaseDatabase, IDatabaseServiceConfig } from '../types';
-import { CitySchema, EventSchema, TicketingPlatformSchema } from './models';
-import { ApiKeySchema } from './models/apiKey';
+import {
+  ApiKeySchema,
+  CitySchema,
+  EventSchema,
+  EventsUsersSchema,
+  TicketingPlatformSchema,
+  UserSchema,
+} from './models';
 
 @Injectable()
 export class EventsFetcherDb implements BaseDatabase {
@@ -21,6 +27,8 @@ export class EventsFetcherDb implements BaseDatabase {
         TicketingPlatformSchema,
       ),
       apiKey: mongoose.model('ApiKey', ApiKeySchema),
+      eventsUsers: mongoose.model('EventsUsers', EventsUsersSchema),
+      user: mongoose.model('User', UserSchema),
     };
   }
 }

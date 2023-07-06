@@ -1,62 +1,13 @@
-import {
-  IMainAppSafePartialUser,
-  IMainAppSafeUser,
-  ISafeAuthUser,
-} from '@app/types';
+import { IMainAppSafePartialUser, IMainAppSafeUser } from '@app/types';
 import {
   DateField,
   EmailField,
   IdField,
+  ImageField,
   NestedField,
   PhoneField,
   StringField,
 } from '../decorators';
-
-export class UserRmqRequestDto implements ISafeAuthUser {
-  @IdField()
-  id: string;
-
-  @EmailField()
-  email: string;
-
-  @PhoneField({
-    optional: true,
-  })
-  phone?: string;
-
-  @StringField({
-    description: 'Validation will be added soon',
-    example: 'd4v1ds0n_',
-  })
-  username: string;
-
-  /**
-   * @description birthDate should be in ISO 8601 format i.e 2003-04-01T21:00:00.000Z
-   */
-  @DateField({
-    description: 'Birth date',
-  })
-  birthDate: Date;
-
-  // @StringField({
-  //   description: 'userId in auth microservice',
-  //   example: '6436b4fa091dc0948e7566c5',
-  // })
-  // authUserId: string;
-  @IdField()
-  cid: string;
-
-  @StringField({
-    optional: true,
-    description: 'Facebook id (optional)',
-  })
-  fbId?: string;
-  @StringField({
-    optional: true,
-    description: 'User name (optional)',
-  })
-  name?: string;
-}
 
 export class UserResponseDto implements IMainAppSafeUser {
   @IdField()
@@ -76,6 +27,23 @@ export class UserResponseDto implements IMainAppSafeUser {
     description: 'Birth date',
   })
   birthDate: Date;
+
+  @StringField({
+    optional: true,
+  })
+  description?: string;
+  @StringField({
+    optional: true,
+  })
+  name?: string;
+  @StringField({
+    optional: true,
+  })
+  profilePicture?: string;
+  @StringField({
+    optional: true,
+  })
+  fbId?: string;
 
   @NestedField([String], {
     description: 'Cids of friends or friends(users) array',
@@ -114,4 +82,26 @@ export class UserPartialResponseDto implements IMainAppSafePartialUser {
 
   @IdField()
   cid: string;
+
+  @StringField({
+    optional: true,
+  })
+  description?: string;
+  @StringField({
+    optional: true,
+  })
+  name?: string;
+  @StringField({
+    optional: true,
+  })
+  profilePicture?: string;
+  @StringField({
+    optional: true,
+  })
+  fbId?: string;
+}
+
+export class UpdateUserProfilePictureRequestDto {
+  @ImageField()
+  photo: Express.Multer.File;
 }

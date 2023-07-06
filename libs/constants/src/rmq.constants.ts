@@ -7,6 +7,7 @@ export class RMQConstants {
         queues: {
           USER_SERVICE: 'users_service_queue',
           LOCATION_SERVICE: 'location_service_queue',
+          EVENTS_SERVICE: 'events_service_queue',
         },
         routingKeys: {
           USER_CREATED: 'user.created',

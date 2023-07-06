@@ -1,6 +1,16 @@
 import { PASSWORD_REGEX } from '@app/constants';
-import { applyDecorators } from '@nestjs/common';
 import {
+  applyDecorators,
+  createParamDecorator,
+  ExecutionContext,
+  FileTypeValidator,
+  MaxFileSizeValidator,
+  ParseFilePipe,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiConsumes,
   ApiProperty,
   ApiPropertyOptional,
   ApiPropertyOptions,
@@ -20,6 +30,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { Request } from 'express';
 
 export type FieldDecorator<T = {}> = (
   args?: T & { optional?: boolean },
@@ -178,5 +189,52 @@ export const IdField: FieldDecorator = ({ optional } = { optional: false }) =>
       optional,
       description: 'id',
       example: '6436b4fa091dc0948e7566c5',
+    }),
+  );
+/**
+ * @todo add min size validation
+ */
+export const UploadedImage = createParamDecorator<
+  | {
+      maxSize: number;
+      minSize?: number;
+    }
+  | undefined
+>(
+  async (
+    { maxSize, minSize } = { maxSize: 3.5, minSize: 0 },
+    ctx: ExecutionContext,
+  ) => {
+    const request = ctx.switchToHttp().getRequest<Request>();
+    const imageUploadPipe = new ParseFilePipe({
+      validators: [
+        new MaxFileSizeValidator({
+          maxSize: maxSize * 1024 * 1024, //3.5mb
+        }),
+        new FileTypeValidator({
+          fileType: 'image/*',
+        }),
+      ],
+    });
+
+    return await imageUploadPipe.transform(request.file);
+  },
+);
+
+export const UseFileInterceptor = (fieldName: string) =>
+  applyDecorators(
+    UseInterceptors(FileInterceptor(fieldName)),
+    ApiConsumes('multipart/form-data'),
+  );
+
+export const ImageField = (
+  { maxSize }: { maxSize: number } | undefined = { maxSize: 3.5 },
+) =>
+  applyDecorators(
+    ApiProperty({
+      type: 'string',
+      format: 'binary',
+      required: true,
+      description: `fileType: image/*; maxSize: ${maxSize}mb`,
     }),
   );

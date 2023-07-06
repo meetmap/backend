@@ -6,6 +6,7 @@ export interface IUser {
   username: string;
   //@todo name
   name?: string;
+  description?: string;
   profilePicture?: string;
   phone?: string;
   email: string;
@@ -26,7 +27,7 @@ export interface IMainAppUser
   extends Pick<
     IUser,
     | 'id'
-    // | 'authUserId'
+    | 'description'
     | 'birthDate'
     | 'friendsIds'
     | 'email'
@@ -47,6 +48,7 @@ export interface IMainAppSafePartialUser
     | 'birthDate'
     | 'email'
     | 'phone'
+    | 'description'
     | 'username'
     | 'id'
     | 'cid'
@@ -90,6 +92,21 @@ export interface ISafeAuthUser
     | 'fbId'
   > {}
 
+export interface IRmqUser
+  extends Pick<
+    IUser,
+    | 'id'
+    | 'phone'
+    | 'email'
+    | 'username'
+    | 'birthDate'
+    | 'cid'
+    | 'name'
+    | 'fbId'
+    | 'description'
+    | 'profilePicture'
+  > {}
+
 export interface IAuthUserWithPassword extends IAuthUser {
   password: string;
 }
@@ -97,6 +114,18 @@ export interface IAuthUserWithPassword extends IAuthUser {
 //location-service
 
 export interface ILocationServiceUser
-  extends Pick<IUser, 'id' | /* 'authUserId' |  */ 'cid'> {
+  extends Pick<IUser, 'id' | 'cid' | 'username' | 'profilePicture' | 'name'> {
   friendsCids: string[];
 }
+
+export interface IEventsServiceUser
+  extends Pick<
+    IUser,
+    | 'id'
+    | 'cid'
+    | 'username'
+    | 'profilePicture'
+    | 'birthDate'
+    | 'name'
+    | 'description'
+  > {}

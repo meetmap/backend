@@ -48,6 +48,9 @@ export const UserSchema = new mongoose.Schema<IMainAppUser>(
     profilePicture: {
       type: mongoose.SchemaTypes.String,
     },
+    description: {
+      type: mongoose.SchemaTypes.String,
+    },
   },
   {
     id: true,

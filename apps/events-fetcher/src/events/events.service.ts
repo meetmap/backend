@@ -1,15 +1,19 @@
 import {
+  EventStatsResponseDto,
+  GetEventsByLocationRequestDto,
+  SingleEventResponseDto,
+} from '@app/dto/events-fetcher/events.dto';
+import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import * as path from 'path';
 import { ZodError } from 'zod';
 import { EventerFetcherService } from '../eventer-fetcher/eventer-fetcher.service';
 import { CreateEventSchema } from './dto';
 import { EventsDal } from './events.dal';
-import * as path from 'path';
-import { GetEventsByLocationRequestDto } from '@app/dto/events-fetcher/events.dto';
 
 @Injectable()
 export class EventsService {
@@ -22,20 +26,44 @@ export class EventsService {
     return this.dal.getEventsByKeywords(keywords);
   }
 
-  // public async getEventBySlug(slug: string) {
-  //   const event = await this.eventerFetcherService.getValidEvent(slug);
-  //   if (!event) {
-  //     throw new NotFoundException('Event not found');
-  //   }
-  //   return event;
-  // }
-
-  public async getEventById(eventId: string) {
+  public async getEventById(eventId: string): Promise<SingleEventResponseDto> {
     const event = await this.dal.getEventById(eventId);
     if (!event) {
       throw new NotFoundException('Event not found');
     }
-    return event;
+    const stats = await this.dal.getEventStats(eventId);
+    return { ...event, stats };
+  }
+
+  public async userAction(
+    userCId: string,
+    eventId: string,
+    type: 'like' | 'will-go' | 'save',
+  ): Promise<EventStatsResponseDto> {
+    const event = await this.dal.getEventById(eventId);
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    await this.dal.userAction(userCId, eventId, type);
+    const stats = await this.dal.getEventStats(eventId);
+    return stats;
+  }
+
+  public async getEventLikes(eventId: string) {
+    return await this.dal.getUsersLikedEvent(eventId);
+  }
+  public async cancelUserAction(
+    userCId: string,
+    eventId: string,
+    type: 'like' | 'will-go' | 'save',
+  ): Promise<EventStatsResponseDto> {
+    const event = await this.dal.getEventById(eventId);
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    await this.dal.cancelUserAction(userCId, eventId, type);
+    const stats = await this.dal.getEventStats(eventId);
+    return stats;
   }
 
   public async getEventsByLocation(dto: GetEventsByLocationRequestDto) {

@@ -1,3 +1,4 @@
+import { PopulatedDoc } from 'mongoose';
 import { ILocation } from '../location';
 
 export interface IEvent {
@@ -61,4 +62,19 @@ export interface IPrice {
   currency: string;
 
   amount: number;
+}
+
+export interface IEventsUsers {
+  event: PopulatedDoc<IEvent>;
+  userCId: string;
+
+  isUserWillGo: boolean;
+  isUserLike: boolean;
+  isUserSave: boolean;
+}
+
+export interface IEventStats {
+  likes: number;
+  saves: number;
+  willGo: number;
 }

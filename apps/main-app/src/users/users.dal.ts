@@ -1,15 +1,20 @@
 import { MainAppDatabase } from '@app/database';
-import { IMainAppUser } from '@app/types';
+import { S3UploaderService } from '@app/s3-uploader';
+import { IMainAppUser, IRmqUser } from '@app/types';
 import { Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import * as mongoose from 'mongoose';
+import * as path from 'path';
 
 @Injectable()
 export class UsersDal {
-  constructor(private readonly db: MainAppDatabase) {}
+  constructor(
+    private readonly db: MainAppDatabase,
+    private readonly s3Service: S3UploaderService,
+  ) {}
   public async createUser(
     payload: Pick<
-      IMainAppUser,
+      IRmqUser,
       | 'birthDate'
       | 'email'
       | 'username'
@@ -78,7 +83,16 @@ export class UsersDal {
   public async updateUser(
     cid: string,
     payload: Partial<
-      Pick<IMainAppUser, 'username' | 'phone' | 'email' | 'name'>
+      Pick<
+        IMainAppUser,
+        | 'phone'
+        | 'email'
+        | 'username'
+        | 'name'
+        | 'fbId'
+        | 'description'
+        | 'profilePicture'
+      >
     >,
   ) {
     return await this.db.models.users.findOneAndUpdate(
@@ -87,10 +101,13 @@ export class UsersDal {
       },
       {
         $set: {
-          username: payload.username,
-          email: payload.email,
           phone: payload.phone,
+          email: payload.email,
+          username: payload.username,
           name: payload.name,
+          fbId: payload.fbId,
+          description: payload.description,
+          profilePicture: payload.profilePicture,
         },
       },
       {
@@ -130,17 +147,6 @@ export class UsersDal {
     return user.id;
   }
 
-  public async comparePassword(password: string, hash?: string) {
-    if (!hash) {
-      return false;
-    }
-    return await bcrypt.compare(password, hash);
-  }
-
-  public async hashPassword(password: string) {
-    return await bcrypt.hash(password, 12);
-  }
-
   public async findUserByEmail(email: string) {
     return await this.db.models.users.findOne({
       email: email,
@@ -150,7 +156,17 @@ export class UsersDal {
   public async findUsersByQueryUsername(query: string) {
     return await this.db.models.users
       .find({
-        username: new RegExp(query, 'i'),
+        $or: [
+          {
+            username: new RegExp(query, 'i'),
+          },
+          {
+            description: new RegExp(query, 'i'),
+          },
+          {
+            name: new RegExp(query, 'i'),
+          },
+        ],
       })
       .limit(15);
   }
@@ -159,16 +175,8 @@ export class UsersDal {
     return await this.db.models.users.findById(userId);
   }
 
-  public async findUserByCid(cid: string): Promise<IMainAppUser | null> {
+  public async findUserByCid(cid: string) {
     return await this.db.models.users.findOne({ cid });
-  }
-
-  public async findUserByCorrelationId(
-    cid: string,
-  ): Promise<IMainAppUser | null> {
-    return await this.db.models.users.findOne({
-      cid: cid,
-    });
   }
 
   public async findUserByUsername(username: string) {
@@ -181,5 +189,18 @@ export class UsersDal {
     return await this.db.models.users.findOne({
       phone: phone,
     });
+  }
+
+  public async uploadUserProfilePicture(
+    cid: string,
+    file: Express.Multer.File,
+  ) {
+    const { url } = await this.s3Service.upload(
+      'users-assets/'
+        .concat(cid + '_profile-picture_' + randomUUID())
+        .concat(path.extname(file.originalname)),
+      file.buffer,
+    );
+    return url;
   }
 }
