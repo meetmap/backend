@@ -35,30 +35,36 @@ export class EventsController {
     type: [EventResponseDto],
   })
   @Get('/?')
+  @UseMicroserviceAuthGuard()
   public async getEventsByKeywords(
+    @ExtractJwtPayload() jwt: IJwtUserPayload,
     @Query('q') keywords: string,
   ): Promise<EventResponseDto[]> {
-    return this.eventsService.getEventsByKeywords(keywords);
+    return this.eventsService.getEventsByKeywords(jwt.cid, keywords);
   }
 
   @ApiOkResponse({
     type: SingleEventResponseDto,
   })
   @Get('/:eventId')
+  @UseMicroserviceAuthGuard()
   public async getEventById(
+    @ExtractJwtPayload() jwt: IJwtUserPayload,
     @Param('eventId') eventId: string,
   ): Promise<SingleEventResponseDto> {
-    return this.eventsService.getEventById(eventId);
+    return this.eventsService.getEventById(jwt.cid, eventId);
   }
 
   @ApiOkResponse({
     type: [EventResponseDto],
   })
+  @UseMicroserviceAuthGuard()
   @Post('/location')
   public async getEventsByLocation(
+    @ExtractJwtPayload() jwt: IJwtUserPayload,
     @Body() dto: GetEventsByLocationRequestDto,
   ): Promise<EventResponseDto[]> {
-    return this.eventsService.getEventsByLocation(dto);
+    return this.eventsService.getEventsByLocation(jwt.cid, dto);
   }
 
   @ApiOkResponse({
@@ -87,7 +93,7 @@ export class EventsController {
   ): Promise<EventResponseDto> {
     return await this.eventsService.userCreateEvent(
       body.rawEvent,
-      jwtPayload.sub,
+      jwtPayload.cid,
       file,
     );
   }
@@ -124,45 +130,45 @@ export class EventsController {
     );
     return stats;
   }
-  //save event
-  @ApiOkResponse({
-    type: EventStatsResponseDto,
-  })
-  @Patch('/save/:eventId')
-  @UseMicroserviceAuthGuard()
-  public async saveEvent(
-    @Param('eventId') eventId: string,
-    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
-  ): Promise<EventStatsResponseDto> {
-    const stats = await this.eventsService.userAction(
-      jwtPayload.cid,
-      eventId,
-      'save',
-    );
-    return stats;
-  }
-  @ApiOkResponse({
-    type: EventStatsResponseDto,
-  })
-  @Delete('/save/:eventId')
-  @UseMicroserviceAuthGuard()
-  public async cancelSaveEvent(
-    @Param('eventId') eventId: string,
-    @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
-  ): Promise<EventStatsResponseDto> {
-    const stats = await this.eventsService.cancelUserAction(
-      jwtPayload.cid,
-      eventId,
-      'save',
-    );
-    return stats;
-  }
+  // //save event
+  // @ApiOkResponse({
+  //   type: EventStatsResponseDto,
+  // })
+  // @Patch('/save/:eventId')
+  // @UseMicroserviceAuthGuard()
+  // public async saveEvent(
+  //   @Param('eventId') eventId: string,
+  //   @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
+  // ): Promise<EventStatsResponseDto> {
+  //   const stats = await this.eventsService.userAction(
+  //     jwtPayload.cid,
+  //     eventId,
+  //     'save',
+  //   );
+  //   return stats;
+  // }
+  // @ApiOkResponse({
+  //   type: EventStatsResponseDto,
+  // })
+  // @Delete('/save/:eventId')
+  // @UseMicroserviceAuthGuard()
+  // public async cancelSaveEvent(
+  //   @Param('eventId') eventId: string,
+  //   @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
+  // ): Promise<EventStatsResponseDto> {
+  //   const stats = await this.eventsService.cancelUserAction(
+  //     jwtPayload.cid,
+  //     eventId,
+  //     'save',
+  //   );
+  //   return stats;
+  // }
 
   //will-go
   @ApiOkResponse({
     type: EventStatsResponseDto,
   })
-  @Patch('/will-go/:eventId')
+  @Patch('/want-go/:eventId')
   @UseMicroserviceAuthGuard()
   public async willGoEvent(
     @Param('eventId') eventId: string,
@@ -171,7 +177,7 @@ export class EventsController {
     const stats = await this.eventsService.userAction(
       jwtPayload.cid,
       eventId,
-      'will-go',
+      'want-go',
     );
     return stats;
   }
@@ -179,7 +185,7 @@ export class EventsController {
   @ApiOkResponse({
     type: EventStatsResponseDto,
   })
-  @Delete('/will-go/:eventId')
+  @Delete('/want-go/:eventId')
   @UseMicroserviceAuthGuard()
   public async cancelWillGoEvent(
     @Param('eventId') eventId: string,
@@ -188,7 +194,7 @@ export class EventsController {
     const stats = await this.eventsService.cancelUserAction(
       jwtPayload.cid,
       eventId,
-      'will-go',
+      'want-go',
     );
     return stats;
   }

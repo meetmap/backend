@@ -1,40 +1,39 @@
+import { ExtractApiPlatform, UseApiAuthGuard } from '@app/auth/api-auth';
 import {
   ExtractPlatform,
   UseDashboardAuthGuard,
 } from '@app/auth/dashboard-jwt';
 import {
-  IssueApiKeyRequestDto,
-  IssueApiKeyResponseDto,
+  ApiKeyResponseDto,
   CreateTicketingPlatformRequestDto,
   CreateTicketingPlatformResponseDto,
+  EventResponseDto,
+  IssueApiKeyRequestDto,
+  IssueApiKeyResponseDto,
   LoginPlatformRequestDto,
   LoginPlatformResponseDto,
   RefreshDashboardAtResponseDto,
   RevokeApiKeyRequestDto,
-  ApiKeyResponseDto,
   UploadEventRequestDto,
 } from '@app/dto/events-fetcher/ticketing-platform.dto';
 import { ITicketingPlatform } from '@app/types';
 import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Res,
-  Req,
-  ForbiddenException,
   BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
+  Param,
+  Post,
+  Req,
+  Res,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiOkResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
-import { TicketingPlatformService } from './ticketing-platform.service';
 import ms from 'ms';
-import { EventResponseDto } from '@app/dto/events-fetcher/events.dto';
-import { ExtractApiPlatform, UseApiAuthGuard } from '@app/auth/api-auth';
+import { TicketingPlatformService } from './ticketing-platform.service';
 @Controller('ticketing-platform')
 export class TicketingPlatformController {
   constructor(

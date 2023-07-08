@@ -1,13 +1,10 @@
 import {
-  ITicketingPlatform,
-  ISafeApiKey,
-  IApiKey,
-  ISafeTicketingPlatform,
-  IEvent,
   EventType,
-  ICreator,
-  ILocation,
-  ITicket,
+  IApiKey,
+  IEvent,
+  ISafeApiKey,
+  ISafeTicketingPlatform,
+  ITicketingPlatform,
 } from '@app/types';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -19,6 +16,48 @@ import {
   PasswordField,
   StringField,
 } from '../decorators';
+import { EventStatsResponseDto, LocationResponseDto } from './events.dto';
+
+export class EventResponseDto
+  implements
+    Pick<
+      IEvent,
+      | 'id'
+      | 'slug'
+      | 'title'
+      | 'picture'
+      | 'startTime'
+      | 'endTime'
+      | 'ageLimit'
+      | 'creator'
+      | 'location'
+      | 'eventType'
+    >
+{
+  @IdField()
+  id: string;
+  @StringField()
+  slug: string;
+  @StringField()
+  title: string;
+  @StringField({ optional: true })
+  picture?: string | undefined;
+
+  @DateField()
+  startTime: Date;
+  @DateField()
+  endTime: Date;
+  @NumberField()
+  ageLimit: number;
+  @NestedField(LocationResponseDto)
+  location: LocationResponseDto;
+  @StringField({
+    enum: EventType,
+  })
+  eventType: EventType;
+  @NestedField(EventStatsResponseDto, {})
+  stats: EventStatsResponseDto;
+}
 
 export class TicketingPlatformResponseDto implements ISafeTicketingPlatform {
   @IdField()

@@ -1,10 +1,13 @@
 import {
   CreatorType,
+  EventAccessibilityType,
+  EventsUsersStatusType,
   EventType,
   ICity,
   ICreator,
   IEvent,
   IEventStats,
+  IEventsUsers,
   ILocation,
   IPoint,
   IPrice,
@@ -14,12 +17,25 @@ import { ApiProperty } from '@nestjs/swagger';
 import { PopulatedDoc, Types } from 'mongoose';
 import { z } from 'zod';
 import {
+  BooleanField,
   DateField,
   IdField,
   NestedField,
   NumberField,
   StringField,
 } from '../decorators';
+
+export class EventUserStatsResponseDto
+  implements Pick<IEventsUsers, 'isUserLike' | 'userStatus'>
+{
+  @BooleanField()
+  isUserLike: boolean;
+  @StringField({
+    enum: EventsUsersStatusType,
+    optional: true,
+  })
+  userStatus?: EventsUsersStatusType;
+}
 
 export class GetEventsByLocationRequestDto {
   @NumberField()
@@ -127,6 +143,8 @@ export class EventResponseDto
     enum: EventType,
   })
   eventType: EventType;
+  @NestedField(EventUserStatsResponseDto, {})
+  userStats: EventUserStatsResponseDto;
 }
 
 export class EventStatsResponseDto implements IEventStats {
@@ -134,10 +152,10 @@ export class EventStatsResponseDto implements IEventStats {
   likes: number;
 
   @NumberField()
-  saves: number;
+  ticketsPurchased: number;
 
   @NumberField()
-  willGo: number;
+  wantGo: number;
 }
 
 export class SingleEventResponseDto implements IEvent {
@@ -161,6 +179,10 @@ export class SingleEventResponseDto implements IEvent {
   endTime: Date;
   @NumberField()
   ageLimit: number;
+
+  @StringField({ enum: EventAccessibilityType })
+  accessibility: EventAccessibilityType;
+
   @NestedField(CreatorResponseDto, {
     optional: true,
   })
@@ -175,6 +197,9 @@ export class SingleEventResponseDto implements IEvent {
   tickets: TicketDto[];
   @NestedField(EventStatsResponseDto, {})
   stats: EventStatsResponseDto;
+
+  @NestedField(EventUserStatsResponseDto, {})
+  userStats: EventUserStatsResponseDto;
   @DateField()
   createdAt: Date;
   @DateField()
@@ -187,11 +212,12 @@ export class CreateEventRequestDto {
     description: 'Stringified json',
     example: JSON.stringify(
       {
-        ageLimit: 0,
+        ageLimit: 1,
         description: 'description',
         endTime: new Date('2003-04-01T21:00:00.000Z'),
         startTime: new Date('2003-04-01T21:00:00.000Z'),
-        eventType: 'USER_PRIVATE',
+        accessibility: EventAccessibilityType.PUBLIC,
+        eventType: EventType.USER,
         location: {
           lat: 1,
           lng: 1,
@@ -206,7 +232,7 @@ export class CreateEventRequestDto {
           },
         ],
         title: 'title',
-      } satisfies z.infer<typeof CreateEventSchema>,
+      } as z.infer<typeof CreateEventSchema>,
       null,
       2,
     ),
@@ -219,7 +245,7 @@ export class CreateEventRequestDto {
     required: true,
     description: 'fileType: image/*; maxSize: 3.5mb',
   })
-  file: Express.Multer.File;
+  photo: Express.Multer.File;
 }
 
 export const TicketSchema = z.object({
@@ -227,13 +253,14 @@ export const TicketSchema = z.object({
   price: z.number().max(100000),
   amount: z.number().min(-1).max(1000000).optional().default(-1),
   description: z.string().optional().nullable().default(null),
-});
-//@todo make startTime and endTime validation
+}); //@todo make startTime and endTime validation
+
 export const CreateEventSchema = z.object({
   title: z.string(),
   description: z.string().optional().nullable().default(null),
   slug: z.string(),
-  eventType: z.enum(['USER_PUBLIC', 'USER_PRIVATE']),
+  eventType: z.nativeEnum(EventType),
+  accessibility: z.nativeEnum(EventAccessibilityType),
   startTime: z.coerce.date(),
   endTime: z.coerce.date(),
   ageLimit: z.number().min(1).max(120),

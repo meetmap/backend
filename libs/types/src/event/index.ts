@@ -25,6 +25,8 @@ export interface IEvent {
 
   eventType: EventType;
 
+  accessibility: EventAccessibilityType;
+
   tickets: ITicket[];
 
   createdAt: Date;
@@ -41,9 +43,20 @@ export enum CreatorType {
 }
 
 export enum EventType {
-  USER_PUBLIC = 'user-public',
-  USER_PRIVATE = 'user-private',
-  PARTNER_EVENT = 'partner-event',
+  USER = 'user',
+  ORGANIZER = 'organizer',
+  PARTNER = 'partner',
+}
+
+export enum EventAccessibilityType {
+  PUBLIC = 'public',
+  PRIVATE = 'private',
+}
+
+export enum EventsUsersStatusType {
+  WANT_GO = 'want-go',
+  APPROVED = 'approved',
+  TICKETS_PURCHASED = 'tickets-purchased',
 }
 
 export interface ITicket {
@@ -67,14 +80,15 @@ export interface IPrice {
 export interface IEventsUsers {
   event: PopulatedDoc<IEvent>;
   userCId: string;
-
-  isUserWillGo: boolean;
+  userStatus?: EventsUsersStatusType;
   isUserLike: boolean;
-  isUserSave: boolean;
 }
 
 export interface IEventStats {
   likes: number;
-  saves: number;
-  willGo: number;
+  ticketsPurchased: number;
+  wantGo: number;
+}
+export interface IEventWithUserStats extends IEvent {
+  userStats: Pick<IEventsUsers, 'isUserLike' | 'userStatus'>;
 }

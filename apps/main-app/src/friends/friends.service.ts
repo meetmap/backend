@@ -15,18 +15,18 @@ import {
 } from '@nestjs/common';
 
 import { UsersService } from '../users/users.service';
-import { FreindsDal } from './friends.dal';
+import { FriendsDal } from './friends.dal';
 
 @Injectable()
 export class FriendsService {
   constructor(
-    private readonly dal: FreindsDal,
+    private readonly dal: FriendsDal,
     private readonly rmq: RabbitmqService,
   ) {}
 
   public async requestFriendship(requestorCid: string, friendCid: string) {
-    const currentUser = await this.dal.getUserByCid(requestorCid);
-    const friendUser = await this.dal.getUserByCid(friendCid);
+    const currentUser = await this.dal.getUserByCId(requestorCid);
+    const friendUser = await this.dal.getUserByCId(friendCid);
     if (!currentUser) {
       throw new ForbiddenException("User doesn't exist");
     }
@@ -36,46 +36,46 @@ export class FriendsService {
     if (!this.isValidFriend(currentUser, friendUser)) {
       throw new BadRequestException('Invalid user');
     }
-    await this.dal.sendFriendshipRequest(currentUser.id, friendUser.id);
+    await this.dal.sendFriendshipRequest(currentUser.cid, friendUser.cid);
     return UsersService.mapUserDbToResponsePartialUser(friendUser);
   }
 
   public async getIncomingFriendshipRequests(cid: string) {
-    const user = await this.dal.getUserByCid(cid);
+    const user = await this.dal.getUserByCId(cid);
     if (!user) {
       throw new ForbiddenException("User doesn't exist");
     }
-    return await this.dal.getIncomingFriendshipRequests(user.id);
+    return await this.dal.getIncomingFriendshipRequests(user.cid);
   }
 
   public async getOutcomingFriendshipRequests(cid: string) {
-    const user = await this.dal.getUserByCid(cid);
+    const user = await this.dal.getUserByCId(cid);
     if (!user) {
       throw new ForbiddenException("User doesn't exist");
     }
-    return await this.dal.getOutcomingFriendshipRequests(user.id);
+    return await this.dal.getOutcomingFriendshipRequests(user.cid);
   }
 
   public async acceptFriendshipRequest(
     currentUserCid: string,
     requesterId: string,
   ) {
-    const user = await this.dal.getUserByCid(currentUserCid);
+    const user = await this.dal.getUserByCId(currentUserCid);
     if (!user) {
       throw new ForbiddenException("User doesn't exist");
     }
-    const requesterUser = await this.dal.getUserByCid(requesterId);
+    const requesterUser = await this.dal.getUserByCId(requesterId);
     if (!this.isValidFriend(user, requesterUser)) {
       throw new BadRequestException('Invalid user');
     }
-    await this.dal.acceptFriendshipRequest(user.id, requesterUser.id);
+    await this.dal.acceptFriendshipRequest(user.cid, requesterUser.cid);
 
     await this.rmq.amqp.publish(
       RMQConstants.exchanges.FRIENDS.name,
       RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_ADDED,
       {
-        friendCid: requesterUser.cid,
-        userCid: user.cid,
+        friendCId: requesterUser.cid,
+        userCId: user.cid,
       } satisfies UpdateFriendshipRMQRequestDto,
     );
 
@@ -85,23 +85,23 @@ export class FriendsService {
     currentUserCid: string,
     requesterCid: string,
   ) {
-    const user = await this.dal.getUserByCid(currentUserCid);
+    const user = await this.dal.getUserByCId(currentUserCid);
     if (!user) {
       throw new ForbiddenException("User doesn't exist");
     }
-    const requesterUser = await this.dal.getUserByCid(requesterCid);
+    const requesterUser = await this.dal.getUserByCId(requesterCid);
     if (!this.isValidFriend(user, requesterUser)) {
       throw new BadRequestException('Invalid user');
     }
 
-    await this.dal.rejectFriendshipRequest(user.id, requesterUser.id);
+    await this.dal.rejectFriendshipRequest(user.cid, requesterUser.cid);
 
     await this.rmq.amqp.publish(
       RMQConstants.exchanges.FRIENDS.name,
       RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REMOVED,
       {
-        friendCid: requesterUser.cid,
-        userCid: user.cid,
+        friendCId: requesterUser.cid,
+        userCId: user.cid,
       } satisfies UpdateFriendshipRMQRequestDto,
     );
 
@@ -109,13 +109,13 @@ export class FriendsService {
   }
 
   public isValidFriend(
-    user: Pick<IMainAppUser, 'id'>,
+    user: Pick<IMainAppUser, 'id' | 'cid'>,
     friend: IUser | IMainAppSafeUser | IMainAppSafePartialUser | null,
   ): friend is IMainAppUser {
     if (!friend) {
       throw new NotFoundException(`User not found`);
     }
-    if (user.id === friend.id) {
+    if (user.cid === friend.cid) {
       throw new BadRequestException(
         `Can not procceed friendship request to user itselfs`,
       );
@@ -124,12 +124,12 @@ export class FriendsService {
   }
 
   public async getUserFriends(userCid: string, limit: number, page: number) {
-    const user = await this.dal.getUserByCid(userCid);
+    const user = await this.dal.getUserByCId(userCid);
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    return this.dal.getUserFriends(user.id, limit, page);
+    return this.dal.getUserFriends(user.cid, limit, page);
   }
 
   // public async getFriendsLocation(userId: string) {

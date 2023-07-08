@@ -28,7 +28,7 @@ export class FreindsController {
   ): Promise<UserPartialResponseDto> {
     return await this.friendsService.requestFriendship(
       jwtPayload.cid,
-      dto.userCid,
+      dto.userCId,
     );
   }
 
@@ -72,7 +72,7 @@ export class FreindsController {
   ): Promise<UserPartialResponseDto> {
     return await this.friendsService.acceptFriendshipRequest(
       jwtPayload.cid,
-      dto.friendCid,
+      dto.friendCId,
     );
   }
 
@@ -88,7 +88,7 @@ export class FreindsController {
   ): Promise<UserPartialResponseDto> {
     return await this.friendsService.rejectFriendshipRequest(
       jwtPayload.cid,
-      dto.friendCid,
+      dto.friendCId,
     );
   }
 

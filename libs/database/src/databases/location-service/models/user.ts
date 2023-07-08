@@ -8,7 +8,7 @@ export const UserSchema = new mongoose.Schema<ILocationServiceUser>(
       required: true,
       unique: true,
     },
-    friendsCids: {
+    friendsCIds: {
       type: [mongoose.SchemaTypes.String],
       default: [],
     },

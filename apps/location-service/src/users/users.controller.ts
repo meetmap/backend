@@ -70,8 +70,8 @@ export class UsersController {
       handler: this.handleFriendship.name,
       routingKey: routingKey,
       msg: {
-        userCid: payload.userCid,
-        friendCid: payload.friendCid,
+        userCid: payload.userCId,
+        friendCid: payload.friendCId,
       },
     });
 
@@ -79,8 +79,8 @@ export class UsersController {
       routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_ADDED
     ) {
       await this.usersService.handleAddFriend(
-        payload.userCid,
-        payload.friendCid,
+        payload.userCId,
+        payload.friendCId,
       );
       return;
     }
@@ -88,8 +88,8 @@ export class UsersController {
       routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REMOVED
     ) {
       await this.usersService.handleRemoveFriend(
-        payload.userCid,
-        payload.friendCid,
+        payload.userCId,
+        payload.friendCId,
       );
       return;
     } else {

@@ -1,6 +1,7 @@
 import { EventsFetcherDb } from '@app/database';
-import { IEvent, IRmqUser } from '@app/types';
+import { IEventWithUserStats, IRmqUser } from '@app/types';
 import { Injectable } from '@nestjs/common';
+import { EventsDal } from '../events/events.dal';
 
 @Injectable()
 export class UsersDal {
@@ -10,7 +11,7 @@ export class UsersDal {
     userCId: string,
     actionType: 'saved' | 'will-go' | 'liked',
   ) {
-    return await this.db.models.eventsUsers.aggregate<IEvent>([
+    return await this.db.models.eventsUsers.aggregate<IEventWithUserStats>([
       {
         $match: {
           userCId: userCId,
@@ -29,6 +30,7 @@ export class UsersDal {
       },
       { $unwind: '$event' },
       { $replaceRoot: { newRoot: '$event' } },
+      ...EventsDal.getEventsWithUserStatsAggregation(userCId),
     ]);
   }
 

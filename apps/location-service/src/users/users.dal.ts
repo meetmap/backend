@@ -1,10 +1,16 @@
 import { LocationServiceDatabase } from '@app/database';
-import { ILocationServiceUser } from '@app/types';
+import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
+import { ILocationServiceFriends, ILocationServiceUser } from '@app/types';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class UsersDal {
-  constructor(private readonly db: LocationServiceDatabase) {}
+export class UsersDal extends CommonDataManipulation<
+  ILocationServiceFriends,
+  ILocationServiceUser
+> {
+  constructor(private readonly db: LocationServiceDatabase) {
+    super(db.models.friends, db.models.users);
+  }
 
   public async createUser(
     payload: Pick<
@@ -48,14 +54,15 @@ export class UsersDal {
     if (!user) {
       return;
     }
+    //@todo later
     //pull out this user from friends list of every friend
     await this.db.models.users.updateMany(
       {
-        friendsCids: user.cid,
+        friendsCIds: user.cid,
       },
       {
         $pull: {
-          friendsCids: user.cid,
+          friendsCIds: user.cid,
         },
       },
     );
@@ -63,49 +70,9 @@ export class UsersDal {
   }
 
   public async addFriendCid(userCid: string, friendCid: string) {
-    //@todo probably need to check user existance
-    await this.db.models.users.findOneAndUpdate(
-      {
-        cid: userCid,
-      },
-      {
-        $push: {
-          friendsCids: friendCid,
-        },
-      },
-    );
-    await this.db.models.users.findOneAndUpdate(
-      {
-        cid: friendCid,
-      },
-      {
-        $push: {
-          friendsCids: userCid,
-        },
-      },
-    );
+    await super.friends.forceFriendship(userCid, friendCid);
   }
   public async removeFriendCid(userCid: string, friendCid: string) {
-    //@todo probably need to check user existance
-    await this.db.models.users.findOneAndUpdate(
-      {
-        cid: userCid,
-      },
-      {
-        $pull: {
-          friendsCids: friendCid,
-        },
-      },
-    );
-    await this.db.models.users.findOneAndUpdate(
-      {
-        cid: friendCid,
-      },
-      {
-        $pull: {
-          friendsCids: userCid,
-        },
-      },
-    );
+    await super.friends.rejectFriendshipRequest(userCid, friendCid);
   }
 }

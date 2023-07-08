@@ -1,4 +1,4 @@
-import { IEventsUsers } from '@app/types';
+import { EventsUsersStatusType, IEventsUsers } from '@app/types';
 import * as mongoose from 'mongoose';
 
 export const EventsUsersSchema = new mongoose.Schema<IEventsUsers>(
@@ -15,14 +15,11 @@ export const EventsUsersSchema = new mongoose.Schema<IEventsUsers>(
     isUserLike: {
       type: mongoose.SchemaTypes.Boolean,
       required: true,
+      default: false,
     },
-    isUserSave: {
-      type: mongoose.SchemaTypes.Boolean,
-      required: true,
-    },
-    isUserWillGo: {
-      type: mongoose.SchemaTypes.Boolean,
-      required: true,
+    userStatus: {
+      type: mongoose.SchemaTypes.String,
+      enum: EventsUsersStatusType,
     },
   },
   {

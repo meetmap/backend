@@ -25,10 +25,9 @@ export const UserSchema = new mongoose.Schema<IMainAppUser>(
       unique: true,
       sparse: true,
     },
-    friendsIds: [
+    friendsCIds: [
       {
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'User',
+        type: mongoose.SchemaTypes.String,
       },
     ],
     // authUserId: {

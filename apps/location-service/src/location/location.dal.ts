@@ -48,7 +48,7 @@ export class LocationDal {
     if (!user) {
       return null;
     }
-    return user.friendsCids;
+    return user.friendsCIds;
   }
 
   public async getUsersLocationBulk(

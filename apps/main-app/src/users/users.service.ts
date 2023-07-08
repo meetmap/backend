@@ -30,8 +30,7 @@ export class UsersService {
     payload: UserRmqRequestDto,
   ): Promise<UserResponseDto> {
     const user = await this.dal.createUser(payload);
-    const friendsCids = await this.dal.getFriendsCids(user.id);
-    return UsersService.mapUserDbToResponseUser(user, friendsCids);
+    return UsersService.mapUserDbToResponseUser(user);
   }
 
   public async updateUser(
@@ -41,8 +40,8 @@ export class UsersService {
     if (!user) {
       return null;
     }
-    const friendsCids = await this.dal.getFriendsCids(user.id);
-    return UsersService.mapUserDbToResponseUser(user, friendsCids);
+
+    return UsersService.mapUserDbToResponseUser(user);
   }
 
   public async deleteUser(cid: string) {
@@ -55,9 +54,8 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const friendsCids = await this.dal.getFriendsCids(user.id);
 
-    return UsersService.mapUserDbToResponseUser(user, friendsCids);
+    return UsersService.mapUserDbToResponseUser(user);
   }
 
   public async findUsers(query: string): Promise<UserPartialResponseDto[]> {
@@ -72,9 +70,9 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const friendsCids = await this.dal.getFriendsCids(user.id);
+    // const friendsCids = await this.dal.getFriendsCids(user.id);
 
-    return UsersService.mapUserDbToResponseUser(user, friendsCids);
+    return UsersService.mapUserDbToResponseUser(user);
   }
 
   public async updateUserProfilePicture(
@@ -85,13 +83,13 @@ export class UsersService {
     if (!user) {
       throw new ForbiddenException('User not found');
     }
-    const friendsCids = await this.dal.getFriendsCids(user.id);
+    // const friendsCids = await this.dal.getFriendsCids(user.id);
 
     const url = await this.dal.uploadUserProfilePicture(cid, photo);
     // user.profilePicture = url
     const updatedUser: IUser = {
       ...user.toJSON(),
-      friendsIds: [],
+      friendsCIds: [],
       profilePicture: url,
     };
 
@@ -101,7 +99,7 @@ export class UsersService {
       UsersService.mapDbUserToRmqUser(updatedUser),
     );
 
-    return UsersService.mapUserDbToResponseUser(updatedUser, friendsCids);
+    return UsersService.mapUserDbToResponseUser(updatedUser);
   }
 
   static mapDbUserToRmqUser(user: IMainAppUser): IRmqUser {
@@ -121,12 +119,11 @@ export class UsersService {
 
   static mapUserDbToResponseUser(
     user: IUser | IMainAppSafeUser,
-    friendsCids: string[],
   ): IMainAppSafeUser {
     return {
       id: user.id,
       birthDate: user.birthDate,
-      friendsCids: friendsCids,
+      friendsCIds: user.friendsCIds,
       email: user.email,
       phone: user.phone,
       username: user.username,
