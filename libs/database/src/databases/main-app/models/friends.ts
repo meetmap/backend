@@ -1,23 +1,10 @@
-import { IFriends } from '@app/types';
+import { FriendsBaseSchema } from '@app/database/shared-models/friends.base';
+import { IMainAppFriends } from '@app/types';
 import * as mongoose from 'mongoose';
 
-import { PointSchema } from '@app/database/shared-models';
-
-export const FriendsSchema = new mongoose.Schema<IFriends>(
+export const FriendsSchema = new mongoose.Schema<IMainAppFriends>(
   {
-    requester: {
-      type: mongoose.SchemaTypes.ObjectId,
-      ref: 'User',
-    },
-    recipient: {
-      type: mongoose.SchemaTypes.ObjectId,
-      ref: 'User',
-    },
-    status: {
-      type: mongoose.SchemaTypes.String,
-      enum: ['add-friend', 'requested', 'pending', 'rejected', 'friends'],
-      default: 'add-friend',
-    },
+    ...FriendsBaseSchema.obj,
   },
   {
     id: true,

@@ -1,5 +1,3 @@
-import { PopulatedDoc } from 'mongoose';
-import { IFriends } from '../friends';
 //common user
 export interface IUser {
   id: string;
@@ -17,7 +15,7 @@ export interface IUser {
   updatedAt: Date;
   // authUserId: string;
   cid: string;
-  friendsIds: PopulatedDoc<IFriends>[];
+  friendsCIds: string[];
   //facebook
   fbId?: string;
   fbToken?: string;
@@ -29,7 +27,7 @@ export interface IMainAppUser
     | 'id'
     | 'description'
     | 'birthDate'
-    | 'friendsIds'
+    | 'friendsCIds'
     | 'email'
     | 'phone'
     | 'username'
@@ -40,7 +38,9 @@ export interface IMainAppUser
     | 'name'
     | 'profilePicture'
     | 'fbId'
-  > {}
+  > {
+  friendsCIds: string[];
+}
 
 export interface IMainAppSafePartialUser
   extends Pick<
@@ -57,7 +57,7 @@ export interface IMainAppSafePartialUser
     | 'fbId'
   > {}
 export interface IMainAppSafeUser extends IMainAppSafePartialUser {
-  friendsCids: string[];
+  friendsCIds: string[];
 }
 //auth-service
 export interface IAuthUser
@@ -114,9 +114,10 @@ export interface IAuthUserWithPassword extends IAuthUser {
 //location-service
 
 export interface ILocationServiceUser
-  extends Pick<IUser, 'id' | 'cid' | 'username' | 'profilePicture' | 'name'> {
-  friendsCids: string[];
-}
+  extends Pick<
+    IUser,
+    'id' | 'cid' | 'username' | 'profilePicture' | 'name' | 'friendsCIds'
+  > {}
 
 export interface IEventsServiceUser
   extends Pick<

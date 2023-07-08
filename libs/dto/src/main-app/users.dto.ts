@@ -49,7 +49,7 @@ export class UserResponseDto implements IMainAppSafeUser {
     description: 'Cids of friends or friends(users) array',
     example: ['6436b4ff091dc0948e75671f', '6436b4fa091dc0948e7566c5'],
   })
-  friendsCids: string[];
+  friendsCIds: string[];
 
   @IdField()
   cid: string;

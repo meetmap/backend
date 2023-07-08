@@ -1,3 +1,4 @@
+import { EventResponseDto } from '@app/dto/events-fetcher/events.dto';
 import { EventsServiceUserResponseDto } from '@app/dto/events-fetcher/users.dto';
 import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common';
 import { IEventsServiceUser } from '@app/types';
@@ -8,11 +9,15 @@ import { UsersDal } from './users.dal';
 export class UsersService {
   constructor(private readonly dal: UsersDal) {}
 
-  public async getUserLikedEvents(userCId: string) {
+  public async getUserLikedEvents(
+    userCId: string,
+  ): Promise<EventResponseDto[]> {
     return await this.dal.getEventsByUserAction(userCId, 'liked');
   }
 
-  public async getUserSavedEvents(userCId: string) {
+  public async getUserSavedEvents(
+    userCId: string,
+  ): Promise<EventResponseDto[]> {
     return await this.dal.getEventsByUserAction(userCId, 'saved');
   }
 

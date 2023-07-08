@@ -1,16 +1,14 @@
 import { MainAppDatabase } from '@app/database';
-import { IFriends, IMainAppSafePartialUser, IMainAppUser } from '@app/types';
-import {
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
-import * as mongoose from 'mongoose';
+import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
+import { IMainAppSafePartialUser } from '@app/types';
+import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
-export class FreindsDal {
-  constructor(private readonly db: MainAppDatabase) {}
+export class FriendsDal extends CommonDataManipulation {
+  constructor(private readonly db: MainAppDatabase) {
+    super(db.models.friends, db.models.users);
+  }
 
   public async getUserByUsername(
     username: string,
@@ -23,7 +21,7 @@ export class FreindsDal {
         id: true,
         birthDate: true,
         email: true,
-        friendsIds: true,
+        friendsCIds: true,
         username: true,
         phone: true,
         cid: true,
@@ -39,7 +37,7 @@ export class FreindsDal {
     return null;
   }
 
-  public async getUserByCid(
+  public async getUserByCId(
     cid: string,
   ): Promise<IMainAppSafePartialUser | null> {
     const user = await this.db.models.users.findOne(
@@ -50,7 +48,7 @@ export class FreindsDal {
         id: true,
         birthDate: true,
         email: true,
-        friendsIds: true,
+        friendsCIds: true,
         username: true,
         phone: true,
         cid: true,
@@ -66,230 +64,32 @@ export class FreindsDal {
     return null;
   }
 
-  public async sendFriendshipRequest(requesterId: string, recipientId: string) {
-    if (
-      await this.db.models.friends.findOne({
-        requester: requesterId,
-        recipient: recipientId,
-      })
-    ) {
-      throw new ConflictException('Friendship request was already sent');
-    }
-    await this.db.models.friends.findOneAndUpdate(
-      {
-        requester: requesterId,
-        recipient: recipientId,
-      },
-      {
-        $set: {
-          status: 'requested',
-        },
-      },
-      {
-        upsert: true,
-        new: true,
-      },
-    );
-
-    await this.db.models.friends.findOneAndUpdate(
-      {
-        recipient: requesterId,
-        requester: recipientId,
-      },
-      {
-        $set: {
-          status: 'pending',
-        },
-      },
-      {
-        upsert: true,
-        new: true,
-      },
-    );
-
-    await this.db.models.users.findByIdAndUpdate(requesterId, {
-      $push: {
-        friendsIds: recipientId,
-      },
-    });
-
-    await this.db.models.users.findByIdAndUpdate(recipientId, {
-      $push: {
-        friendsIds: requesterId,
-      },
-    });
-  }
-  public async acceptFriendshipRequest(userId: string, requesterId: string) {
-    //check if user doesn't accept friendship requests himself
-
-    if (
-      await this.db.models.friends.findOne({
-        requester: userId,
-        recipient: requesterId,
-        status: 'requested',
-      })
-    ) {
-      throw new ForbiddenException(
-        'User can not accept friendship requests himself',
-      );
-    }
-
-    await this.db.models.friends.findOneAndUpdate(
-      {
-        requester: userId,
-        recipient: requesterId,
-      },
-      {
-        $set: {
-          status: 'friends',
-        },
-      },
-    );
-
-    await this.db.models.friends.findOneAndUpdate(
-      {
-        requester: requesterId,
-        recipient: userId,
-      },
-      {
-        $set: {
-          status: 'friends',
-        },
-      },
-    );
-  }
-
-  public async rejectFriendshipRequest(userId: string, requesterId: string) {
-    await this.db.models.friends.findOneAndRemove({
-      requester: userId,
-      recipient: requesterId,
-    });
-
-    await this.db.models.friends.findOneAndRemove({
-      requester: requesterId,
-      recipient: userId,
-    });
-    await this.db.models.users.findByIdAndUpdate(requesterId, {
-      $pull: {
-        friendsIds: userId,
-      },
-    });
-
-    await this.db.models.users.findByIdAndUpdate(userId, {
-      $pull: {
-        friendsIds: requesterId,
-      },
-    });
-  }
-
-  public async getUserFriends(userId: string, limit: number, page: number) {
-    const response =
-      await this.db.models.friends.aggregate<IUserFromFriendsAggregationResult>(
-        [
-          {
-            $match: {
-              status: 'friends',
-              requester: new mongoose.Types.ObjectId(userId),
-            },
-          },
-          ...this.getUserListFromFriendsAggregation('recipient'),
-        ],
-      );
-    return response; // response.map(({ friends }) => friends);
-  }
-
-  public async getIncomingFriendshipRequests(userId: string) {
-    return this.db.models.friends.aggregate<IUserFromFriendsAggregationResult>([
-      {
-        $match: {
-          status: 'requested',
-          recipient: new mongoose.Types.ObjectId(userId),
-        },
-      },
-      ...this.getUserListFromFriendsAggregation('requester'),
-    ]);
-  }
-
-  public async getOutcomingFriendshipRequests(userId: string) {
-    return this.db.models.friends.aggregate<IUserFromFriendsAggregationResult>([
-      {
-        $match: {
-          status: 'requested',
-          requester: new mongoose.Types.ObjectId(userId),
-        },
-      },
-      ...this.getUserListFromFriendsAggregation('recipient'),
-    ]);
-  }
-
-  private getUserListFromFriendsAggregation(
-    from: keyof Pick<IFriends, 'requester' | 'recipient'>,
+  public async sendFriendshipRequest(
+    requesterCId: string,
+    recipientCId: string,
   ) {
-    return [
-      {
-        $lookup: {
-          from: 'users',
-          // localField: 'recipient',
-          localField: from,
-          foreignField: '_id',
-          as: 'friends',
-        },
-      },
-      {
-        $unwind: {
-          path: '$friends',
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $project: {
-          friends: 1,
-        },
-      },
-      {
-        $replaceRoot: {
-          newRoot: '$friends',
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          username: 1,
-          // coordinates: 1,
-          email: 1,
-          phone: 1,
-          birthDate: 1,
-          friendsIds: 1,
-          cid: 1,
-          description: 1,
-          fbId: 1,
-          name: 1,
-          profilePicture: 1,
-        },
-      },
-      {
-        $addFields: {
-          id: {
-            $toString: '$_id',
-          },
-        },
-      },
-    ];
+    return await super.friends.sendFriendshipRequest(
+      requesterCId,
+      recipientCId,
+    );
+  }
+  public async acceptFriendshipRequest(userCId: string, requesterCId: string) {
+    return await super.friends.acceptFriendshipRequest(userCId, requesterCId);
+  }
+
+  public async rejectFriendshipRequest(userCId: string, requesterCId: string) {
+    return await super.friends.rejectFriendshipRequest(userCId, requesterCId);
+  }
+
+  public async getUserFriends(userCId: string, limit: number, page: number) {
+    return await super.friends.getUserFriends(userCId, limit, page);
+  }
+
+  public async getIncomingFriendshipRequests(userCId: string) {
+    return await super.friends.getIncomingFriendshipRequests(userCId);
+  }
+
+  public async getOutcomingFriendshipRequests(userCId: string) {
+    return await super.friends.getOutcomingFriendshipRequests(userCId);
   }
 }
-
-export interface IUserFromFriendsAggregationResult
-  extends Pick<
-    IMainAppUser,
-    | 'birthDate'
-    | 'friendsIds'
-    | 'email'
-    | 'phone'
-    | 'username'
-    | 'id'
-    | 'cid'
-    | 'description'
-    | 'fbId'
-    | 'name'
-    | 'profilePicture'
-  > {}

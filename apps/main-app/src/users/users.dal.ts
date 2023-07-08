@@ -30,7 +30,7 @@ export class UsersDal {
       email: payload.email,
       username: payload.username,
       phone: payload.phone,
-      friendsIds: [],
+      friendsCIds: [],
       // authUserId: payload.authUserId,
       cid: payload.cid,
       fbId: payload.fbId,
@@ -127,11 +127,11 @@ export class UsersDal {
     //pull out this user from friends list of every friend
     await this.db.models.users.updateMany(
       {
-        friendsIds: user.id,
+        friendsCIds: user.id,
       },
       {
         $pull: {
-          friendsIds: user.id,
+          friendsCIds: user.id,
         },
       },
     );

@@ -1,8 +1,8 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as mongoose from 'mongoose';
 
 import { BaseDatabase, IDatabaseServiceConfig } from '../types';
-import { UserSchema } from './models/user';
+import { FriendsSchema, UserSchema } from './models';
 
 @Injectable()
 export class LocationServiceDatabase implements BaseDatabase {
@@ -15,6 +15,7 @@ export class LocationServiceDatabase implements BaseDatabase {
   public get models() {
     return {
       users: mongoose.model('User', UserSchema),
+      friends: mongoose.model('Friends', FriendsSchema),
     };
   }
 }

@@ -1,20 +1,21 @@
 import { RADIANS_PER_KILOMETER } from '@app/constants';
 import { EventsFetcherDb } from '@app/database';
+import { CreateEventSchema } from '@app/dto/events-fetcher/events.dto';
 import { S3UploaderService } from '@app/s3-uploader';
 import {
   CreatorType,
-  EventType,
+  EventsUsersStatusType,
   ICity,
   IEvent,
   IEventsServiceUser,
   IEventStats,
+  IEventWithUserStats,
   ILocation,
   ITicket,
 } from '@app/types';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import * as mongoose from 'mongoose';
 import { z } from 'zod';
-import { CreateEventSchema } from './dto';
 @Injectable()
 export class EventsDal {
   constructor(
@@ -30,7 +31,7 @@ export class EventsDal {
     return event.toObject();
   }
 
-  public async getUsersLikedEvent(eventId: string) {
+  public async getUsersLikedAnEvent(eventId: string) {
     return await this.db.models.eventsUsers.aggregate<IEventsServiceUser>([
       {
         $match: {
@@ -54,7 +55,7 @@ export class EventsDal {
   public async userAction(
     userCId: string,
     eventId: string,
-    action: 'like' | 'will-go' | 'save',
+    action: 'like' | 'want-go',
   ) {
     const response = await this.db.models.eventsUsers.findOneAndUpdate(
       {
@@ -64,8 +65,8 @@ export class EventsDal {
       {
         $set: {
           isUserLike: action === 'like' ? true : undefined,
-          isUserSave: action === 'save' ? true : undefined,
-          isUserWillGo: action === 'will-go' ? true : undefined,
+          userStatus:
+            action === 'want-go' ? EventsUsersStatusType.WANT_GO : undefined,
         },
       },
       {
@@ -79,7 +80,7 @@ export class EventsDal {
   public async cancelUserAction(
     userCId: string,
     eventId: string,
-    action: 'like' | 'will-go' | 'save',
+    action: 'like' | 'want-go',
   ) {
     const response = await this.db.models.eventsUsers.findOneAndUpdate(
       {
@@ -89,8 +90,9 @@ export class EventsDal {
       {
         $set: {
           isUserLike: action === 'like' ? false : undefined,
-          isUserSave: action === 'save' ? false : undefined,
-          isUserWillGo: action === 'will-go' ? false : undefined,
+        },
+        $unset: {
+          userStatus: action === 'want-go' ? 1 : undefined,
         },
       },
       {
@@ -101,8 +103,23 @@ export class EventsDal {
     return response.toObject();
   }
 
+  public async getEventUserStats(
+    eventId: string,
+    userCId: string,
+  ): Promise<IEventWithUserStats['userStats']> {
+    const stats = await this.db.models.eventsUsers.findOne({
+      event: new mongoose.Types.ObjectId(eventId),
+      userCId,
+    });
+
+    return {
+      isUserLike: !!stats?.isUserLike,
+      userStatus: stats?.userStatus,
+    };
+  }
+
   public async getEventStats(eventId: string): Promise<IEventStats> {
-    const stats = await this.db.models.eventsUsers.aggregate([
+    const [stats] = await this.db.models.eventsUsers.aggregate<IEventStats>([
       {
         $match: {
           event: new mongoose.Types.ObjectId(eventId),
@@ -111,9 +128,27 @@ export class EventsDal {
       {
         $group: {
           _id: null,
-          saves: { $sum: { $cond: [{ $eq: ['$isUserSave', true] }, 1, 0] } },
           likes: { $sum: { $cond: [{ $eq: ['$isUserLike', true] }, 1, 0] } },
-          willGo: { $sum: { $cond: [{ $eq: ['$isUserWillGo', true] }, 1, 0] } },
+          wantGo: {
+            $sum: {
+              $cond: [
+                { $eq: ['$userStatus', EventsUsersStatusType.WANT_GO] },
+                1,
+                0,
+              ],
+            },
+          },
+          ticketsPurchased: {
+            $sum: {
+              $cond: [
+                {
+                  $eq: ['$userStatus', EventsUsersStatusType.TICKETS_PURCHASED],
+                },
+                1,
+                0,
+              ],
+            },
+          },
         },
       },
       {
@@ -122,47 +157,54 @@ export class EventsDal {
         },
       },
     ]);
-    if (Array.isArray(stats)) {
+
+    if (!stats) {
       return {
         likes: 0,
-        willGo: 0,
-        saves: 0,
+        ticketsPurchased: 0,
+        wantGo: 0,
       };
     }
     return stats satisfies IEventStats;
   }
-  public async getEventsByKeywords(keywords: string): Promise<IEvent[]> {
+  public async getEventsByKeywords(
+    userCId: string,
+    keywords: string,
+  ): Promise<IEventWithUserStats[]> {
     const regex = new RegExp(keywords, 'i');
-    return await this.db.models.event.find({
-      $or: [
-        {
-          title: {
-            $regex: regex,
-          },
+    return await this.db.models.event.aggregate([
+      {
+        $match: {
+          $or: [
+            { title: { $regex: regex } },
+            { description: { $regex: regex } },
+          ],
         },
-        {
-          description: {
-            $regex: regex,
-          },
-        },
-      ],
-    });
+      },
+      ...EventsDal.getEventsWithUserStatsAggregation(userCId),
+    ]);
   }
   public async getEventsByLocation(
+    userCId: string,
     longitude: number,
     latitude: number,
     radius: number,
   ) {
-    return await this.db.models.event.find({
-      'location.coordinates': {
-        $geoWithin: {
-          $centerSphere: [
-            [longitude, latitude],
-            this.getRadiusInRadians(radius),
-          ],
+    return await this.db.models.event.aggregate([
+      {
+        $match: {
+          'location.coordinates': {
+            $geoWithin: {
+              $centerSphere: [
+                [longitude, latitude],
+                this.getRadiusInRadians(radius),
+              ],
+            },
+          },
         },
       },
-    });
+      ...EventsDal.getEventsWithUserStatsAggregation(userCId),
+    ]);
   }
   /**
    *
@@ -210,7 +252,9 @@ export class EventsDal {
         type: CreatorType.USER,
       } satisfies IEvent['creator'],
       description: payload.description,
-      eventType: EventType[payload.eventType] ?? EventType.USER_PUBLIC,
+      //@todo check if enums are working
+      accessibility: payload.accessibility,
+      eventType: payload.eventType, // EventType[payload.eventType] ?? EventType.USER,
       title: payload.title,
       startTime: payload.startTime,
       endTime: payload.endTime,
@@ -254,7 +298,7 @@ export class EventsDal {
     if (!event) {
       throw new NotFoundException('Event not found');
     }
-    return event;
+    return event.toObject();
   }
 
   public async uploadToPublicEventsAssestsBucket(key: string, file: Buffer) {
@@ -263,5 +307,45 @@ export class EventsDal {
       file,
     );
     return url;
+  }
+
+  static getEventsWithUserStatsAggregation(userCId: string) {
+    return [
+      {
+        $lookup: {
+          from: 'eventsusers',
+          localField: '_id',
+          foreignField: 'event',
+          as: 'userStats',
+          pipeline: [
+            {
+              $match: {
+                userCId: userCId,
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                isUserLike: { $ifNull: ['$isUserLike', false] },
+                userStatus: { $ifNull: ['$userStatus', undefined] },
+              },
+            },
+          ],
+        },
+      },
+      {
+        $addFields: {
+          userStats: {
+            $ifNull: [
+              { $arrayElemAt: ['$userStats', 0] },
+              {
+                isUserLike: false,
+                userStatus: undefined,
+              },
+            ],
+          },
+        },
+      },
+    ];
   }
 }

@@ -1,4 +1,6 @@
 import {
+  CreateEventSchema,
+  EventResponseDto,
   EventStatsResponseDto,
   GetEventsByLocationRequestDto,
   SingleEventResponseDto,
@@ -12,7 +14,6 @@ import {
 import * as path from 'path';
 import { ZodError } from 'zod';
 import { EventerFetcherService } from '../eventer-fetcher/eventer-fetcher.service';
-import { CreateEventSchema } from './dto';
 import { EventsDal } from './events.dal';
 
 @Injectable()
@@ -22,23 +23,27 @@ export class EventsService {
     private readonly eventerFetcherService: EventerFetcherService,
   ) {}
 
-  public async getEventsByKeywords(keywords: string) {
-    return this.dal.getEventsByKeywords(keywords);
+  public async getEventsByKeywords(userCId: string, keywords: string) {
+    return this.dal.getEventsByKeywords(userCId, keywords);
   }
 
-  public async getEventById(eventId: string): Promise<SingleEventResponseDto> {
+  public async getEventById(
+    cid: string,
+    eventId: string,
+  ): Promise<SingleEventResponseDto> {
     const event = await this.dal.getEventById(eventId);
     if (!event) {
       throw new NotFoundException('Event not found');
     }
     const stats = await this.dal.getEventStats(eventId);
-    return { ...event, stats };
+    const userStats = await this.dal.getEventUserStats(eventId, cid);
+    return { ...event, stats, userStats };
   }
 
   public async userAction(
     userCId: string,
     eventId: string,
-    type: 'like' | 'will-go' | 'save',
+    type: 'like' | 'want-go',
   ): Promise<EventStatsResponseDto> {
     const event = await this.dal.getEventById(eventId);
     if (!event) {
@@ -50,12 +55,12 @@ export class EventsService {
   }
 
   public async getEventLikes(eventId: string) {
-    return await this.dal.getUsersLikedEvent(eventId);
+    return await this.dal.getUsersLikedAnEvent(eventId);
   }
   public async cancelUserAction(
     userCId: string,
     eventId: string,
-    type: 'like' | 'will-go' | 'save',
+    type: 'like' | 'want-go',
   ): Promise<EventStatsResponseDto> {
     const event = await this.dal.getEventById(eventId);
     if (!event) {
@@ -66,9 +71,13 @@ export class EventsService {
     return stats;
   }
 
-  public async getEventsByLocation(dto: GetEventsByLocationRequestDto) {
+  public async getEventsByLocation(
+    userCId: string,
+    dto: GetEventsByLocationRequestDto,
+  ) {
     const { latitude, longitude, radius } = dto;
     const events = await this.dal.getEventsByLocation(
+      userCId,
       longitude,
       latitude,
       radius,
@@ -81,10 +90,11 @@ export class EventsService {
     body: string,
     userCid: string,
     image: Express.Multer.File,
-  ) {
+  ): Promise<EventResponseDto> {
     try {
       const parsedJson = JSON.parse(body);
       const eventData = CreateEventSchema.parse(parsedJson);
+
       const event = await this.dal.createUserEvent(eventData, userCid);
       const imageUrl = await this.dal.uploadToPublicEventsAssestsBucket(
         event.id.concat('-main-image').concat(path.extname(image.originalname)),
@@ -94,13 +104,19 @@ export class EventsService {
         event.id,
         imageUrl,
       );
-      return eventWithPicture;
+      return {
+        ...eventWithPicture,
+        userStats: {
+          isUserLike: false,
+          userStatus: undefined,
+        },
+      };
     } catch (error) {
       if (error instanceof SyntaxError) {
-        throw new BadRequestException(error);
+        throw new BadRequestException(error.message);
       }
       if (error instanceof ZodError) {
-        throw new BadRequestException(error);
+        throw new BadRequestException(error.message);
       } else {
         console.log(error);
         throw new InternalServerErrorException('Something went wrong');
