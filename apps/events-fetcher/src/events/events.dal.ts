@@ -189,7 +189,7 @@ export class EventsDal {
     longitude: number,
     latitude: number,
     radius: number,
-  ) {
+  ): Promise<IEventWithUserStats[]> {
     return await this.db.models.event.aggregate([
       {
         $match: {
@@ -335,6 +335,9 @@ export class EventsDal {
       },
       {
         $addFields: {
+          id: {
+            $toString: '$_id',
+          },
           userStats: {
             $ifNull: [
               { $arrayElemAt: ['$userStats', 0] },
@@ -344,7 +347,7 @@ export class EventsDal {
               },
             ],
           },
-        },
+        } satisfies Partial<Record<keyof IEventWithUserStats, any>>,
       },
     ];
   }
