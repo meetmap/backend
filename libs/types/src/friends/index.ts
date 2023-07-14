@@ -1,15 +1,34 @@
-import { PopulatedDoc } from 'mongoose';
-import { IUser } from '../user';
-
-export interface IFriends {
-  requester: PopulatedDoc<IUser>;
-  recipient: PopulatedDoc<IUser>;
+export interface IFriendsBase {
+  requesterCId: string;
+  recipientCId: string;
   status: FriendshipStatus;
 }
 
-export type FriendshipStatus =
-  | 'add-friend'
-  | 'requested'
-  | 'pending'
-  | 'rejected'
-  | 'friends';
+export interface IMainAppFriends extends IFriendsBase {}
+
+export interface ILocationServiceFriends extends IFriendsBase {
+  locationStatus: FriendsLocationStatus;
+}
+
+export interface IEventsFetcherFriends extends IFriendsBase {}
+
+export enum FriendsLocationStatus {
+  SHOW_LOCATION = 'show',
+  NOT_SHOW_LOCATION = 'not-show',
+}
+
+/**
+ * requested means current user send friendship request to another user (i.e. outcoming)
+ *
+ * pending means another user send friendship request to current user (i.e. incoming)
+ */
+export enum FriendshipStatus {
+  ADD_FRIEND = 'add-friend',
+
+  REQUESTED = 'requested',
+  PENDING = 'pending',
+  REJECTED = 'rejected',
+  FRIENDS = 'friends',
+}
+
+// export interface IFriend

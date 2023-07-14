@@ -17,7 +17,9 @@ import { AuthModule } from '@app/auth';
       connectionStringEnvPath: 'LOCATION_SERVICE_DATABASE_URL',
       microserviceName: 'location-service',
     }),
-    AuthModule,
+    AuthModule.init({
+      microserviceName: 'location-service',
+    }),
     RedisModule,
     // InternalAxiosModule,
     RabbitmqModule.forRoot(),

@@ -1,7 +1,13 @@
 import {
+  CreatorType,
+  EventAccessibilityType,
+  EventsUsersStatusType,
   EventType,
   ICity,
+  ICreator,
   IEvent,
+  IEventStats,
+  IEventsUsers,
   ILocation,
   IPoint,
   IPrice,
@@ -10,7 +16,26 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { PopulatedDoc, Types } from 'mongoose';
 import { z } from 'zod';
-import { DateField, IdField, NumberField, StringField } from '../decorators';
+import {
+  BooleanField,
+  DateField,
+  IdField,
+  NestedField,
+  NumberField,
+  StringField,
+} from '../decorators';
+
+export class EventUserStatsResponseDto
+  implements Pick<IEventsUsers, 'isUserLike' | 'userStatus'>
+{
+  @BooleanField()
+  isUserLike: boolean;
+  @StringField({
+    enum: EventsUsersStatusType,
+    optional: true,
+  })
+  userStatus?: EventsUsersStatusType;
+}
 
 export class GetEventsByLocationRequestDto {
   @NumberField()
@@ -28,7 +53,7 @@ export class GetEventsByLocationRequestDto {
   radius: number;
 }
 
-export class PointDto implements IPoint {
+export class PointResponseDto implements IPoint {
   @StringField({
     enum: ['Point'],
   })
@@ -42,15 +67,13 @@ export class PointDto implements IPoint {
   coordinates: [number, number];
 }
 
-export class LocationDto implements ILocation {
+export class LocationResponseDto implements ILocation {
   @StringField()
   country: string;
   @IdField({ optional: true })
   cityId?: PopulatedDoc<ICity, Types.ObjectId | undefined>;
-  @ApiProperty({
-    type: PointDto,
-  })
-  coordinates: PointDto;
+  @NestedField(PointResponseDto)
+  coordinates: PointResponseDto;
 }
 
 export class PriceDto implements IPrice {
@@ -65,10 +88,8 @@ export class TicketDto implements ITicket {
   name: string;
   @StringField({ optional: true })
   description?: string | undefined;
-  @ApiProperty({
-    type: PriceDto,
-  })
-  price: IPrice;
+  @NestedField(PriceDto)
+  price: PriceDto;
   @NumberField({
     min: -1,
     description: `-1 means Infinity; 0 means OOS; `,
@@ -76,7 +97,68 @@ export class TicketDto implements ITicket {
   amount: number;
 }
 
-export class EventResponseDto implements IEvent {
+export class CreatorResponseDto implements ICreator {
+  type: CreatorType;
+  creatorCid: string;
+}
+
+export class EventResponseDto
+  implements
+    Pick<
+      IEvent,
+      | 'id'
+      | 'slug'
+      | 'title'
+      | 'picture'
+      | 'startTime'
+      | 'endTime'
+      | 'ageLimit'
+      | 'creator'
+      | 'location'
+      | 'eventType'
+    >
+{
+  @IdField()
+  id: string;
+  @StringField()
+  slug: string;
+  @StringField()
+  title: string;
+  @StringField({ optional: true })
+  picture?: string | undefined;
+
+  @DateField()
+  startTime: Date;
+  @DateField()
+  endTime: Date;
+  @NumberField()
+  ageLimit: number;
+  @NestedField(CreatorResponseDto, {
+    optional: true,
+  })
+  creator?: CreatorResponseDto;
+  @NestedField(LocationResponseDto)
+  location: LocationResponseDto;
+  @StringField({
+    enum: EventType,
+  })
+  eventType: EventType;
+  @NestedField(EventUserStatsResponseDto, {})
+  userStats: EventUserStatsResponseDto;
+}
+
+export class EventStatsResponseDto implements IEventStats {
+  @NumberField()
+  likes: number;
+
+  @NumberField()
+  ticketsPurchased: number;
+
+  @NumberField()
+  wantGo: number;
+}
+
+export class SingleEventResponseDto implements IEvent {
   @IdField()
   id: string;
   @StringField()
@@ -97,20 +179,27 @@ export class EventResponseDto implements IEvent {
   endTime: Date;
   @NumberField()
   ageLimit: number;
-  @IdField({ optional: true })
-  creatorId?: string | undefined;
-  @ApiProperty({
-    type: LocationDto,
+
+  @StringField({ enum: EventAccessibilityType })
+  accessibility: EventAccessibilityType;
+
+  @NestedField(CreatorResponseDto, {
+    optional: true,
   })
-  location: LocationDto;
+  creator?: CreatorResponseDto;
+  @NestedField(LocationResponseDto)
+  location: LocationResponseDto;
   @StringField({
     enum: EventType,
   })
   eventType: EventType;
-  @ApiProperty({
-    type: [TicketDto],
-  })
-  tickets: ITicket[];
+  @NestedField([TicketDto])
+  tickets: TicketDto[];
+  @NestedField(EventStatsResponseDto, {})
+  stats: EventStatsResponseDto;
+
+  @NestedField(EventUserStatsResponseDto, {})
+  userStats: EventUserStatsResponseDto;
   @DateField()
   createdAt: Date;
   @DateField()
@@ -123,11 +212,12 @@ export class CreateEventRequestDto {
     description: 'Stringified json',
     example: JSON.stringify(
       {
-        ageLimit: 0,
+        ageLimit: 1,
         description: 'description',
         endTime: new Date('2003-04-01T21:00:00.000Z'),
         startTime: new Date('2003-04-01T21:00:00.000Z'),
-        eventType: 'USER_PRIVATE',
+        accessibility: EventAccessibilityType.PUBLIC,
+        eventType: EventType.USER,
         location: {
           lat: 1,
           lng: 1,
@@ -142,7 +232,7 @@ export class CreateEventRequestDto {
           },
         ],
         title: 'title',
-      } satisfies z.infer<typeof CreateEventSchema>,
+      } as z.infer<typeof CreateEventSchema>,
       null,
       2,
     ),
@@ -155,7 +245,7 @@ export class CreateEventRequestDto {
     required: true,
     description: 'fileType: image/*; maxSize: 3.5mb',
   })
-  file: Express.Multer.File;
+  photo: Express.Multer.File;
 }
 
 export const TicketSchema = z.object({
@@ -163,13 +253,14 @@ export const TicketSchema = z.object({
   price: z.number().max(100000),
   amount: z.number().min(-1).max(1000000).optional().default(-1),
   description: z.string().optional().nullable().default(null),
-});
-//@todo make startTime and endTime validation
+}); //@todo make startTime and endTime validation
+
 export const CreateEventSchema = z.object({
   title: z.string(),
   description: z.string().optional().nullable().default(null),
   slug: z.string(),
-  eventType: z.enum(['USER_PUBLIC', 'USER_PRIVATE']),
+  eventType: z.nativeEnum(EventType),
+  accessibility: z.nativeEnum(EventAccessibilityType),
   startTime: z.coerce.date(),
   endTime: z.coerce.date(),
   ageLimit: z.number().min(1).max(120),

@@ -1,14 +1,22 @@
-import { JwtService } from '@app/auth';
-import { MAX_AGE, MIN_AGE, RabbitMQExchanges } from '@app/constants';
-import { UserRmqRequestDto } from '@app/dto/main-app/users.dto';
-import { RabbitmqService } from '@app/rabbitmq';
-import { IMainAppSafeUser, IUser } from '@app/types';
+import { RMQConstants } from '@app/constants';
+import { IGetUserListWithFriendshipStatusAggregationResult } from '@app/database/shared-aggregations';
 import {
-  BadRequestException,
-  ConflictException,
+  UserPartialResponseDto,
+  UserResponseDto,
+} from '@app/dto/main-app/users.dto';
+import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
+import { RabbitmqService } from '@app/rabbitmq';
+import {
+  IMainAppSafeUser,
+  IMainAppSafeUserWithoutFriends,
+  IMainAppUser,
+  IRmqUser,
+  IUser,
+} from '@app/types';
+import {
+  ForbiddenException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { UsersDal } from './users.dal';
 
@@ -16,18 +24,26 @@ import { UsersDal } from './users.dal';
 export class UsersService {
   constructor(
     private readonly dal: UsersDal,
-    private readonly rmq: RabbitmqService,
-    private readonly jwtService: JwtService,
+    private readonly rmqService: RabbitmqService,
   ) {}
 
-  public async createUser(payload: UserRmqRequestDto) {
+  public async createUser(
+    payload: UserRmqRequestDto,
+  ): Promise<UserResponseDto> {
     const user = await this.dal.createUser(payload);
-    return UsersService.mapUserDbToResponseUser(user);
+    return UsersService.mapUserDbToResponseUser(user, []);
   }
 
-  public async updateUser(payload: UserRmqRequestDto) {
+  public async updateUser(
+    payload: UserRmqRequestDto,
+  ): Promise<UserResponseDto | null> {
     const user = await this.dal.updateUser(payload.cid, payload);
-    return user ? UsersService.mapUserDbToResponseUser(user) : null;
+    if (!user) {
+      return null;
+    }
+    const friends = await this.dal.getUserFriends(payload.cid);
+
+    return UsersService.mapUserDbToResponseUser(user, friends);
   }
 
   public async deleteUser(cid: string) {
@@ -35,51 +51,114 @@ export class UsersService {
     return userId;
   }
 
-  // public async updateUserLocation(userId: string, dto: UpdateUserLocationDto) {
-  //   this.rmq.amqp.publish(
-  //     RabbitMQExchanges.LOCATION_EXCHANGE,
-  //     'update-location',
-  //     {
-  //       userId: userId,
-  //       ...dto,
-  //     },
-  //   );
-  //   return dto;
-  // }
-
-  public async getUserSelf(cid: string): Promise<IMainAppSafeUser> {
-    const user = await this.dal.findUserByCorrelationId(cid);
+  public async getUserSelf(cid: string): Promise<UserResponseDto> {
+    const user = await this.dal.findUserByCid(cid);
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    const friends = await this.dal.getUserFriends(cid);
 
-    return UsersService.mapUserDbToResponseUser(user);
+    return UsersService.mapUserDbToResponseUser(user, friends);
   }
 
-  public async findUsers(query: string): Promise<IMainAppSafeUser[]> {
-    const users = await this.dal.findUsersByQueryUsername(query);
-    return users.map((user) => UsersService.mapUserDbToResponseUser(user));
+  public async findUsers(
+    userCId: string,
+    query: string,
+  ): Promise<UserPartialResponseDto[]> {
+    const users = await this.dal.findUsersByQueryUsername(userCId, query);
+    return users.map((user) =>
+      UsersService.mapUserDbToResponsePartialUser(user),
+    );
   }
 
-  public async getUserByCId(cid: string): Promise<IMainAppSafeUser> {
-    const user = await this.dal.findUserByCId(cid);
+  public async getUserByCid(cid: string): Promise<IMainAppSafeUser> {
+    const user = await this.dal.findUserByCid(cid);
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return UsersService.mapUserDbToResponseUser(user);
+    const friends = await this.dal.getUserFriends(cid);
+
+    return UsersService.mapUserDbToResponseUser(user, friends);
+  }
+
+  public async updateUserProfilePicture(
+    cid: string,
+    photo: Express.Multer.File,
+  ) {
+    const user = await this.dal.findUserByCid(cid);
+    if (!user) {
+      throw new ForbiddenException('User not found');
+    }
+    // const friendsCids = await this.dal.getFriendsCids(user.id);
+
+    const url = await this.dal.uploadUserProfilePicture(cid, photo);
+    // user.profilePicture = url
+    const updatedUser: IUser = {
+      ...user.toJSON(),
+      profilePicture: url,
+    };
+    const friends = await this.dal.getUserFriends(cid);
+
+    const result = await this.rmqService.amqp.publish(
+      RMQConstants.exchanges.USERS.name,
+      RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
+      UsersService.mapDbUserToRmqUser(updatedUser),
+    );
+
+    return UsersService.mapUserDbToResponseUser(updatedUser, friends);
+  }
+
+  static mapDbUserToRmqUser(user: IMainAppUser): IRmqUser {
+    return {
+      birthDate: user.birthDate,
+      cid: user.cid,
+      email: user.email,
+      id: user.id,
+      username: user.username,
+      description: user.description,
+      phone: user.phone,
+      fbId: user.fbId,
+      name: user.name,
+      profilePicture: user.profilePicture,
+    };
   }
 
   static mapUserDbToResponseUser(
     user: IUser | IMainAppSafeUser,
-  ): IMainAppSafeUser {
+    friends: IMainAppSafeUserWithoutFriends[],
+  ): UserResponseDto {
     return {
       id: user.id,
       birthDate: user.birthDate,
-      friendsIds: user.friendsIds,
+      friends: friends,
       email: user.email,
       phone: user.phone,
       username: user.username,
       cid: user.cid,
+      description: user.description,
+      fbId: user.fbId,
+      name: user.name,
+      profilePicture: user.profilePicture,
+      // authUserId: user.authUserId,
+    };
+  }
+
+  static mapUserDbToResponsePartialUser(
+    user: IGetUserListWithFriendshipStatusAggregationResult<IMainAppUser>,
+  ): UserPartialResponseDto {
+    return {
+      id: user.id,
+      birthDate: user.birthDate,
+      email: user.email,
+      phone: user.phone,
+      username: user.username,
+      cid: user.cid,
+      description: user.description,
+      fbId: user.fbId,
+      name: user.name,
+      profilePicture: user.profilePicture,
+      friendshipStatus: user.friendshipStatus,
+
       // authUserId: user.authUserId,
     };
   }

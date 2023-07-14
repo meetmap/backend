@@ -1,4 +1,4 @@
-import { IAuthUser, IUser } from '@app/types';
+import { IAuthUser } from '@app/types';
 import * as mongoose from 'mongoose';
 
 export const UserSchema = new mongoose.Schema<IAuthUser>(
@@ -7,6 +7,9 @@ export const UserSchema = new mongoose.Schema<IAuthUser>(
       type: mongoose.SchemaTypes.String,
       unique: true,
       required: true,
+    },
+    name: {
+      type: mongoose.SchemaTypes.String,
     },
     refreshToken: {
       type: mongoose.SchemaTypes.String,
@@ -32,6 +35,14 @@ export const UserSchema = new mongoose.Schema<IAuthUser>(
       type: mongoose.SchemaTypes.String,
       required: true,
       unique: true,
+    },
+    fbToken: {
+      type: mongoose.SchemaTypes.String,
+    },
+    fbId: {
+      type: mongoose.SchemaTypes.String,
+      unique: true,
+      sparse: true,
     },
   },
   {

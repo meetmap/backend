@@ -1,3 +1,4 @@
+import { PopulatedDoc } from 'mongoose';
 import { ILocation } from '../location';
 
 export interface IEvent {
@@ -19,11 +20,12 @@ export interface IEvent {
 
   ageLimit: number;
 
-  creatorId?: string;
-
+  creator?: ICreator;
   location: ILocation;
 
   eventType: EventType;
+
+  accessibility: EventAccessibilityType;
 
   tickets: ITicket[];
 
@@ -31,10 +33,30 @@ export interface IEvent {
   updatedAt: Date;
 }
 
+export interface ICreator {
+  type: CreatorType;
+  creatorCid: string;
+}
+export enum CreatorType {
+  USER = 'user',
+  TICKETING_PLATFOFRM = 'ticketing-platform',
+}
+
 export enum EventType {
-  USER_PUBLIC = 'user-public',
-  USER_PRIVATE = 'user-private',
-  PARTNER_EVENT = 'partner-event',
+  USER = 'user',
+  ORGANIZER = 'organizer',
+  PARTNER = 'partner',
+}
+
+export enum EventAccessibilityType {
+  PUBLIC = 'public',
+  PRIVATE = 'private',
+}
+
+export enum EventsUsersStatusType {
+  WANT_GO = 'want-go',
+  APPROVED = 'approved',
+  TICKETS_PURCHASED = 'tickets-purchased',
 }
 
 export interface ITicket {
@@ -53,4 +75,20 @@ export interface IPrice {
   currency: string;
 
   amount: number;
+}
+
+export interface IEventsUsers {
+  event: PopulatedDoc<IEvent>;
+  userCId: string;
+  userStatus?: EventsUsersStatusType;
+  isUserLike: boolean;
+}
+
+export interface IEventStats {
+  likes: number;
+  ticketsPurchased: number;
+  wantGo: number;
+}
+export interface IEventWithUserStats extends IEvent {
+  userStats: Pick<IEventsUsers, 'isUserLike' | 'userStatus'>;
 }

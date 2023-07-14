@@ -1,6 +1,6 @@
 import { RMQConstants } from '@app/constants';
 import { UpdateFriendshipRMQRequestDto } from '@app/dto/main-app/friends.dto';
-import { UserRmqRequestDto } from '@app/dto/main-app/users.dto';
+import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
 import {
   Nack,
   RabbitPayload,
@@ -18,8 +18,9 @@ export class UsersController {
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.USERS.name,
     routingKey: [
-      RMQConstants.exchanges.USERS.routes.USER_CREATED,
-      RMQConstants.exchanges.USERS.routes.USER_DELETED,
+      RMQConstants.exchanges.USERS.routingKeys.USER_CREATED,
+      RMQConstants.exchanges.USERS.routingKeys.USER_DELETED,
+      RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
     ],
     queue: RMQConstants.exchanges.USERS.queues.LOCATION_SERVICE,
   })
@@ -36,11 +37,15 @@ export class UsersController {
       },
     });
 
-    if (routingKey === RMQConstants.exchanges.USERS.routes.USER_CREATED) {
+    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_CREATED) {
       await this.usersService.handleCreateUser(payload);
       return;
     }
-    if (routingKey === RMQConstants.exchanges.USERS.routes.USER_DELETED) {
+    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED) {
+      await this.usersService.handleUpdateUser(payload);
+      return;
+    }
+    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_DELETED) {
       await this.usersService.handleDeleteUser(payload);
       return;
     } else {
@@ -51,8 +56,8 @@ export class UsersController {
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.USERS.name,
     routingKey: [
-      RMQConstants.exchanges.USERS.routes.USER_CREATED,
-      RMQConstants.exchanges.USERS.routes.USER_DELETED,
+      RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_ADDED,
+      RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REMOVED,
     ],
     queue: RMQConstants.exchanges.USERS.queues.LOCATION_SERVICE,
   })
@@ -65,22 +70,26 @@ export class UsersController {
       handler: this.handleFriendship.name,
       routingKey: routingKey,
       msg: {
-        userCid: payload.userCid,
-        friendCid: payload.friendCid,
+        userCid: payload.userCId,
+        friendCid: payload.friendCId,
       },
     });
 
-    if (routingKey === RMQConstants.exchanges.FRIENDS.routes.FRIEND_ADDED) {
+    if (
+      routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_ADDED
+    ) {
       await this.usersService.handleAddFriend(
-        payload.userCid,
-        payload.friendCid,
+        payload.userCId,
+        payload.friendCId,
       );
       return;
     }
-    if (routingKey === RMQConstants.exchanges.FRIENDS.routes.FRIEND_REMOVED) {
+    if (
+      routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REMOVED
+    ) {
       await this.usersService.handleRemoveFriend(
-        payload.userCid,
-        payload.friendCid,
+        payload.userCId,
+        payload.friendCId,
       );
       return;
     } else {

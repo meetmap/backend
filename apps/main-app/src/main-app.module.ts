@@ -1,12 +1,12 @@
 import { AuthModule } from '@app/auth';
 import { DatabaseModule } from '@app/database';
 import { RabbitmqModule } from '@app/rabbitmq';
+import { S3UploaderModule } from '@app/s3-uploader';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { FriendsModule } from './friends/friends.module';
-import { UsersModule } from './users/users.module';
-import { InternalAxiosModule } from '@app/axios';
 import { MainAppController } from './main-app.controller';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -19,7 +19,10 @@ import { MainAppController } from './main-app.controller';
     }),
     RabbitmqModule.forRoot(),
     // InternalAxiosModule,
-    AuthModule,
+    AuthModule.init({
+      microserviceName: 'main-app',
+    }),
+    S3UploaderModule,
     UsersModule,
     FriendsModule,
   ],

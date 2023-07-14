@@ -1,16 +1,40 @@
 import { MainAppDatabase } from '@app/database';
-import { IAuthUser, IMainAppUser, IUser } from '@app/types';
-import { ConflictException, Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import { sortUsersAggregationPipeline } from '@app/database/shared-aggregations';
+import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
+import { S3UploaderService } from '@app/s3-uploader';
+import { IMainAppFriends, IMainAppUser, IRmqUser } from '@app/types';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import * as mongoose from 'mongoose';
+import * as path from 'path';
 
 @Injectable()
-export class UsersDal {
-  constructor(private readonly db: MainAppDatabase) {}
+export class UsersDal implements OnModuleInit {
+  private dataManipulation: CommonDataManipulation<
+    IMainAppFriends,
+    IMainAppUser
+  >;
+  constructor(
+    private readonly db: MainAppDatabase,
+    private readonly s3Service: S3UploaderService,
+  ) {}
+  onModuleInit() {
+    this.dataManipulation = new CommonDataManipulation(
+      this.db.models.friends,
+      this.db.models.users,
+    );
+  }
   public async createUser(
     payload: Pick<
-      IMainAppUser,
-      'birthDate' | 'email' | 'username' | 'phone' | 'authUserId' | 'cid'
+      IRmqUser,
+      | 'birthDate'
+      | 'email'
+      | 'username'
+      | 'phone'
+      // | 'authUserId'
+      | 'cid'
+      | 'fbId'
+      | 'name'
     >,
   ) {
     return await this.db.models.users.create({
@@ -18,15 +42,73 @@ export class UsersDal {
       email: payload.email,
       username: payload.username,
       phone: payload.phone,
-      friendsIds: [],
-      authUserId: payload.authUserId,
+      // authUserId: payload.authUserId,
       cid: payload.cid,
+      fbId: payload.fbId,
+      name: payload.name,
     });
+  }
+
+  public async getFriendsCids(userId: string) {
+    const response = await this.db.models.friends.aggregate<{ cid: string }>([
+      {
+        $match: {
+          status: 'friends',
+          requester: new mongoose.Types.ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'recipient',
+          foreignField: '_id',
+          as: 'friends',
+        },
+      },
+      {
+        $unwind: {
+          path: '$friends',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          friends: 1,
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: '$friends',
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          cid: 1,
+        },
+      },
+    ]);
+    return response.map(({ cid }) => cid); // response.map(({ friends }) => friends);
+  }
+
+  public async getUserFriends(cid: string) {
+    return await this.dataManipulation.friends.getUserFriends(cid, 0, 0);
   }
 
   public async updateUser(
     cid: string,
-    payload: Partial<Pick<IMainAppUser, 'username' | 'phone' | 'email'>>,
+    payload: Partial<
+      Pick<
+        IMainAppUser,
+        | 'phone'
+        | 'email'
+        | 'username'
+        | 'name'
+        | 'fbId'
+        | 'description'
+        | 'profilePicture'
+      >
+    >,
   ) {
     return await this.db.models.users.findOneAndUpdate(
       {
@@ -34,9 +116,13 @@ export class UsersDal {
       },
       {
         $set: {
-          username: payload.username,
-          email: payload.email,
           phone: payload.phone,
+          email: payload.email,
+          username: payload.username,
+          name: payload.name,
+          fbId: payload.fbId,
+          description: payload.description,
+          profilePicture: payload.profilePicture,
         },
       },
       {
@@ -56,11 +142,11 @@ export class UsersDal {
     //pull out this user from friends list of every friend
     await this.db.models.users.updateMany(
       {
-        friendsIds: user.id,
+        friendsCIds: user.id,
       },
       {
         $pull: {
-          friendsIds: user.id,
+          friendsCIds: user.id,
         },
       },
     );
@@ -76,43 +162,44 @@ export class UsersDal {
     return user.id;
   }
 
-  public async comparePassword(password: string, hash?: string) {
-    if (!hash) {
-      return false;
-    }
-    return await bcrypt.compare(password, hash);
-  }
-
-  public async hashPassword(password: string) {
-    return await bcrypt.hash(password, 12);
-  }
-
   public async findUserByEmail(email: string) {
     return await this.db.models.users.findOne({
       email: email,
     });
   }
 
-  public async findUsersByQueryUsername(query: string) {
-    return await this.db.models.users
-      .find({
-        username: new RegExp(query, 'i'),
-      })
+  public async findUsersByQueryUsername(userCId: string, query: string) {
+    return await this.dataManipulation.users
+      .getUsersWithFriendshipStatus(
+        userCId,
+        [
+          {
+            $match: {
+              $or: [
+                {
+                  username: new RegExp(query, 'i'),
+                },
+                {
+                  description: new RegExp(query, 'i'),
+                },
+                {
+                  name: new RegExp(query, 'i'),
+                },
+              ],
+            },
+          },
+        ],
+        sortUsersAggregationPipeline,
+      )
       .limit(15);
   }
 
-  public async findUserById(userId: string): Promise<IUser | null> {
+  public async findUserById(userId: string): Promise<IMainAppUser | null> {
     return await this.db.models.users.findById(userId);
   }
 
-  public async findUserByCId(cid: string): Promise<IUser | null> {
+  public async findUserByCid(cid: string) {
     return await this.db.models.users.findOne({ cid });
-  }
-
-  public async findUserByCorrelationId(cid: string): Promise<IUser | null> {
-    return await this.db.models.users.findOne({
-      cid: cid,
-    });
   }
 
   public async findUserByUsername(username: string) {
@@ -125,5 +212,18 @@ export class UsersDal {
     return await this.db.models.users.findOne({
       phone: phone,
     });
+  }
+
+  public async uploadUserProfilePicture(
+    cid: string,
+    file: Express.Multer.File,
+  ) {
+    const { url } = await this.s3Service.upload(
+      'users-assets/'
+        .concat(cid + '_profile-picture_' + randomUUID())
+        .concat(path.extname(file.originalname)),
+      file.buffer,
+    );
+    return url;
   }
 }

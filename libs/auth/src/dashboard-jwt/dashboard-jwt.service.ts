@@ -10,7 +10,7 @@ interface IJwtOptions {
 }
 
 @Injectable()
-export class JwtService {
+export class DashboardJwtService {
   private readonly jwtAt: IJwtOptions;
   private readonly jwtRt: IJwtOptions;
   constructor(private readonly configService: ConfigService) {

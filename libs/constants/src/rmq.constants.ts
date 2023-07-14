@@ -7,8 +7,9 @@ export class RMQConstants {
         queues: {
           USER_SERVICE: 'users_service_queue',
           LOCATION_SERVICE: 'location_service_queue',
+          EVENTS_SERVICE: 'events_service_queue',
         },
-        routes: {
+        routingKeys: {
           USER_CREATED: 'user.created',
           USER_UPDATED: 'user.updated',
           USER_DELETED: 'user.deleted',
@@ -21,7 +22,7 @@ export class RMQConstants {
         queues: {
           LOCATION_SERVICE: 'location_service_friends_queue',
         },
-        routes: {
+        routingKeys: {
           FRIEND_ADDED: 'friend.added',
           FRIEND_REMOVED: 'friend.removed',
         },
@@ -33,7 +34,7 @@ export class RMQConstants {
 export interface IRMQExchange {
   name: string;
   queues: Record<string, string>;
-  routes: Record<string, string>;
+  routingKeys: Record<string, string>;
   type: 'topic' | 'direct' | 'fanout';
 }
 

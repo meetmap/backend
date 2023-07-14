@@ -10,7 +10,7 @@ export class LocationService {
     cid: string,
     dto: UpdateUserLocationRequestDto,
   ) {
-    const user = await this.dal.getUserByCId(cid);
+    const user = await this.dal.getUserByCid(cid);
     if (!user) {
       throw new ForbiddenException('Invalid user');
     }
@@ -20,10 +20,12 @@ export class LocationService {
     });
   }
   public async getFriendsLocation(cid: string) {
-    const userFriends = await this.dal.getUserFriendsCIds(cid);
+    const userFriends = await this.dal.getUserFriends(cid);
     if (!userFriends) {
       throw new ForbiddenException('Invalid user');
     }
-    return await this.dal.getUsersLocationBulk(userFriends);
+    return await this.dal.getUsersLocationBulk(
+      userFriends.map((user) => user.cid),
+    );
   }
 }

@@ -1,17 +1,21 @@
-import { JwtService } from '@app/auth';
+import { FacebookAuthProvider } from '@app/auth-providers/facebook';
+import { JwtService } from '@app/auth/jwt';
 import { MAX_AGE, MIN_AGE, RMQConstants } from '@app/constants';
 import {
   CreateUserRequestDto,
+  LoginWithAuthProviderRequestDto,
   LoginWithPasswordDto,
+  SignUpWithAuthProviderRequestDto,
   UpdateUsersUsernameRequestDto,
 } from '@app/dto/auth-service/auth.dto';
-import { UserRmqRequestDto } from '@app/dto/main-app/users.dto';
+import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
 import { RabbitmqService } from '@app/rabbitmq';
-import { ISafeAuthUser, IMainAppSafeUser, IUser } from '@app/types';
+import { IAuthUser, ISafeAuthUser } from '@app/types';
 import {
   BadRequestException,
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -23,6 +27,7 @@ export class AuthService {
     private readonly dal: AuthDal,
     private readonly rmq: RabbitmqService,
     private readonly jwtService: JwtService,
+    private readonly fbAuthProvider: FacebookAuthProvider,
   ) {}
 
   public async createUser(payload: CreateUserRequestDto) {
@@ -31,7 +36,9 @@ export class AuthService {
         `Invalid birth date, min age is ${MIN_AGE} years and max age is ${MAX_AGE} years`,
       );
     }
-    const userExists = await this.dal.findUserByEmail(payload.email);
+    const userExists =
+      (await this.dal.findUserByEmail(payload.email)) ||
+      (await this.dal.findUserByUsername(payload.username));
     if (userExists) {
       throw new ConflictException('User already exists');
     }
@@ -39,14 +46,14 @@ export class AuthService {
     const safeUser = AuthService.mapUserDbToResponseUser(user);
     this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
-      RMQConstants.exchanges.USERS.routes.USER_CREATED,
+      RMQConstants.exchanges.USERS.routingKeys.USER_CREATED,
       this.mapUserDbToRmqRequest(user) satisfies UserRmqRequestDto,
     );
     return safeUser;
   }
 
   public async getTokensAndRefreshRT(
-    user: Pick<IUser, 'id' | 'username' | 'cid'>,
+    user: Pick<IAuthUser, 'id' | 'username' | 'cid'>,
   ) {
     const jwt = await this.jwtService.getTokens({
       sub: user.id,
@@ -72,6 +79,16 @@ export class AuthService {
     }
   }
 
+  public async refreshAccessToken(refreshToken: string) {
+    const jwtPayload = await this.jwtService.verifyRt(refreshToken);
+    const user = await this.dal.findUserById(jwtPayload.sub);
+    if (!user || user.refreshToken !== refreshToken) {
+      throw new UnauthorizedException('Invalid token');
+    }
+    const at = await this.jwtService.getAt(refreshToken);
+    return at;
+  }
+
   public async updateUsersRefreshToken(userId: string, refreshToken: string) {
     return await this.dal.updateUsersRefreshToken(userId, refreshToken);
   }
@@ -93,7 +110,6 @@ export class AuthService {
     return user;
   }
   public async loginWithEmailAndPassword(email: string, password: string) {
-    console.log('zalupa');
     const user = await this.dal.findUserByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Email or password is wrong');
@@ -152,9 +168,9 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
     const safeUser = AuthService.mapUserDbToResponseUser(updatedUser);
-    this.rmq.amqp.publish(
+    await this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
-      RMQConstants.exchanges.USERS.routes.USER_UPDATED,
+      RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
       this.mapUserDbToRmqRequest(updatedUser) satisfies UserRmqRequestDto,
     );
     return safeUser;
@@ -176,6 +192,89 @@ export class AuthService {
     );
   }
 
+  public async signUpWithFacebook(payload: SignUpWithAuthProviderRequestDto) {
+    const longLiveToken = await this.fbAuthProvider.getLongLiveToken(
+      payload.token,
+    );
+    const fbUser = await this.fbAuthProvider.getUser(longLiveToken);
+    const email = fbUser.email ?? payload.email;
+    const phone = fbUser.phone ?? payload.phone;
+    const birthDate = fbUser.birthDate ?? payload.birthDate;
+    const name = fbUser.name ?? payload.name;
+    if (!email) {
+      throw new BadRequestException("Email hasn't been provided");
+    }
+    if (!birthDate) {
+      throw new BadRequestException("Birth date hasn't been provided");
+    }
+    if (!this.isValidBirthDate(birthDate)) {
+      throw new BadRequestException(
+        `Invalid birth date, min age is ${MIN_AGE} years and max age is ${MAX_AGE} years`,
+      );
+    }
+    if (await this.dal.getUserByFbId(fbUser.id)) {
+      throw new ConflictException('User with this facebook already exists');
+    }
+
+    const userExists =
+      (await this.dal.findUserByEmail(email)) ||
+      (await this.dal.findUserByUsername(payload.username));
+    if (userExists) {
+      throw new ConflictException('User already exists');
+    }
+
+    const user = await this.dal.createUserWithAuthProvider({
+      birthDate: birthDate,
+      email: email,
+      username: payload.username,
+      fbId: fbUser.id,
+      fbToken: fbUser.token,
+      phone: phone,
+      name: name,
+    });
+
+    const safeUser = AuthService.mapUserDbToResponseUser(user);
+    this.rmq.amqp.publish(
+      RMQConstants.exchanges.USERS.name,
+      RMQConstants.exchanges.USERS.routingKeys.USER_CREATED,
+      this.mapUserDbToRmqRequest(user) satisfies UserRmqRequestDto,
+    );
+    return safeUser;
+  }
+
+  public async loginWithFacebook(payload: LoginWithAuthProviderRequestDto) {
+    const longLiveToken = await this.fbAuthProvider.getLongLiveToken(
+      payload.token,
+    );
+    const fbUser = await this.fbAuthProvider.getUser(longLiveToken);
+    const user = await this.dal.getUserByFbId(fbUser.id);
+    if (!user) {
+      throw new NotFoundException("User with this facebook doesn't exist");
+    }
+
+    const safeUser = AuthService.mapUserDbToResponseUser(user);
+    return safeUser;
+  }
+
+  public async linkFacebook(user: IAuthUser, token: string) {
+    const longLiveToken = await this.fbAuthProvider.getLongLiveToken(token);
+    const fbUser = await this.fbAuthProvider.getUser(longLiveToken);
+    const fbUserExists = await this.dal.getUserByFbId(fbUser.id);
+    if (fbUserExists) {
+      throw new ConflictException('User with this facebook already exists');
+    }
+    const updatedUser = await this.dal.linkFbToUser(user.id, fbUser);
+    if (!updatedUser) {
+      throw new InternalServerErrorException("User hasn't been updated");
+    }
+    await this.rmq.amqp.publish(
+      RMQConstants.exchanges.USERS.name,
+      RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
+      this.mapUserDbToRmqRequest(updatedUser) satisfies UserRmqRequestDto,
+    );
+    return updatedUser;
+  }
+
   private mapUserDbToRmqRequest(user: ISafeAuthUser): UserRmqRequestDto {
     return {
       id: user.id,
@@ -184,7 +283,9 @@ export class AuthService {
       username: user.username,
       birthDate: user.birthDate,
       cid: user.cid,
-      authUserId: user.id,
+      // authUserId: user.id,
+      fbId: user.fbId,
+      name: user.name,
     };
   }
 
@@ -196,6 +297,8 @@ export class AuthService {
       username: user.username,
       birthDate: user.birthDate,
       cid: user.cid,
+      name: user.name,
+      fbId: user.fbId,
     };
   }
 }

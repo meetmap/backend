@@ -12,8 +12,8 @@ export class UpdateFriendshipRequestDto {
 
 export class UpdateFriendshipRMQRequestDto {
   @IdField()
-  userCid: string;
+  userCId: string;
 
   @IdField()
-  friendCid: string;
+  friendCId: string;
 }

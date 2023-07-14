@@ -1,18 +1,38 @@
 import { LocationServiceDatabase } from '@app/database';
+import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
 import { RedisService } from '@app/redis';
-import { ICoordinates, IUserLocation } from '@app/types';
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  ICoordinates,
+  ILocationServiceFriends,
+  ILocationServiceUser,
+  IUserLocation,
+} from '@app/types';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 
 @Injectable()
-export class LocationDal {
+export class LocationDal implements OnModuleInit {
+  private dataManipulation: CommonDataManipulation<
+    ILocationServiceFriends,
+    ILocationServiceUser
+  >;
   constructor(
     @Inject(RedisService.name)
     private readonly redisClient: RedisService<IUserLocation>,
     private readonly db: LocationServiceDatabase,
   ) {}
+  onModuleInit() {
+    this.dataManipulation = new CommonDataManipulation(
+      this.db.models.friends,
+      this.db.models.users,
+    );
+  }
 
-  public async getUserByCId(cid: string) {
+  public async getUserByCid(cid: string) {
     return await this.db.models.users.findOne({ cid });
+  }
+
+  public async getUserFriends(cid: string) {
+    return await this.dataManipulation.friends.getUserFriends(cid, 0, 0);
   }
 
   public async updateUserLocation(cid: string, coordinates: ICoordinates) {
@@ -37,19 +57,19 @@ export class LocationDal {
       },
     };
   }
-  public async getUserLocation(userCId: string): Promise<IUserLocation | null> {
-    return this.redisClient.get(userCId);
+  public async getUserLocation(userCid: string): Promise<IUserLocation | null> {
+    return this.redisClient.get(userCid);
   }
 
-  public async getUserFriendsCIds(cid: string) {
-    const user = await this.db.models.users.findOne({
-      cid,
-    });
-    if (!user) {
-      return null;
-    }
-    return user.friendsCids;
-  }
+  // public async getUserFriendsCids(cid: string) {
+  //   const user = await this.db.models.users.findOne({
+  //     cid,
+  //   });
+  //   if (!user) {
+  //     return null;
+  //   }
+  //   return user.friendsCIds;
+  // }
 
   public async getUsersLocationBulk(
     userIds: string[],

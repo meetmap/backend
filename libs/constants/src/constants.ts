@@ -6,7 +6,9 @@ export const MIN_AGE = 12;
 export const MAX_AGE = 120;
 export const RADIANS_PER_KILOMETER = 1 / 6371.01;
 
-export const SERVER_PREFIX = 'http://alb-558491554.eu-west-1.elb.amazonaws.com';
+export const SERVER_PREFIX = 'https://api.meetmap.xyz';
+
+export const CORS_ORIGINS = /\\*\.meetmap.xyz|localhost/;
 
 export const getMicroservicePath = (microservice: MicroServiceName) => {
   return '/'.concat(microservice);

@@ -1,15 +1,20 @@
 import {
+  CreateEventSchema,
+  EventResponseDto,
+  EventStatsResponseDto,
+  GetEventsByLocationRequestDto,
+  SingleEventResponseDto,
+} from '@app/dto/events-fetcher/events.dto';
+import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import * as path from 'path';
 import { ZodError } from 'zod';
 import { EventerFetcherService } from '../eventer-fetcher/eventer-fetcher.service';
-import { CreateEventSchema } from './dto';
 import { EventsDal } from './events.dal';
-import * as path from 'path';
-import { GetEventsByLocationRequestDto } from '@app/dto/events-fetcher/events.dto';
 
 @Injectable()
 export class EventsService {
@@ -18,29 +23,61 @@ export class EventsService {
     private readonly eventerFetcherService: EventerFetcherService,
   ) {}
 
-  public async getEventsByKeywords(keywords: string) {
-    return this.dal.getEventsByKeywords(keywords);
+  public async getEventsByKeywords(userCId: string, keywords: string) {
+    return this.dal.getEventsByKeywords(userCId, keywords);
   }
 
-  // public async getEventBySlug(slug: string) {
-  //   const event = await this.eventerFetcherService.getValidEvent(slug);
-  //   if (!event) {
-  //     throw new NotFoundException('Event not found');
-  //   }
-  //   return event;
-  // }
-
-  public async getEventById(eventId: string) {
+  public async getEventById(
+    cid: string,
+    eventId: string,
+  ): Promise<SingleEventResponseDto> {
     const event = await this.dal.getEventById(eventId);
     if (!event) {
       throw new NotFoundException('Event not found');
     }
-    return event;
+    const stats = await this.dal.getEventStats(eventId);
+    const userStats = await this.dal.getEventUserStats(eventId, cid);
+    return { ...event, stats, userStats };
   }
 
-  public async getEventsByLocation(dto: GetEventsByLocationRequestDto) {
+  public async userAction(
+    userCId: string,
+    eventId: string,
+    type: 'like' | 'want-go',
+  ): Promise<EventStatsResponseDto> {
+    const event = await this.dal.getEventById(eventId);
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    await this.dal.userAction(userCId, eventId, type);
+    const stats = await this.dal.getEventStats(eventId);
+    return stats;
+  }
+
+  public async getEventLikes(eventId: string) {
+    return await this.dal.getUsersLikedAnEvent(eventId);
+  }
+  public async cancelUserAction(
+    userCId: string,
+    eventId: string,
+    type: 'like' | 'want-go',
+  ): Promise<EventStatsResponseDto> {
+    const event = await this.dal.getEventById(eventId);
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    await this.dal.cancelUserAction(userCId, eventId, type);
+    const stats = await this.dal.getEventStats(eventId);
+    return stats;
+  }
+
+  public async getEventsByLocation(
+    userCId: string,
+    dto: GetEventsByLocationRequestDto,
+  ) {
     const { latitude, longitude, radius } = dto;
     const events = await this.dal.getEventsByLocation(
+      userCId,
       longitude,
       latitude,
       radius,
@@ -49,15 +86,16 @@ export class EventsService {
     return events;
   }
 
-  public async createEvent(
+  public async userCreateEvent(
     body: string,
-    userId: string,
+    userCid: string,
     image: Express.Multer.File,
-  ) {
+  ): Promise<EventResponseDto> {
     try {
       const parsedJson = JSON.parse(body);
       const eventData = CreateEventSchema.parse(parsedJson);
-      const event = await this.dal.createEvent(eventData, userId);
+
+      const event = await this.dal.createUserEvent(eventData, userCid);
       const imageUrl = await this.dal.uploadToPublicEventsAssestsBucket(
         event.id.concat('-main-image').concat(path.extname(image.originalname)),
         image.buffer,
@@ -66,13 +104,19 @@ export class EventsService {
         event.id,
         imageUrl,
       );
-      return eventWithPicture;
+      return {
+        ...eventWithPicture,
+        userStats: {
+          isUserLike: false,
+          userStatus: undefined,
+        },
+      };
     } catch (error) {
       if (error instanceof SyntaxError) {
-        throw new BadRequestException(error);
+        throw new BadRequestException(error.message);
       }
       if (error instanceof ZodError) {
-        throw new BadRequestException(error);
+        throw new BadRequestException(error.message);
       } else {
         console.log(error);
         throw new InternalServerErrorException('Something went wrong');

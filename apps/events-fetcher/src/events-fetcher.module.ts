@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
 
-import { EventerFetcherService } from './eventer-fetcher/eventer-fetcher.service';
-import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '@app/database';
+import { ConfigModule } from '@nestjs/config';
 
-import { RedisModule } from '@app/redis';
-import { EventerFetcherModule } from './eventer-fetcher/eventer-fetcher.module';
-import { EventsModule } from './events/events.module';
-import { InternalAxiosModule } from '@app/axios';
-import { RabbitmqModule } from '@app/rabbitmq';
 import { AuthModule } from '@app/auth';
+import { RabbitmqModule } from '@app/rabbitmq';
+import { RedisModule } from '@app/redis';
 import { S3UploaderModule } from '@app/s3-uploader';
+import { EventerFetcherModule } from './eventer-fetcher/eventer-fetcher.module';
 import { EventsFetcherController } from './events-fetcher.controller';
+import { EventsModule } from './events/events.module';
+import { TicketingPlatofrmsModule } from './ticketing-platofrm/ticketing-platofrm.module';
+import { UserModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -23,12 +23,16 @@ import { EventsFetcherController } from './events-fetcher.controller';
       connectionStringEnvPath: 'EVENTS_FETCHER_DATABASE_URL',
       microserviceName: 'events-fetcher',
     }),
-    AuthModule,
+    AuthModule.init({
+      microserviceName: 'events-fetcher',
+    }),
     S3UploaderModule,
-    // RabbitmqModule.forRoot(),
+    RabbitmqModule.forRoot(),
     // InternalAxiosModule,
     EventerFetcherModule,
     EventsModule,
+    UserModule,
+    TicketingPlatofrmsModule,
   ],
   controllers: [EventsFetcherController],
   providers: [],

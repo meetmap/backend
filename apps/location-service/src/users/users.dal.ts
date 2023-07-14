@@ -1,85 +1,79 @@
 import { LocationServiceDatabase } from '@app/database';
-import { ILocationServiceUser } from '@app/types';
-import { Injectable } from '@nestjs/common';
+import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
+import { ILocationServiceFriends, ILocationServiceUser } from '@app/types';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 
 @Injectable()
-export class UsersDal {
+export class UsersDal implements OnModuleInit {
+  private dataManipulation: CommonDataManipulation<
+    ILocationServiceFriends,
+    ILocationServiceUser
+  >;
   constructor(private readonly db: LocationServiceDatabase) {}
 
+  onModuleInit() {
+    this.dataManipulation = new CommonDataManipulation(
+      this.db.models.friends,
+      this.db.models.users,
+    );
+  }
+
   public async createUser(
-    payload: Pick<ILocationServiceUser, 'authUserId' | 'cid'>,
+    payload: Pick<
+      ILocationServiceUser,
+      'cid' | 'username' | 'profilePicture' | 'name'
+    >,
   ) {
     return await this.db.models.users.create({
-      authUserId: payload.authUserId,
+      // authUserId: payload.authUserId,
       cid: payload.cid,
+      profilePicture: payload.profilePicture,
+      name: payload.name,
+      username: payload.username,
     });
   }
 
-  public async deleteUser(cid: string) {
-    const user = await this.db.models.users.findOneAndDelete({
-      cid: cid,
-    });
-    if (!user) {
-      return;
-    }
-    //pull out this user from friends list of every friend
-    await this.db.models.users.updateMany(
+  public async updateUser(
+    cid: string,
+    payload: Pick<ILocationServiceUser, 'profilePicture' | 'name' | 'username'>,
+  ) {
+    return await this.db.models.users.findOneAndUpdate(
       {
-        friendsCids: user.cid,
+        cid: cid,
       },
       {
-        $pull: {
-          friendsCids: user.cid,
+        $set: {
+          profilePicture: payload.profilePicture,
+          name: payload.name,
+          username: payload.username,
+          cid: cid,
         },
       },
+      { new: true, upsert: true },
     );
+  }
+
+  public async deleteUser(cid: string) {
+    await this.dataManipulation.users.deleteUser(cid);
     return cid;
   }
 
   public async addFriendCid(userCid: string, friendCid: string) {
-    //@todo probably need to check user existance
-    await this.db.models.users.findOneAndUpdate(
-      {
-        cid: userCid,
-      },
-      {
-        $push: {
-          friendsCids: friendCid,
-        },
-      },
-    );
-    await this.db.models.users.findOneAndUpdate(
-      {
-        cid: friendCid,
-      },
-      {
-        $push: {
-          friendsCids: userCid,
-        },
-      },
-    );
+    await this.db.session(async (session) => {
+      return await this.dataManipulation.friends.forceFriendship(
+        userCid,
+        friendCid,
+        session,
+      );
+    });
   }
   public async removeFriendCid(userCid: string, friendCid: string) {
-    //@todo probably need to check user existance
-    await this.db.models.users.findOneAndUpdate(
-      {
-        cid: userCid,
-      },
-      {
-        $pull: {
-          friendsCids: friendCid,
-        },
-      },
-    );
-    await this.db.models.users.findOneAndUpdate(
-      {
-        cid: friendCid,
-      },
-      {
-        $pull: {
-          friendsCids: userCid,
-        },
-      },
-    );
+    await this.db.session(async (session) => {
+      return await this.dataManipulation.friends.rejectFriendshipRequest(
+        userCid,
+        friendCid,
+        session,
+      );
+    });
   }
 }
