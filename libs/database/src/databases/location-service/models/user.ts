@@ -8,10 +8,6 @@ export const UserSchema = new mongoose.Schema<ILocationServiceUser>(
       required: true,
       unique: true,
     },
-    friendsCIds: {
-      type: [mongoose.SchemaTypes.String],
-      default: [],
-    },
     profilePicture: {
       type: mongoose.SchemaTypes.String,
     },

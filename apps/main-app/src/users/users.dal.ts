@@ -1,17 +1,29 @@
 import { MainAppDatabase } from '@app/database';
+import { sortUsersAggregationPipeline } from '@app/database/shared-aggregations';
+import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
 import { S3UploaderService } from '@app/s3-uploader';
-import { IMainAppUser, IRmqUser } from '@app/types';
-import { Injectable } from '@nestjs/common';
+import { IMainAppFriends, IMainAppUser, IRmqUser } from '@app/types';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import * as mongoose from 'mongoose';
 import * as path from 'path';
 
 @Injectable()
-export class UsersDal {
+export class UsersDal implements OnModuleInit {
+  private dataManipulation: CommonDataManipulation<
+    IMainAppFriends,
+    IMainAppUser
+  >;
   constructor(
     private readonly db: MainAppDatabase,
     private readonly s3Service: S3UploaderService,
   ) {}
+  onModuleInit() {
+    this.dataManipulation = new CommonDataManipulation(
+      this.db.models.friends,
+      this.db.models.users,
+    );
+  }
   public async createUser(
     payload: Pick<
       IRmqUser,
@@ -30,7 +42,6 @@ export class UsersDal {
       email: payload.email,
       username: payload.username,
       phone: payload.phone,
-      friendsCIds: [],
       // authUserId: payload.authUserId,
       cid: payload.cid,
       fbId: payload.fbId,
@@ -78,6 +89,10 @@ export class UsersDal {
       },
     ]);
     return response.map(({ cid }) => cid); // response.map(({ friends }) => friends);
+  }
+
+  public async getUserFriends(cid: string) {
+    return await this.dataManipulation.friends.getUserFriends(cid, 0, 0);
   }
 
   public async updateUser(
@@ -153,21 +168,29 @@ export class UsersDal {
     });
   }
 
-  public async findUsersByQueryUsername(query: string) {
-    return await this.db.models.users
-      .find({
-        $or: [
+  public async findUsersByQueryUsername(userCId: string, query: string) {
+    return await this.dataManipulation.users
+      .getUsersWithFriendshipStatus(
+        userCId,
+        [
           {
-            username: new RegExp(query, 'i'),
-          },
-          {
-            description: new RegExp(query, 'i'),
-          },
-          {
-            name: new RegExp(query, 'i'),
+            $match: {
+              $or: [
+                {
+                  username: new RegExp(query, 'i'),
+                },
+                {
+                  description: new RegExp(query, 'i'),
+                },
+                {
+                  name: new RegExp(query, 'i'),
+                },
+              ],
+            },
           },
         ],
-      })
+        sortUsersAggregationPipeline,
+      )
       .limit(15);
   }
 

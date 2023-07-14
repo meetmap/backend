@@ -17,8 +17,14 @@ export enum FriendsLocationStatus {
   NOT_SHOW_LOCATION = 'not-show',
 }
 
+/**
+ * requested means current user send friendship request to another user (i.e. outcoming)
+ *
+ * pending means another user send friendship request to current user (i.e. incoming)
+ */
 export enum FriendshipStatus {
   ADD_FRIEND = 'add-friend',
+
   REQUESTED = 'requested',
   PENDING = 'pending',
   REJECTED = 'rejected',

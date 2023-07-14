@@ -1,20 +1,13 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import * as mongoose from 'mongoose';
+import { Injectable } from '@nestjs/common';
+import { AbstractBaseDatabase } from '../abtract.db';
 
-import { BaseDatabase, IDatabaseServiceConfig } from '../types';
 import { UserSchema } from './models/user';
 
 @Injectable()
-export class AuthServiceDatabase implements BaseDatabase {
-  constructor(private readonly config: IDatabaseServiceConfig) {}
-  async onModuleInit() {
-    // const connectionString = this.configService.getOrThrow('DATABASE_URL');
-    await mongoose.connect(this.config.connectionString);
-  }
-
-  public get models() {
+export class AuthServiceDatabase extends AbstractBaseDatabase {
+  public override get models() {
     return {
-      users: mongoose.model('User', UserSchema),
+      users: this.connection.model('User', UserSchema),
     };
   }
 }

@@ -35,7 +35,7 @@ export class UsersDal {
   }
 
   public async createUser(payload: IRmqUser) {
-    return await this.db.models.user.create({
+    return await this.db.models.users.create({
       cid: payload.cid,
       birthDate: payload.birthDate,
       description: payload.description,
@@ -45,7 +45,7 @@ export class UsersDal {
     });
   }
   public async updateUser(cid: string, payload: IRmqUser) {
-    return await this.db.models.user.findOneAndUpdate(
+    return await this.db.models.users.findOneAndUpdate(
       {
         cid,
       },
@@ -66,7 +66,7 @@ export class UsersDal {
     );
   }
   public async deleteUser(cid: string) {
-    await this.db.models.user.deleteOne({ cid });
+    await this.db.models.users.deleteOne({ cid });
     await this.db.models.eventsUsers.deleteMany({ userCId: cid });
   }
 }

@@ -1,40 +1,26 @@
 import { MainAppDatabase } from '@app/database';
 import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
-import { IMainAppSafePartialUser } from '@app/types';
-import { Injectable } from '@nestjs/common';
+import {
+  FriendshipStatus,
+  IMainAppFriends,
+  IMainAppSafePartialUser,
+  IMainAppUser,
+} from '@app/types';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
-export class FriendsDal extends CommonDataManipulation {
-  constructor(private readonly db: MainAppDatabase) {
-    super(db.models.friends, db.models.users);
-  }
-
-  public async getUserByUsername(
-    username: string,
-  ): Promise<IMainAppSafePartialUser | null> {
-    const user = await this.db.models.users.findOne(
-      {
-        username: username,
-      },
-      {
-        id: true,
-        birthDate: true,
-        email: true,
-        friendsCIds: true,
-        username: true,
-        phone: true,
-        cid: true,
-        description: true,
-        fbId: true,
-        name: true,
-        profilePicture: true,
-      },
+export class FriendsDal implements OnModuleInit {
+  private dataManipulation: CommonDataManipulation<
+    IMainAppFriends,
+    IMainAppUser
+  >;
+  constructor(private readonly db: MainAppDatabase) {}
+  onModuleInit() {
+    this.dataManipulation = new CommonDataManipulation(
+      this.db.models.friends,
+      this.db.models.users,
     );
-    if (user) {
-      return UsersService.mapUserDbToResponsePartialUser(user);
-    }
-    return null;
   }
 
   public async getUserByCId(
@@ -48,7 +34,6 @@ export class FriendsDal extends CommonDataManipulation {
         id: true,
         birthDate: true,
         email: true,
-        friendsCIds: true,
         username: true,
         phone: true,
         cid: true,
@@ -59,7 +44,11 @@ export class FriendsDal extends CommonDataManipulation {
       },
     );
     if (user) {
-      return UsersService.mapUserDbToResponsePartialUser(user);
+      //check it
+      return UsersService.mapUserDbToResponsePartialUser({
+        ...user.toObject(),
+        friendshipStatus: FriendshipStatus.PENDING,
+      });
     }
     return null;
   }
@@ -68,28 +57,51 @@ export class FriendsDal extends CommonDataManipulation {
     requesterCId: string,
     recipientCId: string,
   ) {
-    return await super.friends.sendFriendshipRequest(
-      requesterCId,
-      recipientCId,
-    );
+    return await this.db.session(async (session) => {
+      await this.dataManipulation.friends.sendFriendshipRequest(
+        requesterCId,
+        recipientCId,
+        session,
+      );
+    });
   }
   public async acceptFriendshipRequest(userCId: string, requesterCId: string) {
-    return await super.friends.acceptFriendshipRequest(userCId, requesterCId);
+    return await this.db.session(async (session) => {
+      return await this.dataManipulation.friends.acceptFriendshipRequest(
+        userCId,
+        requesterCId,
+        session,
+      );
+    });
   }
 
   public async rejectFriendshipRequest(userCId: string, requesterCId: string) {
-    return await super.friends.rejectFriendshipRequest(userCId, requesterCId);
+    return await this.db.session(async (session) => {
+      return await this.dataManipulation.friends.rejectFriendshipRequest(
+        userCId,
+        requesterCId,
+        session,
+      );
+    });
   }
 
   public async getUserFriends(userCId: string, limit: number, page: number) {
-    return await super.friends.getUserFriends(userCId, limit, page);
+    return await this.dataManipulation.friends.getUserFriends(
+      userCId,
+      limit,
+      page,
+    );
   }
 
   public async getIncomingFriendshipRequests(userCId: string) {
-    return await super.friends.getIncomingFriendshipRequests(userCId);
+    return await this.dataManipulation.friends.getIncomingFriendshipRequests(
+      userCId,
+    );
   }
 
   public async getOutcomingFriendshipRequests(userCId: string) {
-    return await super.friends.getOutcomingFriendshipRequests(userCId);
+    return await this.dataManipulation.friends.getOutcomingFriendshipRequests(
+      userCId,
+    );
   }
 }

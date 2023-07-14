@@ -110,7 +110,6 @@ export class AuthService {
     return user;
   }
   public async loginWithEmailAndPassword(email: string, password: string) {
-    console.log('zalupa');
     const user = await this.dal.findUserByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Email or password is wrong');

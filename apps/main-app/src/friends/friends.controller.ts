@@ -8,6 +8,7 @@ import {
   UpdateFriendshipRequestDto,
 } from '@app/dto/main-app/friends.dto';
 import { UserPartialResponseDto } from '@app/dto/main-app/users.dto';
+import { FriendshipStatus } from '@app/types';
 import { IJwtUserPayload } from '@app/types/jwt';
 import { UsersService } from '../users/users.service';
 
@@ -41,8 +42,15 @@ export class FreindsController {
   public async getIncomingFriendshipRequests(
     @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
   ): Promise<UserPartialResponseDto[]> {
-    return await this.friendsService.getIncomingFriendshipRequests(
+    const incoming = await this.friendsService.getIncomingFriendshipRequests(
       jwtPayload.cid,
+    );
+
+    return incoming.map((user) =>
+      UsersService.mapUserDbToResponsePartialUser({
+        ...user,
+        friendshipStatus: FriendshipStatus.REQUESTED,
+      }),
     );
   }
 
@@ -55,8 +63,13 @@ export class FreindsController {
   public async getOutcomingFriendshipRequests(
     @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
   ): Promise<UserPartialResponseDto[]> {
-    return await this.friendsService.getOutcomingFriendshipRequests(
-      jwtPayload.cid,
+    const requestedUsers =
+      await this.friendsService.getOutcomingFriendshipRequests(jwtPayload.cid);
+    return requestedUsers.map((user) =>
+      UsersService.mapUserDbToResponsePartialUser({
+        ...user,
+        friendshipStatus: FriendshipStatus.REQUESTED,
+      }),
     );
   }
 
@@ -122,7 +135,10 @@ export class FreindsController {
       page,
     );
     return friends.map((user) =>
-      UsersService.mapUserDbToResponsePartialUser(user),
+      UsersService.mapUserDbToResponsePartialUser({
+        ...user,
+        friendshipStatus: FriendshipStatus.FRIENDS,
+      }),
     );
   }
 }
