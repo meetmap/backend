@@ -46,12 +46,7 @@ export class FreindsController {
       jwtPayload.cid,
     );
 
-    return incoming.map((user) =>
-      UsersService.mapUserDbToResponsePartialUser({
-        ...user,
-        friendshipStatus: FriendshipStatus.REQUESTED,
-      }),
-    );
+    return incoming.map(UsersService.mapUserDbToResponsePartialUser);
   }
 
   @ApiOkResponse({
@@ -65,12 +60,8 @@ export class FreindsController {
   ): Promise<UserPartialResponseDto[]> {
     const requestedUsers =
       await this.friendsService.getOutcomingFriendshipRequests(jwtPayload.cid);
-    return requestedUsers.map((user) =>
-      UsersService.mapUserDbToResponsePartialUser({
-        ...user,
-        friendshipStatus: FriendshipStatus.REQUESTED,
-      }),
-    );
+
+    return requestedUsers.map(UsersService.mapUserDbToResponsePartialUser);
   }
 
   @ApiOkResponse({

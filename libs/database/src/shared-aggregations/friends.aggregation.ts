@@ -57,7 +57,11 @@ export const getFriendsUserListFromFriendsAggregation = <User extends IUser>(
       id: 1,
       updatedAt: 1,
       _id: 1,
-    } satisfies Record<keyof Omit<IUser, FieldsToOmit> | '_id', 1>,
+      friendshipStatus: FriendshipStatus.FRIENDS,
+    } satisfies Record<
+      keyof Omit<IUser, FieldsToOmit> | '_id' | 'friendshipStatus',
+      1 | any
+    >,
   },
   {
     $addFields: {
@@ -111,7 +115,11 @@ export const getIncomingRequestsUserListFromFriendsAggregation = <
       id: 1,
       updatedAt: 1,
       _id: 1,
-    } satisfies Record<keyof Omit<IUser, FieldsToOmit> | '_id', 1>,
+      friendshipStatus: FriendshipStatus.PENDING,
+    } satisfies Record<
+      keyof Omit<IUser, FieldsToOmit> | '_id' | 'friendshipStatus',
+      1 | any
+    >,
   },
   {
     $addFields: {
@@ -165,7 +173,11 @@ export const getOutcomingRequestsUserListFromFriendsAggregation = <
       id: 1,
       updatedAt: 1,
       _id: 1,
-    } satisfies Record<keyof Omit<IUser, FieldsToOmit> | '_id', 1>,
+      friendshipStatus: FriendshipStatus.REQUESTED,
+    } satisfies Record<
+      keyof Omit<IUser, FieldsToOmit> | '_id' | 'friendshipStatus',
+      1 | any
+    >,
   },
   {
     $addFields: {
@@ -178,4 +190,6 @@ export const getOutcomingRequestsUserListFromFriendsAggregation = <
 
 export type IGetUserListFromFriendsAggregationResult<
   User extends Partial<IUser>,
-> = Omit<User, FieldsToOmit>;
+> = Omit<User, FieldsToOmit> & {
+  friendshipStatus: FriendshipStatus | null;
+};
