@@ -116,6 +116,8 @@ export class EventResponseDto
       | 'creator'
       | 'location'
       | 'eventType'
+      | 'description'
+      | 'accessibility'
     >
 {
   @IdField()
@@ -145,6 +147,13 @@ export class EventResponseDto
   eventType: EventType;
   @NestedField(EventUserStatsResponseDto, {})
   userStats: EventUserStatsResponseDto;
+
+  @StringField({ optional: true })
+  description?: string | undefined;
+  @StringField({
+    enum: EventAccessibilityType,
+  })
+  accessibility: EventAccessibilityType;
 }
 
 export class EventStatsResponseDto implements IEventStats {

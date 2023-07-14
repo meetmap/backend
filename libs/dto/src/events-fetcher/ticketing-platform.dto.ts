@@ -18,7 +18,7 @@ import {
 } from '../decorators';
 import { EventStatsResponseDto, LocationResponseDto } from './events.dto';
 
-export class EventResponseDto
+export class EventForOrganizersResponseDto
   implements
     Pick<
       IEvent,
