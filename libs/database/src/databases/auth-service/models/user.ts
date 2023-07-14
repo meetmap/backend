@@ -42,6 +42,7 @@ export const UserSchema = new mongoose.Schema<IAuthUser>(
     fbId: {
       type: mongoose.SchemaTypes.String,
       unique: true,
+      sparse: true,
     },
   },
   {

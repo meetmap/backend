@@ -25,16 +25,6 @@ export const UserSchema = new mongoose.Schema<IMainAppUser>(
       unique: true,
       sparse: true,
     },
-    friendsCIds: [
-      {
-        type: mongoose.SchemaTypes.String,
-      },
-    ],
-    // authUserId: {
-    //   type: mongoose.SchemaTypes.String,
-    //   required: true,
-    //   unique: true,
-    // },
     cid: {
       type: mongoose.SchemaTypes.String,
       required: true,
@@ -43,6 +33,7 @@ export const UserSchema = new mongoose.Schema<IMainAppUser>(
     fbId: {
       type: mongoose.SchemaTypes.String,
       unique: true,
+      sparse: true,
     },
     profilePicture: {
       type: mongoose.SchemaTypes.String,

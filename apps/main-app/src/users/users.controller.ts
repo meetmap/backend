@@ -117,11 +117,12 @@ export class UsersController {
   @Get('/find')
   public async findUsers(
     @Query('q') query: string,
+    @ExtractJwtPayload() jwt: IJwtUserPayload,
   ): Promise<UserPartialResponseDto[]> {
     if (!query) {
       return [];
     }
-    return this.usersService.findUsers(query);
+    return this.usersService.findUsers(jwt.cid, query);
   }
 
   @ApiOkResponse({

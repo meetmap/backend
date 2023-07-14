@@ -1,3 +1,5 @@
+import { FriendshipStatus } from '../friends';
+
 //common user
 export interface IUser {
   id: string;
@@ -15,7 +17,6 @@ export interface IUser {
   updatedAt: Date;
   // authUserId: string;
   cid: string;
-  friendsCIds: string[];
   //facebook
   fbId?: string;
   fbToken?: string;
@@ -27,7 +28,6 @@ export interface IMainAppUser
     | 'id'
     | 'description'
     | 'birthDate'
-    | 'friendsCIds'
     | 'email'
     | 'phone'
     | 'username'
@@ -38,9 +38,7 @@ export interface IMainAppUser
     | 'name'
     | 'profilePicture'
     | 'fbId'
-  > {
-  friendsCIds: string[];
-}
+  > {}
 
 export interface IMainAppSafePartialUser
   extends Pick<
@@ -55,9 +53,15 @@ export interface IMainAppSafePartialUser
     | 'name'
     | 'profilePicture'
     | 'fbId'
-  > {}
-export interface IMainAppSafeUser extends IMainAppSafePartialUser {
-  friendsCIds: string[];
+  > {
+  friendshipStatus: FriendshipStatus | null;
+}
+
+export interface IMainAppSafeUserWithoutFriends
+  extends Omit<IMainAppSafeUser, 'friends'> {}
+export interface IMainAppSafeUser
+  extends Omit<IMainAppSafePartialUser, 'friendshipStatus'> {
+  friends: IMainAppSafeUserWithoutFriends[];
 }
 //auth-service
 export interface IAuthUser
@@ -114,10 +118,7 @@ export interface IAuthUserWithPassword extends IAuthUser {
 //location-service
 
 export interface ILocationServiceUser
-  extends Pick<
-    IUser,
-    'id' | 'cid' | 'username' | 'profilePicture' | 'name' | 'friendsCIds'
-  > {}
+  extends Pick<IUser, 'id' | 'cid' | 'username' | 'profilePicture' | 'name'> {}
 
 export interface IEventsServiceUser
   extends Pick<

@@ -1,4 +1,5 @@
 import { RMQConstants } from '@app/constants';
+import { IGetUserListWithFriendshipStatusAggregationResult } from '@app/database/shared-aggregations';
 import {
   UserPartialResponseDto,
   UserResponseDto,
@@ -6,8 +7,8 @@ import {
 import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
 import { RabbitmqService } from '@app/rabbitmq';
 import {
-  IMainAppSafePartialUser,
   IMainAppSafeUser,
+  IMainAppSafeUserWithoutFriends,
   IMainAppUser,
   IRmqUser,
   IUser,
@@ -30,7 +31,7 @@ export class UsersService {
     payload: UserRmqRequestDto,
   ): Promise<UserResponseDto> {
     const user = await this.dal.createUser(payload);
-    return UsersService.mapUserDbToResponseUser(user);
+    return UsersService.mapUserDbToResponseUser(user, []);
   }
 
   public async updateUser(
@@ -40,8 +41,9 @@ export class UsersService {
     if (!user) {
       return null;
     }
+    const friends = await this.dal.getUserFriends(payload.cid);
 
-    return UsersService.mapUserDbToResponseUser(user);
+    return UsersService.mapUserDbToResponseUser(user, friends);
   }
 
   public async deleteUser(cid: string) {
@@ -54,12 +56,16 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    const friends = await this.dal.getUserFriends(cid);
 
-    return UsersService.mapUserDbToResponseUser(user);
+    return UsersService.mapUserDbToResponseUser(user, friends);
   }
 
-  public async findUsers(query: string): Promise<UserPartialResponseDto[]> {
-    const users = await this.dal.findUsersByQueryUsername(query);
+  public async findUsers(
+    userCId: string,
+    query: string,
+  ): Promise<UserPartialResponseDto[]> {
+    const users = await this.dal.findUsersByQueryUsername(userCId, query);
     return users.map((user) =>
       UsersService.mapUserDbToResponsePartialUser(user),
     );
@@ -70,9 +76,9 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    // const friendsCids = await this.dal.getFriendsCids(user.id);
+    const friends = await this.dal.getUserFriends(cid);
 
-    return UsersService.mapUserDbToResponseUser(user);
+    return UsersService.mapUserDbToResponseUser(user, friends);
   }
 
   public async updateUserProfilePicture(
@@ -89,9 +95,9 @@ export class UsersService {
     // user.profilePicture = url
     const updatedUser: IUser = {
       ...user.toJSON(),
-      friendsCIds: [],
       profilePicture: url,
     };
+    const friends = await this.dal.getUserFriends(cid);
 
     const result = await this.rmqService.amqp.publish(
       RMQConstants.exchanges.USERS.name,
@@ -99,7 +105,7 @@ export class UsersService {
       UsersService.mapDbUserToRmqUser(updatedUser),
     );
 
-    return UsersService.mapUserDbToResponseUser(updatedUser);
+    return UsersService.mapUserDbToResponseUser(updatedUser, friends);
   }
 
   static mapDbUserToRmqUser(user: IMainAppUser): IRmqUser {
@@ -119,11 +125,12 @@ export class UsersService {
 
   static mapUserDbToResponseUser(
     user: IUser | IMainAppSafeUser,
-  ): IMainAppSafeUser {
+    friends: IMainAppSafeUserWithoutFriends[],
+  ): UserResponseDto {
     return {
       id: user.id,
       birthDate: user.birthDate,
-      friendsCIds: user.friendsCIds,
+      friends: friends,
       email: user.email,
       phone: user.phone,
       username: user.username,
@@ -137,7 +144,7 @@ export class UsersService {
   }
 
   static mapUserDbToResponsePartialUser(
-    user: IUser | IMainAppSafeUser | IMainAppSafePartialUser,
+    user: IGetUserListWithFriendshipStatusAggregationResult<IMainAppUser>,
   ): UserPartialResponseDto {
     return {
       id: user.id,
@@ -150,6 +157,8 @@ export class UsersService {
       fbId: user.fbId,
       name: user.name,
       profilePicture: user.profilePicture,
+      friendshipStatus: user.friendshipStatus,
+
       // authUserId: user.authUserId,
     };
   }

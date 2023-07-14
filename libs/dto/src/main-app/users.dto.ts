@@ -1,4 +1,9 @@
-import { IMainAppSafePartialUser, IMainAppSafeUser } from '@app/types';
+import {
+  FriendshipStatus,
+  IMainAppSafePartialUser,
+  IMainAppSafeUser,
+  IMainAppSafeUserWithoutFriends,
+} from '@app/types';
 import {
   DateField,
   EmailField,
@@ -8,6 +13,41 @@ import {
   PhoneField,
   StringField,
 } from '../decorators';
+
+export class UserWithoutFriendsResponseDto
+  implements IMainAppSafeUserWithoutFriends
+{
+  @StringField({
+    optional: true,
+  })
+  description?: string;
+  @DateField()
+  birthDate: Date;
+  @EmailField()
+  email: string;
+  @PhoneField({
+    optional: true,
+  })
+  phone?: string;
+  @StringField()
+  username: string;
+  @IdField()
+  id: string;
+  @IdField()
+  cid: string;
+  @StringField({
+    optional: true,
+  })
+  name?: string;
+  @StringField({
+    optional: true,
+  })
+  profilePicture?: string;
+  @StringField({
+    optional: true,
+  })
+  fbId?: string;
+}
 
 export class UserResponseDto implements IMainAppSafeUser {
   @IdField()
@@ -45,11 +85,11 @@ export class UserResponseDto implements IMainAppSafeUser {
   })
   fbId?: string;
 
-  @NestedField([String], {
+  @NestedField([UserWithoutFriendsResponseDto], {
     description: 'Cids of friends or friends(users) array',
     example: ['6436b4ff091dc0948e75671f', '6436b4fa091dc0948e7566c5'],
   })
-  friendsCIds: string[];
+  friends: UserWithoutFriendsResponseDto[];
 
   @IdField()
   cid: string;
@@ -62,6 +102,10 @@ export class UserResponseDto implements IMainAppSafeUser {
 }
 
 export class UserPartialResponseDto implements IMainAppSafePartialUser {
+  @StringField({
+    enum: FriendshipStatus,
+  })
+  friendshipStatus: FriendshipStatus | null;
   @IdField()
   id: string;
   @EmailField()
