@@ -28,6 +28,7 @@ import {
   Matches,
   Max,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { Request } from 'express';
@@ -57,14 +58,17 @@ export const EmailField: FieldDecorator = (
 
 export const OpenApiField: FieldDecorator<ApiPropertyOptions> = ({
   optional,
+  nullable,
   ...options
 }: {
+  nullable: boolean;
   optional: false;
 }) => {
   return applyDecorators(
     ...(optional
       ? [ApiPropertyOptional(options), IsOptional()]
       : [ApiProperty(options)]),
+    ...(nullable ? [ValidateIf((object, value) => value !== null)] : []),
   );
 };
 
@@ -103,6 +107,7 @@ export const StringField: FieldDecorator<{
   title?: string;
   example?: string;
   required?: boolean;
+  nullable?: boolean;
   enum?: ApiPropertyOptions['enum'];
 }> = ({ optional, ...options } = { optional: false }) =>
   applyDecorators(

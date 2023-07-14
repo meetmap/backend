@@ -31,7 +31,10 @@ export class UsersService {
     payload: UserRmqRequestDto,
   ): Promise<UserResponseDto> {
     const user = await this.dal.createUser(payload);
-    return UsersService.mapUserDbToResponseUser(user, []);
+    return UsersService.mapUserDbToResponseUser(
+      { ...user, friendshipStatus: null },
+      [],
+    );
   }
 
   public async updateUser(
@@ -43,7 +46,10 @@ export class UsersService {
     }
     const friends = await this.dal.getUserFriends(payload.cid);
 
-    return UsersService.mapUserDbToResponseUser(user, friends);
+    return UsersService.mapUserDbToResponseUser(
+      { ...user, friendshipStatus: null },
+      friends,
+    );
   }
 
   public async deleteUser(cid: string) {
@@ -52,13 +58,16 @@ export class UsersService {
   }
 
   public async getUserSelf(cid: string): Promise<UserResponseDto> {
-    const user = await this.dal.findUserByCid(cid);
+    const user = await this.dal.findUserByCId(cid);
     if (!user) {
       throw new NotFoundException('User not found');
     }
     const friends = await this.dal.getUserFriends(cid);
 
-    return UsersService.mapUserDbToResponseUser(user, friends);
+    return UsersService.mapUserDbToResponseUser(
+      { ...user, friendshipStatus: null },
+      friends,
+    );
   }
 
   public async findUsers(
@@ -71,8 +80,11 @@ export class UsersService {
     );
   }
 
-  public async getUserByCid(cid: string): Promise<IMainAppSafeUser> {
-    const user = await this.dal.findUserByCid(cid);
+  public async getUserByCid(
+    currentCid: string,
+    cid: string,
+  ): Promise<IMainAppSafeUser> {
+    const user = await this.dal.findUserByCidWithFirends(currentCid, cid);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -85,7 +97,7 @@ export class UsersService {
     cid: string,
     photo: Express.Multer.File,
   ) {
-    const user = await this.dal.findUserByCid(cid);
+    const user = await this.dal.findUserByCId(cid);
     if (!user) {
       throw new ForbiddenException('User not found');
     }
@@ -94,7 +106,7 @@ export class UsersService {
     const url = await this.dal.uploadUserProfilePicture(cid, photo);
     // user.profilePicture = url
     const updatedUser: IUser = {
-      ...user.toJSON(),
+      ...user,
       profilePicture: url,
     };
     const friends = await this.dal.getUserFriends(cid);
@@ -105,7 +117,10 @@ export class UsersService {
       UsersService.mapDbUserToRmqUser(updatedUser),
     );
 
-    return UsersService.mapUserDbToResponseUser(updatedUser, friends);
+    return UsersService.mapUserDbToResponseUser(
+      { ...updatedUser, friendshipStatus: null },
+      friends,
+    );
   }
 
   static mapDbUserToRmqUser(user: IMainAppUser): IRmqUser {
@@ -124,7 +139,7 @@ export class UsersService {
   }
 
   static mapUserDbToResponseUser(
-    user: IUser | IMainAppSafeUser,
+    user: IGetUserListWithFriendshipStatusAggregationResult<IMainAppUser>,
     friends: IMainAppSafeUserWithoutFriends[],
   ): UserResponseDto {
     return {
@@ -139,6 +154,7 @@ export class UsersService {
       fbId: user.fbId,
       name: user.name,
       profilePicture: user.profilePicture,
+      friendshipStatus: user.friendshipStatus,
       // authUserId: user.authUserId,
     };
   }
