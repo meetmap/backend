@@ -108,6 +108,7 @@ export class UserResponseDto implements IMainAppSafeUser {
 export class UserPartialResponseDto implements IMainAppSafePartialUser {
   @StringField({
     enum: FriendshipStatus,
+    nullable: true,
   })
   friendshipStatus: FriendshipStatus | null;
   @IdField()
