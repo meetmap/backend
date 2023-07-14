@@ -132,12 +132,13 @@ export class UsersController {
   @UseMicroserviceAuthGuard()
   @Get('/get/:userCid')
   public async getUserById(
+    @ExtractJwtPayload() jwt: IJwtUserPayload,
     @Param('userCid') userCid: string,
   ): Promise<UserResponseDto> {
     if (!userCid) {
       throw new BadRequestException('Invalid userId');
     }
-    return this.usersService.getUserByCid(userCid);
+    return this.usersService.getUserByCid(jwt.cid, userCid);
   }
 
   @ApiOkResponse({

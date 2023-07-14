@@ -47,6 +47,11 @@ export class UserWithoutFriendsResponseDto
     optional: true,
   })
   fbId?: string;
+  @StringField({
+    enum: FriendshipStatus,
+    nullable: true,
+  })
+  friendshipStatus: FriendshipStatus | null;
 }
 
 export class UserResponseDto implements IMainAppSafeUser {
@@ -94,16 +99,16 @@ export class UserResponseDto implements IMainAppSafeUser {
   @IdField()
   cid: string;
 
-  //   @StringField({
-  //     description: 'userId in auth microservice',
-  //     example: '6436b4fa091dc0948e7566c5',
-  //   })
-  //   authUserId: string;
+  @StringField({
+    enum: FriendshipStatus,
+  })
+  friendshipStatus: FriendshipStatus | null;
 }
 
 export class UserPartialResponseDto implements IMainAppSafePartialUser {
   @StringField({
     enum: FriendshipStatus,
+    nullable: true,
   })
   friendshipStatus: FriendshipStatus | null;
   @IdField()
