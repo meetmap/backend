@@ -62,6 +62,7 @@ export interface IMainAppSafeUserWithoutFriends
 export interface IMainAppSafeUser
   extends Omit<IMainAppSafePartialUser, 'friendshipStatus'> {
   friends: IMainAppSafeUserWithoutFriends[];
+  friendshipStatus: FriendshipStatus | null;
 }
 //auth-service
 export interface IAuthUser

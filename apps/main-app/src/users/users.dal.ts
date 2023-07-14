@@ -1,5 +1,8 @@
 import { MainAppDatabase } from '@app/database';
-import { sortUsersAggregationPipeline } from '@app/database/shared-aggregations';
+import {
+  IGetUserListWithFriendshipStatusAggregationResult,
+  sortUsersAggregationPipeline,
+} from '@app/database/shared-aggregations';
 import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
 import { S3UploaderService } from '@app/s3-uploader';
 import { IMainAppFriends, IMainAppUser, IRmqUser } from '@app/types';
@@ -37,7 +40,7 @@ export class UsersDal implements OnModuleInit {
       | 'name'
     >,
   ) {
-    return await this.db.models.users.create({
+    const user = await this.db.models.users.create({
       birthDate: payload.birthDate,
       email: payload.email,
       username: payload.username,
@@ -47,6 +50,7 @@ export class UsersDal implements OnModuleInit {
       fbId: payload.fbId,
       name: payload.name,
     });
+    return user.toObject();
   }
 
   public async getFriendsCids(userId: string) {
@@ -110,7 +114,7 @@ export class UsersDal implements OnModuleInit {
       >
     >,
   ) {
-    return await this.db.models.users.findOneAndUpdate(
+    const user = await this.db.models.users.findOneAndUpdate(
       {
         cid: cid,
       },
@@ -129,6 +133,7 @@ export class UsersDal implements OnModuleInit {
         new: true,
       },
     );
+    return user?.toObject();
   }
 
   public async deleteUser(cid: string) {
@@ -194,12 +199,27 @@ export class UsersDal implements OnModuleInit {
       .limit(15);
   }
 
-  public async findUserById(userId: string): Promise<IMainAppUser | null> {
-    return await this.db.models.users.findById(userId);
+  public async findUserByCId(cid: string) {
+    const user = await this.db.models.users.findOne({ cid });
+    return user?.toObject();
   }
 
-  public async findUserByCid(cid: string) {
-    return await this.db.models.users.findOne({ cid });
+  public async findUserByCidWithFirends(
+    currentUserCId: string,
+    cid: string,
+  ): Promise<IGetUserListWithFriendshipStatusAggregationResult<IMainAppUser> | null> {
+    const [user] =
+      await this.dataManipulation.users.getUsersWithFriendshipStatus(
+        currentUserCId,
+        [
+          {
+            $match: {
+              cid: cid,
+            } satisfies Partial<Record<keyof IMainAppUser, any>>,
+          },
+        ],
+      );
+    return user ?? null;
   }
 
   public async findUserByUsername(username: string) {
