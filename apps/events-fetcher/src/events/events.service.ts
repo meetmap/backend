@@ -5,6 +5,7 @@ import {
   GetEventsByLocationRequestDto,
   SingleEventResponseDto,
 } from '@app/dto/events-fetcher/events.dto';
+import { IEvent, IEventStats, IEventWithUserStats } from '@app/types';
 import {
   BadRequestException,
   Injectable,
@@ -24,7 +25,8 @@ export class EventsService {
   ) {}
 
   public async getEventsByKeywords(userCId: string, keywords: string) {
-    return this.dal.getEventsByKeywords(userCId, keywords);
+    const events = await this.dal.getEventsByKeywords(userCId, keywords);
+    return events.map(EventsService.mapDbEventToEventResponse);
   }
 
   public async getEventById(
@@ -35,9 +37,13 @@ export class EventsService {
     if (!event) {
       throw new NotFoundException('Event not found');
     }
-    const stats = await this.dal.getEventStats(eventId);
+    const eventStats = await this.dal.getEventStats(eventId);
     const userStats = await this.dal.getEventUserStats(eventId, cid);
-    return { ...event, stats, userStats };
+    return EventsService.mapDbEventToSingleEventResponse(
+      event,
+      eventStats,
+      userStats,
+    );
   }
 
   public async userAction(
@@ -83,7 +89,7 @@ export class EventsService {
       radius,
     );
 
-    return events;
+    return events.map(EventsService.mapDbEventToEventResponse);
   }
 
   public async userCreateEvent(
@@ -104,13 +110,13 @@ export class EventsService {
         event.id,
         imageUrl,
       );
-      return {
+      return EventsService.mapDbEventToEventResponse({
         ...eventWithPicture,
         userStats: {
           isUserLike: false,
           userStatus: undefined,
         },
-      };
+      });
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw new BadRequestException(error.message);
@@ -122,5 +128,52 @@ export class EventsService {
         throw new InternalServerErrorException('Something went wrong');
       }
     }
+  }
+
+  static mapDbEventToEventResponse(
+    event: IEventWithUserStats,
+  ): EventResponseDto {
+    return {
+      id: event.id,
+      ageLimit: event.ageLimit,
+      endTime: event.endTime,
+      eventType: event.eventType,
+      location: event.location,
+      slug: event.slug,
+      startTime: event.startTime,
+      title: event.title,
+      userStats: event.userStats,
+      creator: event.creator,
+      description: event.description,
+      picture: event.picture,
+      accessibility: event.accessibility,
+    };
+  }
+
+  static mapDbEventToSingleEventResponse(
+    event: IEvent,
+    eventStats: IEventStats,
+    userStats: IEventWithUserStats['userStats'],
+  ): SingleEventResponseDto {
+    return {
+      id: event.id,
+      ageLimit: event.ageLimit,
+      endTime: event.endTime,
+      eventType: event.eventType,
+      location: event.location,
+      slug: event.slug,
+      startTime: event.startTime,
+      title: event.title,
+      userStats: userStats,
+      creator: event.creator,
+      description: event.description,
+      picture: event.picture,
+      accessibility: event.accessibility,
+      createdAt: event.createdAt,
+      stats: eventStats,
+      tickets: event.tickets,
+      updatedAt: event.updatedAt,
+      link: event.link,
+    };
   }
 }

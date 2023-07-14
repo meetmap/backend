@@ -130,39 +130,6 @@ export class EventsController {
     );
     return stats;
   }
-  // //save event
-  // @ApiOkResponse({
-  //   type: EventStatsResponseDto,
-  // })
-  // @Patch('/save/:eventId')
-  // @UseMicroserviceAuthGuard()
-  // public async saveEvent(
-  //   @Param('eventId') eventId: string,
-  //   @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
-  // ): Promise<EventStatsResponseDto> {
-  //   const stats = await this.eventsService.userAction(
-  //     jwtPayload.cid,
-  //     eventId,
-  //     'save',
-  //   );
-  //   return stats;
-  // }
-  // @ApiOkResponse({
-  //   type: EventStatsResponseDto,
-  // })
-  // @Delete('/save/:eventId')
-  // @UseMicroserviceAuthGuard()
-  // public async cancelSaveEvent(
-  //   @Param('eventId') eventId: string,
-  //   @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
-  // ): Promise<EventStatsResponseDto> {
-  //   const stats = await this.eventsService.cancelUserAction(
-  //     jwtPayload.cid,
-  //     eventId,
-  //     'save',
-  //   );
-  //   return stats;
-  // }
 
   //will-go
   @ApiOkResponse({
