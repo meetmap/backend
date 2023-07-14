@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "esModuleInterop": true,
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -77,6 +78,12 @@
       ],
       "@app/dto/*": [
         "libs/dto/src/*"
+      ],
+      "@app/auth-providers": [
+        "libs/auth-providers/src"
+      ],
+      "@app/auth-providers/*": [
+        "libs/auth-providers/src/*"
       ]
     }
   }

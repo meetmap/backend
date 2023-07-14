@@ -1,14 +1,15 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { EventerFetcherDal } from './eventer-fetcher.dal';
 import {
+  EventAccessibilityType,
   EventType,
   ICity,
   IEvent,
   IEventerFullEventResponse,
   IEventerTicketsResponse,
 } from '@app/types';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import * as mongoose from 'mongoose';
+import { EventerFetcherDal } from './eventer-fetcher.dal';
 
 @Injectable()
 export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
@@ -90,6 +91,7 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
       return null;
     }
     return {
+      accessibility: EventAccessibilityType.PUBLIC,
       title: event.event.name,
       ageLimit: event.event.guestInfoFields?.age.ageLimit ?? 1,
       picture: event.event.ticketPlatform.images?.imageSquare,
@@ -106,7 +108,7 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
           coordinates: [location.longitude, location.latitude],
         },
       },
-      eventType: EventType.PARTNER_EVENT,
+      eventType: EventType.PARTNER,
       tickets: (tickets?.ticketTypes ?? []).map((ticket) => ({
         amount: ticket.remaining,
         description: ticket.description,

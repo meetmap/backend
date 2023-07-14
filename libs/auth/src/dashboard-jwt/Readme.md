@@ -1,1 +1,1 @@
-This one is using for authenticating only ticketing platoforma admins
+This one is using for authenticating only ticketing platoform admins

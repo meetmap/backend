@@ -1,10 +1,13 @@
-import { PopulatedDoc } from 'mongoose';
-import { IFriends } from '../friends';
-import { IPoint } from '../location';
+import { FriendshipStatus } from '../friends';
 
+//common user
 export interface IUser {
   id: string;
   username: string;
+  //@todo name
+  name?: string;
+  description?: string;
+  profilePicture?: string;
   phone?: string;
   email: string;
   password?: string;
@@ -12,19 +15,19 @@ export interface IUser {
   birthDate: Date;
   createdAt: Date;
   updatedAt: Date;
-  authUserId: string;
+  // authUserId: string;
   cid: string;
-  // coordinates?: IPoint;
-  friendsIds: PopulatedDoc<IFriends>[];
+  //facebook
+  fbId?: string;
+  fbToken?: string;
 }
-
+//main-app
 export interface IMainAppUser
   extends Pick<
     IUser,
     | 'id'
-    | 'authUserId'
+    | 'description'
     | 'birthDate'
-    | 'friendsIds'
     | 'email'
     | 'phone'
     | 'username'
@@ -32,15 +35,35 @@ export interface IMainAppUser
     | 'updatedAt'
     | 'phone'
     | 'cid'
+    | 'name'
+    | 'profilePicture'
+    | 'fbId'
   > {}
 
-export interface IMainAppSafeUser
+export interface IMainAppSafePartialUser
   extends Pick<
     IMainAppUser,
-    'birthDate' | 'friendsIds' | 'email' | 'phone' | 'username' | 'id' | 'cid'
-    // | 'authUserId'
-  > {}
+    | 'birthDate'
+    | 'email'
+    | 'phone'
+    | 'description'
+    | 'username'
+    | 'id'
+    | 'cid'
+    | 'name'
+    | 'profilePicture'
+    | 'fbId'
+  > {
+  friendshipStatus: FriendshipStatus | null;
+}
 
+export interface IMainAppSafeUserWithoutFriends
+  extends Omit<IMainAppSafeUser, 'friends'> {}
+export interface IMainAppSafeUser
+  extends Omit<IMainAppSafePartialUser, 'friendshipStatus'> {
+  friends: IMainAppSafeUserWithoutFriends[];
+}
+//auth-service
 export interface IAuthUser
   extends Pick<
     IUser,
@@ -53,21 +76,58 @@ export interface IAuthUser
     | 'createdAt'
     | 'updatedAt'
     | 'birthDate'
-    | 'authUserId'
+    // | 'authUserId'
     | 'cid'
+    | 'fbId'
+    | 'fbToken'
+    | 'name'
   > {}
 
 export interface ISafeAuthUser
   extends Pick<
     IAuthUser,
-    'id' | 'phone' | 'email' | 'username' | 'birthDate' | 'cid'
+    | 'id'
+    | 'phone'
+    | 'email'
+    | 'username'
+    | 'birthDate'
+    | 'cid'
+    | 'name'
+    | 'fbId'
+  > {}
+
+export interface IRmqUser
+  extends Pick<
+    IUser,
+    | 'id'
+    | 'phone'
+    | 'email'
+    | 'username'
+    | 'birthDate'
+    | 'cid'
+    | 'name'
+    | 'fbId'
+    | 'description'
+    | 'profilePicture'
   > {}
 
 export interface IAuthUserWithPassword extends IAuthUser {
   password: string;
 }
 
+//location-service
+
 export interface ILocationServiceUser
-  extends Pick<IUser, 'id' | 'authUserId' | 'cid'> {
-  friendsCids: string[];
-}
+  extends Pick<IUser, 'id' | 'cid' | 'username' | 'profilePicture' | 'name'> {}
+
+export interface IEventsServiceUser
+  extends Pick<
+    IUser,
+    | 'id'
+    | 'cid'
+    | 'username'
+    | 'profilePicture'
+    | 'birthDate'
+    | 'name'
+    | 'description'
+  > {}

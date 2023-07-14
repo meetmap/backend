@@ -1,47 +1,52 @@
-import { IFriends, IMainAppSafeUser, ISafeAuthUser } from '@app/types';
-import { ApiProperty } from '@nestjs/swagger';
-import { PopulatedDoc, Types } from 'mongoose';
+import {
+  FriendshipStatus,
+  IMainAppSafePartialUser,
+  IMainAppSafeUser,
+  IMainAppSafeUserWithoutFriends,
+} from '@app/types';
 import {
   DateField,
   EmailField,
   IdField,
+  ImageField,
+  NestedField,
   PhoneField,
   StringField,
 } from '../decorators';
 
-export class UserRmqRequestDto implements ISafeAuthUser {
-  @IdField()
-  id: string;
-
+export class UserWithoutFriendsResponseDto
+  implements IMainAppSafeUserWithoutFriends
+{
+  @StringField({
+    optional: true,
+  })
+  description?: string;
+  @DateField()
+  birthDate: Date;
   @EmailField()
   email: string;
-
   @PhoneField({
     optional: true,
   })
   phone?: string;
-
-  @StringField({
-    description: 'Validation will be added soon',
-    example: 'd4v1ds0n_',
-  })
+  @StringField()
   username: string;
-
-  /**
-   * @description birthDate should be in ISO 8601 format i.e 2003-04-01T21:00:00.000Z
-   */
-  @DateField({
-    description: 'Birth date',
-  })
-  birthDate: Date;
-
-  @StringField({
-    description: 'userId in auth microservice',
-    example: '6436b4fa091dc0948e7566c5',
-  })
-  authUserId: string;
+  @IdField()
+  id: string;
   @IdField()
   cid: string;
+  @StringField({
+    optional: true,
+  })
+  name?: string;
+  @StringField({
+    optional: true,
+  })
+  profilePicture?: string;
+  @StringField({
+    optional: true,
+  })
+  fbId?: string;
 }
 
 export class UserResponseDto implements IMainAppSafeUser {
@@ -63,12 +68,28 @@ export class UserResponseDto implements IMainAppSafeUser {
   })
   birthDate: Date;
 
-  @ApiProperty({
-    type: [String],
-    description: 'ids of friends or friends(users) array',
+  @StringField({
+    optional: true,
+  })
+  description?: string;
+  @StringField({
+    optional: true,
+  })
+  name?: string;
+  @StringField({
+    optional: true,
+  })
+  profilePicture?: string;
+  @StringField({
+    optional: true,
+  })
+  fbId?: string;
+
+  @NestedField([UserWithoutFriendsResponseDto], {
+    description: 'Cids of friends or friends(users) array',
     example: ['6436b4ff091dc0948e75671f', '6436b4fa091dc0948e7566c5'],
   })
-  friendsIds: PopulatedDoc<IFriends, Types.ObjectId | undefined>[];
+  friends: UserWithoutFriendsResponseDto[];
 
   @IdField()
   cid: string;
@@ -78,4 +99,53 @@ export class UserResponseDto implements IMainAppSafeUser {
   //     example: '6436b4fa091dc0948e7566c5',
   //   })
   //   authUserId: string;
+}
+
+export class UserPartialResponseDto implements IMainAppSafePartialUser {
+  @StringField({
+    enum: FriendshipStatus,
+  })
+  friendshipStatus: FriendshipStatus | null;
+  @IdField()
+  id: string;
+  @EmailField()
+  email: string;
+
+  @PhoneField({ optional: true })
+  phone?: string;
+
+  @StringField({
+    title: 'Username',
+  })
+  username: string;
+
+  @DateField({
+    description: 'Birth date',
+  })
+  birthDate: Date;
+
+  @IdField()
+  cid: string;
+
+  @StringField({
+    optional: true,
+  })
+  description?: string;
+  @StringField({
+    optional: true,
+  })
+  name?: string;
+  @StringField({
+    optional: true,
+  })
+  profilePicture?: string;
+  @StringField({
+    optional: true,
+  })
+  fbId?: string;
+}
+
+export class UpdateUserProfilePictureRequestDto {
+  @ImageField()
+  photo: Express.Multer.File;
 }

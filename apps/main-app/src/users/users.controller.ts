@@ -1,6 +1,9 @@
-import { JwtService } from '@app/auth';
-import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
-import { InternalAxiosService } from '@app/axios';
+import {
+  ExtractJwtPayload,
+  JwtService,
+  UseMicroserviceAuthGuard,
+} from '@app/auth/jwt';
+import { RMQConstants } from '@app/constants';
 import {
   BadRequestException,
   Body,
@@ -10,10 +13,8 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { ApiTags, ApiOkResponse } from '@nestjs/swagger';
-import { RMQConstants } from '@app/constants';
 // import {
 //   Nack,
 //   RabbitPayload,
@@ -21,11 +22,14 @@ import { RMQConstants } from '@app/constants';
 //   RabbitSubscribe,
 //   RequestOptions,
 // } from '@app/rmq-lib';
-import { IJwtUserPayload } from '@app/types/jwt';
+import { UploadedImage, UseFileInterceptor } from '@app/dto/decorators';
 import {
+  UpdateUserProfilePictureRequestDto,
+  UserPartialResponseDto,
   UserResponseDto,
-  UserRmqRequestDto,
 } from '@app/dto/main-app/users.dto';
+import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common';
+import { IJwtUserPayload } from '@app/types/jwt';
 import {
   Nack,
   RabbitPayload,
@@ -45,9 +49,9 @@ export class UsersController {
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.USERS.name,
     routingKey: [
-      RMQConstants.exchanges.USERS.routes.USER_CREATED,
-      RMQConstants.exchanges.USERS.routes.USER_UPDATED,
-      RMQConstants.exchanges.USERS.routes.USER_DELETED,
+      RMQConstants.exchanges.USERS.routingKeys.USER_CREATED,
+      RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
+      RMQConstants.exchanges.USERS.routingKeys.USER_DELETED,
     ],
     queue: RMQConstants.exchanges.USERS.queues.USER_SERVICE,
   })
@@ -64,22 +68,22 @@ export class UsersController {
       },
     });
 
-    if (routingKey === RMQConstants.exchanges.USERS.routes.USER_CREATED) {
+    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_CREATED) {
       await this.usersService.createUser(payload);
       return;
     }
-    if (routingKey === RMQConstants.exchanges.USERS.routes.USER_UPDATED) {
+    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED) {
       await this.usersService.updateUser(payload);
       return;
     }
-    if (routingKey === RMQConstants.exchanges.USERS.routes.USER_DELETED) {
+    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_DELETED) {
       await this.usersService.deleteUser(payload.cid);
       return;
     } else {
       return new Nack(true);
     }
   }
-
+  //@todo on update users profile picture send an event without updating db
   // @ApiOkResponse({
   //   type: UpdateUserLocationDto,
   //   description: 'Update user location dto',
@@ -106,18 +110,19 @@ export class UsersController {
   }
 
   @ApiOkResponse({
-    type: [UserResponseDto],
+    type: [UserPartialResponseDto],
     description: 'Find users response',
   })
   @UseMicroserviceAuthGuard()
   @Get('/find')
   public async findUsers(
     @Query('q') query: string,
-  ): Promise<UserResponseDto[]> {
+    @ExtractJwtPayload() jwt: IJwtUserPayload,
+  ): Promise<UserPartialResponseDto[]> {
     if (!query) {
       return [];
     }
-    return this.usersService.findUsers(query);
+    return this.usersService.findUsers(jwt.cid, query);
   }
 
   @ApiOkResponse({
@@ -125,13 +130,30 @@ export class UsersController {
     description: 'Find user response',
   })
   @UseMicroserviceAuthGuard()
-  @Get('/get/:userCId')
+  @Get('/get/:userCid')
   public async getUserById(
-    @Param('userCId') userCId: string,
+    @Param('userCid') userCid: string,
   ): Promise<UserResponseDto> {
-    if (!userCId) {
+    if (!userCid) {
       throw new BadRequestException('Invalid userId');
     }
-    return this.usersService.getUserByCId(userCId);
+    return this.usersService.getUserByCid(userCid);
+  }
+
+  @ApiOkResponse({
+    type: UserResponseDto,
+  })
+  @UseMicroserviceAuthGuard()
+  @Post('/profile/picture')
+  @ApiConsumes('multipart/form-data')
+  @UseFileInterceptor('photo')
+  public async updateUserProfilePicture(
+    @ExtractJwtPayload() jwt: IJwtUserPayload,
+    @UploadedImage()
+    file: Express.Multer.File,
+    @Body() payload: UpdateUserProfilePictureRequestDto,
+  ): Promise<UserResponseDto> {
+    return await this.usersService.updateUserProfilePicture(jwt.cid, file);
+    // return this.usersService.getUserByCid(userCid);
   }
 }

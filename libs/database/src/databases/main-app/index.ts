@@ -1,18 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import * as mongoose from 'mongoose';
-import { BaseDatabase, IDatabaseServiceConfig } from '../types';
+import { AbstractBaseDatabase } from '../abtract.db';
 import { FriendsSchema, UserSchema } from './models';
 
 @Injectable()
-export class MainAppDatabase implements BaseDatabase {
-  constructor(private readonly config: IDatabaseServiceConfig) {}
-  public async onModuleInit() {
-    await mongoose.connect(this.config.connectionString);
-  }
-  public get models() {
+export class MainAppDatabase extends AbstractBaseDatabase {
+  public override get models() {
     return {
-      users: mongoose.model('User', UserSchema),
-      friends: mongoose.model('Friends', FriendsSchema),
+      users: this.connection.model('User', UserSchema),
+      friends: this.connection.model('Friends', FriendsSchema),
     };
   }
 }

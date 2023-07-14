@@ -1,12 +1,11 @@
-import { PASSWORD_REGEX } from '@app/constants';
 import { ISafeAuthUser } from '@app/types';
-import { ApiProperty } from '@nestjs/swagger';
-import { Matches } from 'class-validator';
 import {
   BooleanField,
   DateField,
   EmailField,
   IdField,
+  NestedField,
+  PasswordField,
   PhoneField,
   StringField,
 } from '../decorators';
@@ -36,6 +35,12 @@ export class AuthUserResponseDto implements ISafeAuthUser {
   })
   username: string;
 
+  @StringField({
+    example: 'User name',
+    optional: true,
+  })
+  name?: string;
+
   @DateField()
   birthDate: Date;
 
@@ -44,29 +49,18 @@ export class AuthUserResponseDto implements ISafeAuthUser {
 }
 
 export class LoginResponseDto {
-  @ApiProperty({
-    type: TokensResponseDto,
+  @NestedField(TokensResponseDto, {
     description: 'Tokens',
   })
   tokens: TokensResponseDto;
-
-  @ApiProperty({
-    type: AuthUserResponseDto,
+  @NestedField(AuthUserResponseDto, {
     description: 'User',
   })
   user: AuthUserResponseDto;
 }
 
 export class CreateUserRequestDto {
-  @StringField({
-    description:
-      'At least 1 uppercase, 1 lowercase and 1 number, minimal length is 6',
-    example: 'Abc12dsaj',
-  })
-  @Matches(PASSWORD_REGEX, {
-    message:
-      'Password is not strong enough, it should containt at least 1 uppercase, 1 lowercase and 1 number, minimal length is 6',
-  })
+  @PasswordField()
   password: string;
 
   @EmailField()
@@ -74,6 +68,12 @@ export class CreateUserRequestDto {
 
   @PhoneField({ optional: true })
   phone?: string;
+
+  @StringField({
+    description: 'User name, optional',
+    optional: true,
+  })
+  name?: string;
 
   @StringField({
     description: 'Validation will be added soon',
@@ -86,6 +86,54 @@ export class CreateUserRequestDto {
    */
   @DateField()
   birthDate: Date;
+}
+
+export class SignUpWithAuthProviderRequestDto {
+  @EmailField({
+    optional: true,
+  })
+  email?: string;
+
+  @PhoneField({ optional: true })
+  phone?: string;
+
+  @StringField({
+    description: 'Validation will be added soon',
+    example: 'd4v1ds0n_',
+  })
+  username: string;
+
+  @StringField({
+    description: 'User name, optional',
+    optional: true,
+  })
+  name?: string;
+
+  /**
+   * @description birthDate should be in ISO 8601 format i.e 2003-04-01T21:00:00.000Z
+   */
+  @DateField({
+    optional: true,
+  })
+  birthDate?: Date;
+  @StringField({
+    description: 'Short-live auth provider token',
+  })
+  token: string;
+}
+
+export class LoginWithAuthProviderRequestDto {
+  @StringField({
+    description: 'Short-live auth provider token',
+  })
+  token: string;
+}
+
+export class LinkFacebookRequestDto {
+  @StringField({
+    description: 'Short-live auth provider token',
+  })
+  token: string;
 }
 
 export class LoginWithPasswordDto {

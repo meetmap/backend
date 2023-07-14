@@ -1,6 +1,6 @@
-import { PriceSchema } from '@app/database/shared-models';
-import { EventType, IEvent } from '@app/types';
+import { EventAccessibilityType, EventType, IEvent } from '@app/types';
 import * as mongoose from 'mongoose';
+import { CreatorSchema } from './creator-schema';
 import { LocationSchema } from './location';
 import { TicketSchema } from './ticket';
 
@@ -46,12 +46,18 @@ export const EventSchema = new mongoose.Schema<IEvent>(
       enum: EventType,
       required: true,
     },
+    accessibility: {
+      type: mongoose.SchemaTypes.String,
+      enum: EventAccessibilityType,
+      required: true,
+      default: EventAccessibilityType.PUBLIC,
+    },
     tickets: {
       type: [TicketSchema],
       requried: true,
     },
-    creatorId: {
-      type: mongoose.SchemaTypes.ObjectId,
+    creator: {
+      type: CreatorSchema,
     },
   },
   {

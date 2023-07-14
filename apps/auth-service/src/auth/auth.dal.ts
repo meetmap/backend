@@ -1,3 +1,4 @@
+import { IAuthProviderUser } from '@app/auth-providers/types';
 import { AuthServiceDatabase } from '@app/database';
 import { IAuthUser, IAuthUserWithPassword, ISafeAuthUser } from '@app/types';
 import { ConflictException, Injectable } from '@nestjs/common';
@@ -11,16 +12,42 @@ export class AuthDal {
   public async createUser(
     payload: Pick<
       IAuthUserWithPassword,
-      'email' | 'username' | 'phone' | 'password' | 'birthDate'
+      'email' | 'username' | 'phone' | 'password' | 'birthDate' | 'name'
+    >,
+  ) {
+    return await this.db.models.users.create({
+      email: payload.email,
+      username: payload.username,
+      name: payload.name,
+      phone: payload.phone,
+      password: await this.hashPassword(payload.password),
+      birthDate: payload.birthDate,
+      cid: randomUUID(),
+    });
+  }
+
+  public async getUserByFbId(fbId: string) {
+    return await this.db.models.users.findOne({
+      fbId,
+    });
+  }
+
+  public async createUserWithAuthProvider(
+    payload: Pick<
+      IAuthUser,
+      'email' | 'username' | 'phone' | 'birthDate' | 'fbId' | 'fbToken' | 'name'
     >,
   ) {
     return await this.db.models.users.create({
       email: payload.email,
       username: payload.username,
       phone: payload.phone,
-      password: await this.hashPassword(payload.password),
       birthDate: payload.birthDate,
       cid: randomUUID(),
+      name: payload.name,
+      //user has signed in with facebook
+      fbId: payload.fbId,
+      fbToken: payload.fbToken,
     });
   }
 
@@ -61,10 +88,23 @@ export class AuthDal {
     });
   }
 
+  public async linkFbToUser(userId: string, fbUser: IAuthProviderUser) {
+    return await this.db.models.users.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          fbId: fbUser.id,
+          fbToken: fbUser.token,
+        },
+      },
+      { new: true },
+    );
+  }
+
   public async updateUser(
     id: string,
     payload: Partial<
-      Pick<IAuthUser, 'email' | 'phone' | 'password' | 'username'>
+      Pick<IAuthUser, 'email' | 'phone' | 'password' | 'username' | 'name'>
     >,
   ) {
     if (payload.email && (await this.findUserByEmail(payload.email))) {
@@ -92,6 +132,7 @@ export class AuthDal {
           email: payload.email,
           phone: payload.phone,
           username: payload.username,
+          name: payload.name,
         },
       },
       {
