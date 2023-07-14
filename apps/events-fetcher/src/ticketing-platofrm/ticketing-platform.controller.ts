@@ -7,7 +7,7 @@ import {
   ApiKeyResponseDto,
   CreateTicketingPlatformRequestDto,
   CreateTicketingPlatformResponseDto,
-  EventResponseDto,
+  EventForOrganizersResponseDto,
   IssueApiKeyRequestDto,
   IssueApiKeyResponseDto,
   LoginPlatformRequestDto,
@@ -170,30 +170,30 @@ export class TicketingPlatformController {
   }
 
   @ApiOkResponse({
-    type: [EventResponseDto],
+    type: [EventForOrganizersResponseDto],
   })
   @Get('/events')
   @UseApiAuthGuard()
   public async getEvents(
     @ExtractApiPlatform() platform: ITicketingPlatform,
-  ): Promise<EventResponseDto[]> {
+  ): Promise<EventForOrganizersResponseDto[]> {
     throw new BadRequestException();
   }
 
   @ApiOkResponse({
-    type: EventResponseDto,
+    type: EventForOrganizersResponseDto,
   })
   @Get('/events/:id')
   @UseApiAuthGuard()
   public async getEvent(
     @Param('id') id: string,
     @ExtractApiPlatform() platform: ITicketingPlatform,
-  ): Promise<EventResponseDto> {
+  ): Promise<EventForOrganizersResponseDto> {
     throw new BadRequestException();
   }
 
   @ApiOkResponse({
-    type: EventResponseDto,
+    type: EventForOrganizersResponseDto,
   })
   @Post('/upload-event')
   @UseApiAuthGuard()
@@ -201,7 +201,7 @@ export class TicketingPlatformController {
     @ExtractApiPlatform() platform: ITicketingPlatform,
     @Body()
     payload: UploadEventRequestDto,
-  ): Promise<EventResponseDto> {
+  ): Promise<EventForOrganizersResponseDto> {
     throw new BadRequestException();
   }
 }
