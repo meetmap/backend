@@ -39,6 +39,15 @@ export class FriendsService {
       throw new BadRequestException('Invalid user');
     }
     await this.dal.sendFriendshipRequest(currentUser.cid, friendUser.cid);
+    await this.rmq.amqp.publish(
+      RMQConstants.exchanges.FRIENDS.name,
+      RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REQUESTED,
+      {
+        friendCId: friendCid,
+        userCId: requestorCid,
+      } satisfies UpdateFriendshipRMQRequestDto,
+    );
+
     return UsersService.mapUserDbToResponsePartialUser(friendUser);
   }
 
@@ -111,7 +120,7 @@ export class FriendsService {
 
     await this.rmq.amqp.publish(
       RMQConstants.exchanges.FRIENDS.name,
-      RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REMOVED,
+      RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REJECTED,
       {
         userCId: user.cid,
         friendCId: requesterUser.cid,

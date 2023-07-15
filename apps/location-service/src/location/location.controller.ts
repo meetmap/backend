@@ -1,13 +1,12 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { RabbitMQExchanges } from '@app/constants';
-import { LocationService } from './location.service';
+import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import {
   GetUserLocationResponseDto,
   UpdateUserLocationRequestDto,
 } from '@app/dto/location-service/location.dto';
-import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import { IJwtUserPayload } from '@app/types/jwt';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
+import { LocationService } from './location.service';
 @Controller('location')
 export class LocationController {
   constructor(private readonly locationService: LocationService) {}
