@@ -96,7 +96,7 @@ export class UsersDal implements OnModuleInit {
   }
 
   public async getUserFriends(cid: string) {
-    return await this.dataManipulation.friends.getUserFriends(cid, 0, 0);
+    return await this.dataManipulation.friends.getUserFriends(cid, cid, 0, 0);
   }
 
   public async updateUser(

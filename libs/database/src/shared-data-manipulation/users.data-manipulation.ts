@@ -28,6 +28,27 @@ export class UsersDataManipulation<
     ]);
   }
 
+  public async getUserWithFriendshipStatus(
+    userCId: string,
+    matchPipeline: mongoose.PipelineStage[],
+    afterPipeline: mongoose.PipelineStage[] = [],
+    session?: mongoose.mongo.ClientSession,
+  ): Promise<IGetUserListWithFriendshipStatusAggregationResult<Users> | null> {
+    const [user] = await this.users.aggregate<
+      IGetUserListWithFriendshipStatusAggregationResult<Users>
+    >(
+      [
+        ...matchPipeline,
+        ...getFriendsipStatusForUserFromUsersAggregation(userCId),
+        ...afterPipeline,
+      ],
+      {
+        session: session,
+      },
+    );
+    return user ?? null;
+  }
+
   public async deleteUser(userCId: string) {
     await this.friends.deleteMany({
       $or: [

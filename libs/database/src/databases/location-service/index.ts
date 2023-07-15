@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AbstractBaseDatabase } from '../abtract.db';
+import { AbstractBaseDatabase } from '../abstract.db';
 
 import { FriendsSchema, UserSchema } from './models';
 

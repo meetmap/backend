@@ -7,7 +7,7 @@ import {
   LocationServiceDatabase,
   MainAppDatabase,
 } from './databases';
-import { AbstractBaseDatabase } from './databases/abtract.db';
+import { AbstractBaseDatabase } from './databases/abstract.db';
 import './mongoose-defaults';
 
 export interface IDatabaseModuleConfig {
