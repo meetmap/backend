@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
-import * as jwt from 'jsonwebtoken';
-import { ConfigService } from '@nestjs/config';
 import { IJwtUserPayload } from '@app/types/jwt';
+import { ConfigService } from '@nestjs/config';
+import * as jwt from 'jsonwebtoken';
 
 interface IJwtOptions {
   secret: string;

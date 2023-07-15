@@ -11,6 +11,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { LocationServiceModule } from './location-service.module';
 
 async function bootstrap() {
+  const microserviceName: MicroServiceName = 'location-service';
   const app = await NestFactory.create(LocationServiceModule);
   const PORT = process.env.PORT ?? 3002;
 
@@ -31,12 +32,12 @@ async function bootstrap() {
     .addServer(SERVER_PREFIX)
     .addServer(`http://localhost:${PORT}`)
     .build();
-  app.setGlobalPrefix('location-service' satisfies MicroServiceName);
+  app.setGlobalPrefix(microserviceName);
   app.enableCors({ origin: CORS_ORIGINS });
   const document = SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup(
-    getMicroservicePath('location-service').concat('/api'),
+    getMicroservicePath(microserviceName).concat('/api'),
     app,
     document,
   );
@@ -44,5 +45,6 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   await app.listen(PORT);
   console.log('App is running on port:', PORT);
+  console.log('Local url:', `http://localhost:${PORT}/${microserviceName}/api`);
 }
 bootstrap();

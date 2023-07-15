@@ -91,4 +91,6 @@ registry-login:
 	aws ecr get-login-password --region eu-west-1 --profile meetmap | docker login --username AWS --password-stdin 970180171170.dkr.ecr.eu-west-1.amazonaws.com
 
 
-
+.PHONY: local-dev
+local-dev:
+	docker-compose -f docker-compose.dev.yaml up 

@@ -10,6 +10,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AuthServiceModule } from './auth-service.module';
 
 async function bootstrap() {
+  const microserviceName: MicroServiceName = 'auth-service';
   const app = await NestFactory.create(AuthServiceModule);
   const PORT = process.env.PORT ?? 3003;
 
@@ -30,12 +31,12 @@ async function bootstrap() {
     .addServer(SERVER_PREFIX)
     .addServer(`http://localhost:${PORT}`)
     .build();
-  app.setGlobalPrefix('auth-service' satisfies MicroServiceName);
+  app.setGlobalPrefix(microserviceName);
   app.enableCors({ origin: CORS_ORIGINS });
   const document = SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup(
-    getMicroservicePath('auth-service').concat('/api'),
+    getMicroservicePath(microserviceName).concat('/api'),
     app,
     document,
   );
@@ -44,5 +45,6 @@ async function bootstrap() {
 
   await app.listen(PORT);
   console.log('App is running on port:', PORT);
+  console.log('Local url:', `http://localhost:${PORT}/${microserviceName}/api`);
 }
 bootstrap();
