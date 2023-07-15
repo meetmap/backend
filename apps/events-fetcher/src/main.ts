@@ -7,10 +7,11 @@ import { MicroServiceName } from '@app/types';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { EventsFetcherModule } from './events-fetcher.module';
 import cookieParser from 'cookie-parser';
+import { EventsFetcherModule } from './events-fetcher.module';
 
 async function bootstrap() {
+  const microserviceName: MicroServiceName = 'events-fetcher';
   const app = await NestFactory.create(EventsFetcherModule);
   const PORT = process.env.PORT ?? 3000;
 
@@ -51,12 +52,12 @@ async function bootstrap() {
     .build();
 
   app.use(cookieParser());
-  app.setGlobalPrefix('events-fetcher' satisfies MicroServiceName);
+  app.setGlobalPrefix(microserviceName);
   app.enableCors({ origin: CORS_ORIGINS });
   const document = SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup(
-    getMicroservicePath('events-fetcher').concat('/api'),
+    getMicroservicePath(microserviceName).concat('/api'),
     app,
     document,
   );
@@ -65,5 +66,6 @@ async function bootstrap() {
 
   await app.listen(PORT);
   console.log('App is running on port:', PORT);
+  console.log('Local url:', `http://localhost:${PORT}/${microserviceName}/api`);
 }
 bootstrap();
