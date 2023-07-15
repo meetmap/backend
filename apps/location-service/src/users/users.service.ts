@@ -19,10 +19,14 @@ export class UsersService {
   }
 
   public async handleAddFriend(userCid: string, friendCid: string) {
-    await this.dal.addFriendCid(userCid, friendCid);
+    await this.dal.requestFriend(userCid, friendCid);
   }
 
-  public async handleRemoveFriend(userCid: string, friendCid: string) {
-    await this.dal.removeFriendCid(userCid, friendCid);
+  public async handleRequestFriend(userCid: string, friendCid: string) {
+    await this.dal.requestFriend(userCid, friendCid);
+  }
+
+  public async handleRejectFriend(userCid: string, friendCid: string) {
+    await this.dal.rejectFriend(userCid, friendCid);
   }
 }
