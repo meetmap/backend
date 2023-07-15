@@ -1,6 +1,5 @@
 import { AuthModule as LibAuthModule } from '@app/auth';
 import { AuthProvidersModule } from '@app/auth-providers';
-import { InternalAxiosModule } from '@app/axios';
 import { DatabaseModule } from '@app/database';
 import { RabbitmqModule } from '@app/rabbitmq';
 import { Module } from '@nestjs/common';

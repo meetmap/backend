@@ -1,24 +1,195 @@
 version: '3.7'
 services:
-  redis:
-    image: redis
-    restart: always
-    ports:
-      - 6379:6379
-    logging:
-      options:
-        max-size: 10m
-        max-file: '3'
-  mongo:
-    image: mongo
-    restart: always
-    ports:
-      - 27017:27017
-  events-fetcher:
-    image: events-fetcher
+  nginx:
     build:
       context: ./
-      dockerfile: apps/events-fetcher/Dockerfile
-    restart: always
+      dockerfile: nginx/Dockerfile
     ports:
-      - 3001:3001
+      - '3000:80'
+    networks:
+      - public
+    depends_on:
+      events-fetcher:
+        condition: service_healthy
+      main-app:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      location-service:
+        condition: service_healthy
+
+  events-fetcher:
+    platform: linux/amd64
+    build:
+      context: ./
+      dockerfile: apps/events-fetcher/Dockerfile.dev
+    volumes:
+      - ./:/app # Maps host directory to container directory
+    networks:
+      - private
+    env_file:
+      - .env.dev
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      main-app:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:3000/events-fetcher"
+        ]
+      interval: 5s
+      timeout: 20s
+      retries: 10
+  main-app:
+    platform: linux/amd64
+    build:
+      context: ./
+      dockerfile: apps/main-app/Dockerfile.dev
+    volumes:
+      - ./:/app
+    networks:
+      - private
+    env_file:
+      - .env.dev
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3001/main-app" ]
+      interval: 5s
+      timeout: 20s
+      retries: 10
+
+  auth-service:
+    platform: linux/amd64
+    build:
+      context: ./
+      dockerfile: apps/auth-service/Dockerfile.dev
+    volumes:
+      - ./:/app
+    networks:
+      - private
+    env_file:
+      - .env.dev
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      location-service:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:3003/auth-service"
+        ]
+      interval: 5s
+      timeout: 20s
+      retries: 10
+
+  location-service:
+    platform: linux/amd64
+    build:
+      context: ./
+      dockerfile: apps/location-service/Dockerfile.dev
+    volumes:
+      - ./:/app
+    networks:
+      - private
+    env_file:
+      - .env.dev
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:3002/location-service"
+        ]
+      interval: 5s
+      timeout: 20s
+      retries: 10
+
+  mongo:
+    image: mongo:6.0
+    volumes:
+      - ~/mongo:/data/db
+    ports:
+      - 27017:27017
+    networks:
+      - public
+      - private
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--eval",
+          "'db.adminCommand(\"ping\")'"
+        ]
+      interval: 5s
+      timeout: 20s
+      retries: 10
+
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    networks:
+      - public
+      - private
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-h", "redis", "ping" ]
+      interval: 5s
+      timeout: 20s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq
+    command: rabbitmq-server
+    expose:
+      - 5672
+      - 15672
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 5s
+      timeout: 15s
+      retries: 5
+    networks:
+      - public
+      - private
+
+networks:
+  public:
+  private:
+    driver: bridge
+    internal: true

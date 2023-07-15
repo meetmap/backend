@@ -1,0 +1,20 @@
+# Start from the official Node.js 16 image
+FROM node:16
+
+# Set the working directory
+WORKDIR /app
+
+# Add the `node_modules/.bin` to $PATH
+ENV PATH /app/node_modules/.bin:$PATH
+
+# Install dependencies first to take advantage of Docker layer caching
+COPY package*.json ./
+RUN yarn install
+
+# Copy the rest of the app
+COPY . .
+
+EXPOSE 3001
+
+# Default command, starting the app with hot-reloading enabled
+CMD [ "yarn", "run", "start:dev", "main-app" ]
