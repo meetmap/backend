@@ -11,6 +11,7 @@ import {
   getIncomingRequestsUserListFromFriendsAggregation,
   getOutcomingRequestsUserListFromFriendsAggregation,
   IGetUserListFromFriendsAggregationResult,
+  IGetUserListWithFriendshipStatusAggregationResult,
 } from '../shared-aggregations';
 
 export class FriendsDataManipulation<
@@ -306,42 +307,40 @@ export class FriendsDataManipulation<
       );
     }
 
-    // Delete the friend document
+    //i.e userCId rejects current frienship and makes requesterCId follower
+    if (friendDoc.status === FriendshipStatus.FRIENDS) {
+      //delete existing
+      friendDoc.status = FriendshipStatus.REQUESTED;
+      friendDoc.recipientCId = userCId;
+      friendDoc.requesterCId = requesterCId;
+      await friendDoc.save({
+        session,
+      });
+      return;
+    }
+    //otherwise delete the friend document
     await this.friends
       .findOneAndRemove({
         requesterCId: requesterCId,
         recipientCId: userCId,
       })
       .session(session);
-
-    // Remove each other from their friends lists
-    // await this.users
-    //   .findOneAndUpdate(
-    //     { cid: requesterCId },
-    //     {
-    //       $pull: {
-    //         friendsCIds: userCId,
-    //       },
-    //     },
-    //   )
-    //   .session(session);
-
-    // await this.users
-    //   .findOneAndUpdate(
-    //     { cid: userCId },
-    //     {
-    //       $pull: {
-    //         friendsCIds: requesterCId,
-    //       },
-    //     },
-    //   )
-    //   .session(session);
   }
 
-  public async getUserFriends(userCId: string, limit: number, page: number) {
+  public async getUserFriends(
+    currentUserCId: string,
+    searchUserCId: string,
+    limit: number,
+    page: number,
+  ) {
     const response = await this.friends.aggregate<
-      IGetUserListFromFriendsAggregationResult<Users>
-    >([...getFriendsUserListFromFriendsAggregation(userCId)]);
+      IGetUserListWithFriendshipStatusAggregationResult<Users>
+    >([
+      ...getFriendsUserListFromFriendsAggregation(
+        currentUserCId,
+        searchUserCId,
+      ),
+    ]);
     return response; // response.map(({ friends }) => friends);
   }
 

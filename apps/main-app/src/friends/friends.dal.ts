@@ -1,13 +1,7 @@
 import { MainAppDatabase } from '@app/database';
 import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
-import {
-  FriendshipStatus,
-  IMainAppFriends,
-  IMainAppSafePartialUser,
-  IMainAppUser,
-} from '@app/types';
+import { IMainAppFriends, IMainAppUser } from '@app/types';
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class FriendsDal implements OnModuleInit {
@@ -23,34 +17,18 @@ export class FriendsDal implements OnModuleInit {
     );
   }
 
-  public async getUserByCId(
-    cid: string,
-  ): Promise<IMainAppSafePartialUser | null> {
-    const user = await this.db.models.users.findOne(
-      {
-        cid,
-      },
-      {
-        id: true,
-        birthDate: true,
-        email: true,
-        username: true,
-        phone: true,
-        cid: true,
-        description: true,
-        fbId: true,
-        name: true,
-        profilePicture: true,
-      },
+  public async getUserByCId(currentUserCId: string, searchUserCId: string) {
+    const user = await this.dataManipulation.users.getUserWithFriendshipStatus(
+      currentUserCId,
+      [
+        {
+          $match: {
+            cid: searchUserCId,
+          },
+        },
+      ],
     );
-    if (user) {
-      //check it
-      return UsersService.mapUserDbToResponsePartialUser({
-        ...user.toObject(),
-        friendshipStatus: FriendshipStatus.PENDING,
-      });
-    }
-    return null;
+    return user;
   }
 
   public async sendFriendshipRequest(
@@ -85,9 +63,15 @@ export class FriendsDal implements OnModuleInit {
     });
   }
 
-  public async getUserFriends(userCId: string, limit: number, page: number) {
+  public async getUserFriends(
+    currentUserCId: string,
+    searchUserCId: string,
+    limit: number,
+    page: number,
+  ) {
     return await this.dataManipulation.friends.getUserFriends(
-      userCId,
+      currentUserCId,
+      searchUserCId,
       limit,
       page,
     );
