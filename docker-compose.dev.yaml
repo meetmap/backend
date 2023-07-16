@@ -13,7 +13,7 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - ~/mongo:/data/db
+      - ./docker-containers/mongo:/data/db
     healthcheck:
       test:
         [
@@ -28,6 +28,8 @@ services:
 
   redis:
     image: redis:latest
+    volumes:
+      - ./docker-containers/redis:/data
     ports:
       - 6379:6379
       # - private
@@ -38,11 +40,14 @@ services:
       retries: 10
 
   rabbitmq:
+    hostname: rabbitmq
     image: rabbitmq:management
     container_name: rabbitmq
     environment:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - ./docker-containers/rabbitmq:/var/lib/rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
