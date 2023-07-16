@@ -1,14 +1,16 @@
 import { FriendshipStatus, IFriendsBase, IUser } from '@app/types';
 import { PipelineStage } from 'mongoose';
+import { getFriendsipStatusForUserFromUsersAggregation } from './users.aggregation';
 
 type FieldsToOmit = 'password' | 'refreshToken' | 'fbToken';
 export const getFriendsUserListFromFriendsAggregation = <User extends IUser>(
-  userCId: string,
+  currentUserCId: string,
+  searchUserCId: string,
   usersCollectionName: string = 'users',
 ): PipelineStage[] => [
   {
     $match: {
-      $or: [{ requesterCId: userCId }, { recipientCId: userCId }],
+      $or: [{ requesterCId: searchUserCId }, { recipientCId: searchUserCId }],
       status: FriendshipStatus.FRIENDS,
     },
   },
@@ -32,7 +34,7 @@ export const getFriendsUserListFromFriendsAggregation = <User extends IUser>(
     $project: {
       friend: {
         $cond: {
-          if: { $eq: ['$requesterCId', userCId] },
+          if: { $eq: ['$requesterCId', searchUserCId] },
           then: { $arrayElemAt: ['$recipientDetails', 0] },
           else: { $arrayElemAt: ['$requesterDetails', 0] },
         },
@@ -70,6 +72,7 @@ export const getFriendsUserListFromFriendsAggregation = <User extends IUser>(
       },
     },
   },
+  ...getFriendsipStatusForUserFromUsersAggregation(currentUserCId),
 ];
 
 export const getIncomingRequestsUserListFromFriendsAggregation = <

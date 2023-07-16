@@ -54,12 +54,13 @@ export class UsersController {
   }
 
   @RabbitSubscribe({
-    exchange: RMQConstants.exchanges.USERS.name,
+    exchange: RMQConstants.exchanges.FRIENDS.name,
     routingKey: [
+      RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REQUESTED,
       RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_ADDED,
-      RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REMOVED,
+      RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REJECTED,
     ],
-    queue: RMQConstants.exchanges.USERS.queues.LOCATION_SERVICE,
+    queue: RMQConstants.exchanges.FRIENDS.queues.LOCATION_SERVICE,
   })
   public async handleFriendship(
     @RabbitPayload() payload: UpdateFriendshipRMQRequestDto,
@@ -76,6 +77,15 @@ export class UsersController {
     });
 
     if (
+      routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REQUESTED
+    ) {
+      await this.usersService.handleRequestFriend(
+        payload.userCId,
+        payload.friendCId,
+      );
+      return;
+    }
+    if (
       routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_ADDED
     ) {
       await this.usersService.handleAddFriend(
@@ -85,9 +95,9 @@ export class UsersController {
       return;
     }
     if (
-      routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REMOVED
+      routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REJECTED
     ) {
-      await this.usersService.handleRemoveFriend(
+      await this.usersService.handleRejectFriend(
         payload.userCId,
         payload.friendCId,
       );

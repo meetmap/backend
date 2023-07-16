@@ -3,12 +3,8 @@ import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { FriendsService } from './friends.service';
 
-import {
-  RequestFriendshipDto,
-  UpdateFriendshipRequestDto,
-} from '@app/dto/main-app/friends.dto';
+import { UpdateFriendshipRequestDto } from '@app/dto/main-app/friends.dto';
 import { UserPartialResponseDto } from '@app/dto/main-app/users.dto';
-import { FriendshipStatus } from '@app/types';
 import { IJwtUserPayload } from '@app/types/jwt';
 import { UsersService } from '../users/users.service';
 
@@ -24,12 +20,12 @@ export class FreindsController {
   @Post('request')
   @UseMicroserviceAuthGuard()
   public async requestFriendship(
-    @Body() dto: RequestFriendshipDto,
+    @Body() dto: UpdateFriendshipRequestDto,
     @ExtractJwtPayload() jwtPayload: IJwtUserPayload,
   ): Promise<UserPartialResponseDto> {
     return await this.friendsService.requestFriendship(
       jwtPayload.cid,
-      dto.userCId,
+      dto.friendCId,
     );
   }
 
@@ -112,24 +108,20 @@ export class FreindsController {
     type: [UserPartialResponseDto],
     description: 'Array of users',
   })
-  @Get('/get/:userCid/?')
-  //   @UseAuthGuard()
+  @Get('/get/:searchUserCId/?')
+  @UseMicroserviceAuthGuard()
   public async getUserFirends(
-    @Param('userCid') userCid: string,
+    @Param('searchUserCId') searchUserCId: string,
     @Query('limit') limit: number,
     @Query('page') page: number,
-    // @ExtractUser() user: IUser,
+    @ExtractJwtPayload() jwt: IJwtUserPayload,
   ): Promise<UserPartialResponseDto[]> {
     const friends = await this.friendsService.getUserFriends(
-      userCid,
+      jwt.cid,
+      searchUserCId,
       limit,
       page,
     );
-    return friends.map((user) =>
-      UsersService.mapUserDbToResponsePartialUser({
-        ...user,
-        friendshipStatus: FriendshipStatus.FRIENDS,
-      }),
-    );
+    return friends;
   }
 }

@@ -28,20 +28,45 @@ export class UsersDataManipulation<
     ]);
   }
 
-  public async deleteUser(userCId: string) {
-    await this.friends.deleteMany({
-      $or: [
-        {
-          requesterCId: userCId,
-        },
-        {
-          recipientCId: userCId,
-        },
+  public async getUserWithFriendshipStatus(
+    userCId: string,
+    matchPipeline: mongoose.PipelineStage[],
+    afterPipeline: mongoose.PipelineStage[] = [],
+    session?: mongoose.mongo.ClientSession,
+  ): Promise<IGetUserListWithFriendshipStatusAggregationResult<Users> | null> {
+    const [user] = await this.users.aggregate<
+      IGetUserListWithFriendshipStatusAggregationResult<Users>
+    >(
+      [
+        ...matchPipeline,
+        ...getFriendsipStatusForUserFromUsersAggregation(userCId),
+        ...afterPipeline,
       ],
-    });
+      {
+        session: session,
+      },
+    );
+    return user ?? null;
+  }
 
-    await this.users.deleteMany({
-      cid: userCId,
-    });
+  public async deleteUser(userCId: string, session: mongoose.ClientSession) {
+    await this.friends
+      .deleteMany({
+        $or: [
+          {
+            requesterCId: userCId,
+          },
+          {
+            recipientCId: userCId,
+          },
+        ],
+      })
+      .session(session);
+
+    await this.users
+      .deleteMany({
+        cid: userCId,
+      })
+      .session(session);
   }
 }

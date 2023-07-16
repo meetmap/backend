@@ -31,8 +31,8 @@ export class LocationDal implements OnModuleInit {
     return await this.db.models.users.findOne({ cid });
   }
 
-  public async getUserFriends(cid: string) {
-    return await this.dataManipulation.friends.getUserFriends(cid, 0, 0);
+  public async getSelfUserFriends(cid: string) {
+    return await this.dataManipulation.friends.getUserFriends(cid, cid, 0, 0);
   }
 
   public async updateUserLocation(cid: string, coordinates: ICoordinates) {

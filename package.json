@@ -10,7 +10,7 @@
     "build": "nest build",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "set -a; source .env.dev; set +a; nest start --watch",
+    "start:dev": "npm run compose:dev-start && echo \"Waiting for mongo replicaset initialized...\"  && sleep 10 && set -a; source .env.dev; set +a; nest start --watch",
     "start:debug": "set -a; source .env.dev; set +a; nest start --debug --watch",
     "start:prod": "node dist/apps/backend-startap/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
