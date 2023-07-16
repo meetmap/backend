@@ -155,7 +155,6 @@ export class UsersService {
       name: user.name,
       profilePicture: user.profilePicture,
       friendshipStatus: user.friendshipStatus,
-      // authUserId: user.authUserId,
     };
   }
 
@@ -174,8 +173,6 @@ export class UsersService {
       name: user.name,
       profilePicture: user.profilePicture,
       friendshipStatus: user.friendshipStatus,
-
-      // authUserId: user.authUserId,
     };
   }
 }

@@ -54,20 +54,32 @@ export class UsersDal implements OnModuleInit {
   }
 
   public async deleteUser(cid: string) {
-    await this.dataManipulation.users.deleteUser(cid);
+    await this.db.session((session) =>
+      this.dataManipulation.users.deleteUser(cid, session),
+    );
     return cid;
   }
 
-  public async addFriendCid(userCid: string, friendCid: string) {
+  public async requestFriend(userCid: string, friendCid: string) {
     await this.db.session(async (session) => {
-      return await this.dataManipulation.friends.forceFriendship(
+      return await this.dataManipulation.friends.sendFriendshipRequest(
         userCid,
         friendCid,
         session,
       );
     });
   }
-  public async removeFriendCid(userCid: string, friendCid: string) {
+
+  public async acceptFriend(userCid: string, friendCid: string) {
+    await this.db.session(async (session) => {
+      return await this.dataManipulation.friends.acceptFriendshipRequest(
+        userCid,
+        friendCid,
+        session,
+      );
+    });
+  }
+  public async rejectFriend(userCid: string, friendCid: string) {
     await this.db.session(async (session) => {
       return await this.dataManipulation.friends.rejectFriendshipRequest(
         userCid,

@@ -21,10 +21,12 @@ export class RMQConstants {
         type: 'direct',
         queues: {
           LOCATION_SERVICE: 'location_service_friends_queue',
+          EVENTS_SERVICE: 'events_service_friends_queue',
         },
         routingKeys: {
+          FRIEND_REQUESTED: 'friend.requested',
           FRIEND_ADDED: 'friend.added',
-          FRIEND_REMOVED: 'friend.removed',
+          FRIEND_REJECTED: 'friend.rejected',
         },
       },
     } satisfies Record<string, IRMQExchange>;
