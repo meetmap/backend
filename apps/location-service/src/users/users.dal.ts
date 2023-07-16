@@ -54,7 +54,9 @@ export class UsersDal implements OnModuleInit {
   }
 
   public async deleteUser(cid: string) {
-    await this.dataManipulation.users.deleteUser(cid);
+    await this.db.session((session) =>
+      this.dataManipulation.users.deleteUser(cid, session),
+    );
     return cid;
   }
 

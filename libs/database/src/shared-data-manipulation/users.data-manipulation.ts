@@ -49,20 +49,24 @@ export class UsersDataManipulation<
     return user ?? null;
   }
 
-  public async deleteUser(userCId: string) {
-    await this.friends.deleteMany({
-      $or: [
-        {
-          requesterCId: userCId,
-        },
-        {
-          recipientCId: userCId,
-        },
-      ],
-    });
+  public async deleteUser(userCId: string, session: mongoose.ClientSession) {
+    await this.friends
+      .deleteMany({
+        $or: [
+          {
+            requesterCId: userCId,
+          },
+          {
+            recipientCId: userCId,
+          },
+        ],
+      })
+      .session(session);
 
-    await this.users.deleteMany({
-      cid: userCId,
-    });
+    await this.users
+      .deleteMany({
+        cid: userCId,
+      })
+      .session(session);
   }
 }

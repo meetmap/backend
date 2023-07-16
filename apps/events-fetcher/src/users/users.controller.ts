@@ -1,6 +1,7 @@
 import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import { RMQConstants } from '@app/constants';
 import { EventResponseDto } from '@app/dto/events-fetcher/events.dto';
+import { UpdateFriendshipRMQRequestDto } from '@app/dto/main-app/friends.dto';
 import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
 import { IJwtUserPayload } from '@app/types/jwt';
 import {
@@ -43,15 +44,69 @@ export class UsersController {
     });
 
     if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_CREATED) {
-      await this.usersService.createUser(payload);
+      await this.usersService.handleCreateUser(payload);
       return;
     }
     if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED) {
-      await this.usersService.updateUser(payload);
+      await this.usersService.handleUpdateUser(payload);
       return;
     }
     if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_DELETED) {
-      await this.usersService.deleteUser(payload.cid);
+      await this.usersService.handleDeleteUser(payload);
+      return;
+    } else {
+      return new Nack(true);
+    }
+  }
+
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.FRIENDS.name,
+    routingKey: [
+      RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REQUESTED,
+      RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_ADDED,
+      RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REJECTED,
+    ],
+    queue: RMQConstants.exchanges.FRIENDS.queues.EVENTS_SERVICE,
+  })
+  public async handleFriendship(
+    @RabbitPayload() payload: UpdateFriendshipRMQRequestDto,
+    @RabbitRequest() req: { fields: RequestOptions },
+  ) {
+    const routingKey = req.fields.routingKey;
+    console.log({
+      handler: this.handleFriendship.name,
+      routingKey: routingKey,
+      msg: {
+        userCid: payload.userCId,
+        friendCid: payload.friendCId,
+      },
+    });
+
+    if (
+      routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REQUESTED
+    ) {
+      await this.usersService.handleRequestFriend(
+        payload.userCId,
+        payload.friendCId,
+      );
+      return;
+    }
+    if (
+      routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_ADDED
+    ) {
+      await this.usersService.handleAddFriend(
+        payload.userCId,
+        payload.friendCId,
+      );
+      return;
+    }
+    if (
+      routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REJECTED
+    ) {
+      await this.usersService.handleRejectFriend(
+        payload.userCId,
+        payload.friendCId,
+      );
       return;
     } else {
       return new Nack(true);

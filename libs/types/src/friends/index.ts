@@ -10,7 +10,7 @@ export interface ILocationServiceFriends extends IFriendsBase {
   locationStatus: FriendsLocationStatus;
 }
 
-export interface IEventsFetcherFriends extends IFriendsBase {}
+export interface IEventsServiceFriends extends IFriendsBase {}
 
 export enum FriendsLocationStatus {
   SHOW_LOCATION = 'show',
