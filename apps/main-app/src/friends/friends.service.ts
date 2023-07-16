@@ -47,8 +47,18 @@ export class FriendsService {
         userCId: requestorCid,
       } satisfies UpdateFriendshipRMQRequestDto,
     );
+    const updatedFriendUser = await this.dal.getUserByCId(
+      requestorCid,
+      friendCid,
+    );
 
-    return UsersService.mapUserDbToResponsePartialUser(friendUser);
+    if (!updatedFriendUser) {
+      throw new NotFoundException(
+        'Updated user not found, something went wrong',
+      );
+    }
+
+    return UsersService.mapUserDbToResponsePartialUser(updatedFriendUser);
   }
 
   public async getIncomingFriendshipRequests(cid: string) {

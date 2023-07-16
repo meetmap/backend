@@ -1,11 +1,28 @@
 import { EventsFetcherDb } from '@app/database';
-import { IEventWithUserStats, IRmqUser } from '@app/types';
-import { Injectable } from '@nestjs/common';
+import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
+import {
+  IEventsServiceFriends,
+  IEventsServiceUser,
+  IEventWithUserStats,
+  IRmqUser,
+} from '@app/types';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { EventsDal } from '../events/events.dal';
 
 @Injectable()
-export class UsersDal {
+export class UsersDal implements OnModuleInit {
   constructor(private readonly db: EventsFetcherDb) {}
+  private dataManipulation: CommonDataManipulation<
+    IEventsServiceFriends,
+    IEventsServiceUser
+  >;
+
+  onModuleInit() {
+    this.dataManipulation = new CommonDataManipulation(
+      this.db.models.friends,
+      this.db.models.users,
+    );
+  }
 
   public async getEventsByUserAction(
     userCId: string,
@@ -65,8 +82,44 @@ export class UsersDal {
       },
     );
   }
+
   public async deleteUser(cid: string) {
-    await this.db.models.users.deleteOne({ cid });
-    await this.db.models.eventsUsers.deleteMany({ userCId: cid });
+    await this.db.session(async (session) => {
+      await this.dataManipulation.users.deleteUser(cid, session);
+      await this.db.models.eventsUsers
+        .deleteMany({ userCId: cid })
+        .session(session);
+    });
+
+    return cid;
+  }
+
+  public async requestFriend(userCid: string, friendCid: string) {
+    await this.db.session(async (session) => {
+      return await this.dataManipulation.friends.sendFriendshipRequest(
+        userCid,
+        friendCid,
+        session,
+      );
+    });
+  }
+
+  public async acceptFriend(userCid: string, friendCid: string) {
+    await this.db.session(async (session) => {
+      return await this.dataManipulation.friends.acceptFriendshipRequest(
+        userCid,
+        friendCid,
+        session,
+      );
+    });
+  }
+  public async rejectFriend(userCid: string, friendCid: string) {
+    await this.db.session(async (session) => {
+      return await this.dataManipulation.friends.rejectFriendshipRequest(
+        userCid,
+        friendCid,
+        session,
+      );
+    });
   }
 }

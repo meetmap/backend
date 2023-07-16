@@ -21,30 +21,34 @@ export class UsersService {
     return await this.dal.getEventsByUserAction(userCId, 'saved');
   }
 
-  public async getUserWillGoEvents(userCId: string) {
+  public async getUserWillGoEvents(
+    userCId: string,
+  ): Promise<EventResponseDto[]> {
     return await this.dal.getEventsByUserAction(userCId, 'will-go');
   }
 
-  public async createUser(
-    payload: UserRmqRequestDto,
-  ): Promise<EventsServiceUserResponseDto> {
-    const user = await this.dal.createUser(payload);
-    return UsersService.mapUserDbToResponseUser(user);
+  public async handleCreateUser(payload: UserRmqRequestDto) {
+    await this.dal.createUser(payload);
   }
 
-  public async updateUser(
-    payload: UserRmqRequestDto,
-  ): Promise<EventsServiceUserResponseDto | null> {
-    const user = await this.dal.updateUser(payload.cid, payload);
-    if (!user) {
-      return null;
-    }
-    return UsersService.mapUserDbToResponseUser(user);
+  public async handleUpdateUser(payload: UserRmqRequestDto) {
+    await this.dal.updateUser(payload.cid, payload);
   }
 
-  public async deleteUser(cid: string) {
-    const userId = await this.dal.deleteUser(cid);
-    return userId;
+  public async handleDeleteUser(payload: UserRmqRequestDto) {
+    await this.dal.deleteUser(payload.cid);
+  }
+
+  public async handleAddFriend(userCid: string, friendCid: string) {
+    await this.dal.requestFriend(userCid, friendCid);
+  }
+
+  public async handleRequestFriend(userCid: string, friendCid: string) {
+    await this.dal.requestFriend(userCid, friendCid);
+  }
+
+  public async handleRejectFriend(userCid: string, friendCid: string) {
+    await this.dal.rejectFriend(userCid, friendCid);
   }
 
   static mapUserDbToResponseUser(

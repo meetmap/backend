@@ -318,11 +318,23 @@ export class FriendsDataManipulation<
       });
       return;
     }
+    console.log({
+      requesterCId: requesterCId,
+      recipientCId: userCId,
+    });
     //otherwise delete the friend document
     await this.friends
       .findOneAndRemove({
-        requesterCId: requesterCId,
-        recipientCId: userCId,
+        $or: [
+          {
+            requesterCId: requesterCId,
+            recipientCId: userCId,
+          },
+          {
+            requesterCId: userCId,
+            recipientCId: requesterCId,
+          },
+        ],
       })
       .session(session);
   }
