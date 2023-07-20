@@ -5,6 +5,12 @@ import { FriendsSchema, UserSchema } from './models';
 
 @Injectable()
 export class LocationServiceDatabase extends AbstractBaseDatabase {
+  public async onModuleInit(): Promise<void> {
+    await super.onModuleInit();
+    for (const modelName in this.models) {
+      await this.models[modelName].syncIndexes();
+    }
+  }
   public override get models() {
     return {
       users: this.connection.model('User', UserSchema),

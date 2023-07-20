@@ -12,6 +12,12 @@ import {
 
 @Injectable()
 export class EventsFetcherDb extends AbstractBaseDatabase {
+  public async onModuleInit(): Promise<void> {
+    await super.onModuleInit();
+    for (const modelName in this.models) {
+      await this.models[modelName].syncIndexes();
+    }
+  }
   public override get models() {
     return {
       event: this.connection.model('Event', EventSchema),
