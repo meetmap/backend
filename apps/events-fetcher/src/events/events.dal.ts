@@ -11,6 +11,7 @@ import {
   IEventStats,
   IEventWithUserStats,
   ILocation,
+  IMinimalEventByLocation,
   ITicket,
 } from '@app/types';
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -175,10 +176,31 @@ export class EventsDal {
     return await this.db.models.event.aggregate([
       {
         $match: {
-          $or: [
-            { title: { $regex: regex } },
-            { description: { $regex: regex } },
-          ],
+          $text: { $search: keywords },
+        },
+      },
+      {
+        $sort: { score: { $meta: 'textScore' } },
+      },
+      {
+        $limit: 15,
+      },
+      ...EventsDal.getEventsWithUserStatsAggregation(userCId),
+    ]);
+  }
+
+  public async getEventsBatch(
+    userCId: string,
+    eventIds: string[],
+  ): Promise<IEventWithUserStats[]> {
+    return await this.db.models.event.aggregate([
+      {
+        $match: {
+          _id: {
+            $in: eventIds.map(
+              (eventId) => new mongoose.Types.ObjectId(eventId),
+            ),
+          },
         },
       },
       ...EventsDal.getEventsWithUserStatsAggregation(userCId),
@@ -189,10 +211,14 @@ export class EventsDal {
     longitude: number,
     latitude: number,
     radius: number,
-  ): Promise<IEventWithUserStats[]> {
-    return await this.db.models.event.aggregate([
+  ): Promise<IMinimalEventByLocation[]> {
+    return await this.db.models.event.aggregate<IMinimalEventByLocation>([
       {
         $match: {
+          endTime: {
+            //exclude events that ended more than a day ago
+            $gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+          },
           'location.coordinates': {
             $geoWithin: {
               $centerSphere: [
@@ -203,7 +229,17 @@ export class EventsDal {
           },
         },
       },
-      ...EventsDal.getEventsWithUserStatsAggregation(userCId),
+      {
+        $project: {
+          picture: 1,
+          coordinates: '$location.coordinates.coordinates',
+          id: {
+            $toString: '$_id',
+          },
+          _id: 0,
+        },
+      },
+      // ...EventsDal.getEventsWithUserStatsAggregation(userCId),
     ]);
   }
   /**

@@ -24,17 +24,12 @@ export class UsersDal implements OnModuleInit {
     );
   }
 
-  public async getEventsByUserAction(
-    userCId: string,
-    actionType: 'saved' | 'will-go' | 'liked',
-  ) {
+  public async getEventsByUserAction(userCId: string, actionType: 'liked') {
     return await this.db.models.eventsUsers.aggregate<IEventWithUserStats>([
       {
         $match: {
           userCId: userCId,
           isUserLike: actionType === 'liked',
-          isUserSave: actionType === 'saved',
-          isUserWillGo: actionType === 'will-go',
         },
       },
       {

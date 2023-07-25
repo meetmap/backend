@@ -59,32 +59,32 @@ deploy-events-fetcher:
 	make registry-login && \
 	make build-events-fetcher && \
 	make push-image-events-fetcher && \
-	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service events-fetcher --force-new-deployment
+	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service events-fetcher --force-new-deployment --no-cli-pager
 
 .PHONY: deploy-main-app
 deploy-main-app:
 	make registry-login && \
 	make build-main-app && \
 	make push-image-main-app && \
-	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service main-app --force-new-deployment
+	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service main-app --force-new-deployment --no-cli-pager
 
 .PHONY: deploy-location-service
 deploy-location-service:
 	make registry-login && \
 	make build-location-service && \
 	make push-image-location-service && \
-	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service location-service --force-new-deployment
+	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service location-service --force-new-deployment --no-cli-pager
 
 .PHONY: deploy-auth-service
 deploy-auth-service:
 	make registry-login && \
 	make build-auth-service && \
 	make push-image-auth-service && \
-	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service auth-service --force-new-deployment
+	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service auth-service --force-new-deployment --no-cli-pager
 
 .PHONY: deploy-all
 make deploy-all:
-	make deploy-main-app make deploy-location-service make deploy-auth-service make deploy-events-fetcher
+	make deploy-main-app && make deploy-location-service && make deploy-auth-service && make deploy-events-fetcher
 
 .PHONY: registry-login
 registry-login:

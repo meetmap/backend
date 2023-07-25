@@ -3,9 +3,15 @@ import {
   EventResponseDto,
   EventStatsResponseDto,
   GetEventsByLocationRequestDto,
+  MinimalEventByLocationResponseDto,
   SingleEventResponseDto,
 } from '@app/dto/events-fetcher/events.dto';
-import { IEvent, IEventStats, IEventWithUserStats } from '@app/types';
+import {
+  IEvent,
+  IEventStats,
+  IEventWithUserStats,
+  IMinimalEventByLocation,
+} from '@app/types';
 import {
   BadRequestException,
   Injectable,
@@ -80,7 +86,7 @@ export class EventsService {
   public async getEventsByLocation(
     userCId: string,
     dto: GetEventsByLocationRequestDto,
-  ) {
+  ): Promise<MinimalEventByLocationResponseDto[]> {
     const { latitude, longitude, radius } = dto;
     const events = await this.dal.getEventsByLocation(
       userCId,
@@ -88,7 +94,14 @@ export class EventsService {
       latitude,
       radius,
     );
+    return events;
+  }
 
+  public async getEventsBatch(
+    userCId: string,
+    eventIds: string[],
+  ): Promise<EventResponseDto[]> {
+    const events = await this.dal.getEventsBatch(userCId, eventIds);
     return events.map(EventsService.mapDbEventToEventResponse);
   }
 
@@ -147,6 +160,16 @@ export class EventsService {
       description: event.description,
       picture: event.picture,
       accessibility: event.accessibility,
+    };
+  }
+
+  static mapDbEventToMinimalEventByLocationResponse(
+    event: IMinimalEventByLocation,
+  ): MinimalEventByLocationResponseDto {
+    return {
+      coordinates: event.coordinates,
+      id: event.id,
+      picture: event.picture,
     };
   }
 

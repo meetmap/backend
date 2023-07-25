@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { LocationServiceController } from './location-service.controller';
 import { LocationModule } from './location/location.module';
 import { UsersModule } from './users/users.module';
+import { SnapshotModule } from './snapshot/snapshot.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { UsersModule } from './users/users.module';
     RabbitmqModule.forRoot(),
     UsersModule,
     LocationModule,
+    SnapshotModule,
   ],
   controllers: [LocationServiceController],
 })

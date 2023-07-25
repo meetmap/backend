@@ -47,7 +47,7 @@ export class AuthService {
     this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
       RMQConstants.exchanges.USERS.routingKeys.USER_CREATED,
-      this.mapUserDbToRmqRequest(user) satisfies UserRmqRequestDto,
+      AuthService.mapUserDbToRmqRequest(user) satisfies UserRmqRequestDto,
     );
     return safeUser;
   }
@@ -171,7 +171,9 @@ export class AuthService {
     await this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
       RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
-      this.mapUserDbToRmqRequest(updatedUser) satisfies UserRmqRequestDto,
+      AuthService.mapUserDbToRmqRequest(
+        updatedUser,
+      ) satisfies UserRmqRequestDto,
     );
     return safeUser;
   }
@@ -237,7 +239,7 @@ export class AuthService {
     this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
       RMQConstants.exchanges.USERS.routingKeys.USER_CREATED,
-      this.mapUserDbToRmqRequest(user) satisfies UserRmqRequestDto,
+      AuthService.mapUserDbToRmqRequest(user) satisfies UserRmqRequestDto,
     );
     return safeUser;
   }
@@ -270,12 +272,14 @@ export class AuthService {
     await this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
       RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
-      this.mapUserDbToRmqRequest(updatedUser) satisfies UserRmqRequestDto,
+      AuthService.mapUserDbToRmqRequest(
+        updatedUser,
+      ) satisfies UserRmqRequestDto,
     );
     return updatedUser;
   }
 
-  private mapUserDbToRmqRequest(user: ISafeAuthUser): UserRmqRequestDto {
+  static mapUserDbToRmqRequest(user: ISafeAuthUser): UserRmqRequestDto {
     return {
       id: user.id,
       email: user.email,

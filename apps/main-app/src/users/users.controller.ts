@@ -31,7 +31,6 @@ import {
 import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common';
 import { IJwtUserPayload } from '@app/types/jwt';
 import {
-  Nack,
   RabbitPayload,
   RabbitRequest,
   RabbitSubscribe,
@@ -67,35 +66,31 @@ export class UsersController {
         cid: payload.cid,
       },
     });
-
-    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_CREATED) {
-      await this.usersService.createUser(payload);
-      return;
-    }
-    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED) {
-      await this.usersService.updateUser(payload);
-      return;
-    }
-    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_DELETED) {
-      await this.usersService.deleteUser(payload.cid);
-      return;
-    } else {
-      return new Nack(true);
+    try {
+      if (
+        routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_CREATED
+      ) {
+        await this.usersService.createUser(payload);
+        return;
+      }
+      if (
+        routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED
+      ) {
+        await this.usersService.updateUser(payload);
+        return;
+      }
+      if (
+        routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_DELETED
+      ) {
+        await this.usersService.deleteUser(payload.cid);
+        return;
+      } else {
+        return new Error('Invalid routing key');
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
-  //@todo on update users profile picture send an event without updating db
-  // @ApiOkResponse({
-  //   type: UpdateUserLocationDto,
-  //   description: 'Update user location dto',
-  // })
-  // @UseMicroserviceAuthGuard()
-  // @Post('update-location')
-  // public async updateUserLocation(
-  //   @Body() body: UpdateUserLocationDto,
-  //   @ExtractJwtPayload() jwt: IJwtUserPayload,
-  // ): Promise<UpdateUserLocationDto> {
-  //   return this.usersService.updateUserLocation(jwt.sub, body);
-  // }
 
   @ApiOkResponse({
     type: UserResponseDto,

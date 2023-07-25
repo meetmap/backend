@@ -2,7 +2,6 @@ import { RMQConstants } from '@app/constants';
 import { UpdateFriendshipRMQRequestDto } from '@app/dto/main-app/friends.dto';
 import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
 import {
-  Nack,
   RabbitPayload,
   RabbitRequest,
   RabbitSubscribe,
@@ -37,19 +36,29 @@ export class UsersController {
       },
     });
 
-    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_CREATED) {
-      await this.usersService.handleCreateUser(payload);
-      return;
-    }
-    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED) {
-      await this.usersService.handleUpdateUser(payload);
-      return;
-    }
-    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_DELETED) {
-      await this.usersService.handleDeleteUser(payload);
-      return;
-    } else {
-      return new Nack(true);
+    try {
+      if (
+        routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_CREATED
+      ) {
+        await this.usersService.handleCreateUser(payload);
+        return;
+      }
+      if (
+        routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED
+      ) {
+        await this.usersService.handleUpdateUser(payload);
+        return;
+      }
+      if (
+        routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_DELETED
+      ) {
+        await this.usersService.handleDeleteUser(payload);
+        return;
+      } else {
+        throw new Error('Invalid routing key');
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
 
@@ -76,34 +85,40 @@ export class UsersController {
       },
     });
 
-    if (
-      routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REQUESTED
-    ) {
-      await this.usersService.handleRequestFriend(
-        payload.userCId,
-        payload.friendCId,
-      );
-      return;
-    }
-    if (
-      routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_ADDED
-    ) {
-      await this.usersService.handleAddFriend(
-        payload.userCId,
-        payload.friendCId,
-      );
-      return;
-    }
-    if (
-      routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REJECTED
-    ) {
-      await this.usersService.handleRejectFriend(
-        payload.userCId,
-        payload.friendCId,
-      );
-      return;
-    } else {
-      return new Nack(true);
+    try {
+      if (
+        routingKey ===
+        RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REQUESTED
+      ) {
+        await this.usersService.handleRequestFriend(
+          payload.userCId,
+          payload.friendCId,
+        );
+        return;
+      }
+      if (
+        routingKey === RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_ADDED
+      ) {
+        await this.usersService.handleAddFriend(
+          payload.userCId,
+          payload.friendCId,
+        );
+        return;
+      }
+      if (
+        routingKey ===
+        RMQConstants.exchanges.FRIENDS.routingKeys.FRIEND_REJECTED
+      ) {
+        await this.usersService.handleRejectFriend(
+          payload.userCId,
+          payload.friendCId,
+        );
+        return;
+      } else {
+        throw new Error('Invalid routing key');
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
 }

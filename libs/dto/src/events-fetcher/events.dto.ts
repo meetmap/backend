@@ -9,6 +9,7 @@ import {
   IEventStats,
   IEventsUsers,
   ILocation,
+  IMinimalEventByLocation,
   IPoint,
   IPrice,
   ITicket,
@@ -100,6 +101,22 @@ export class TicketDto implements ITicket {
 export class CreatorResponseDto implements ICreator {
   type: CreatorType;
   creatorCid: string;
+}
+
+export class MinimalEventByLocationResponseDto
+  implements Pick<IMinimalEventByLocation, 'id' | 'picture' | 'coordinates'>
+{
+  @IdField()
+  id: string;
+  @ApiProperty({
+    type: [Number],
+    minItems: 2,
+    maxItems: 2,
+    description: '[longitude, latitude]',
+  })
+  coordinates: [number, number];
+  @StringField({ optional: true })
+  picture?: string | undefined;
 }
 
 export class EventResponseDto
