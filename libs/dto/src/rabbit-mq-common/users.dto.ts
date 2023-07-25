@@ -1,4 +1,8 @@
-import { IRmqUser } from '@app/types';
+import {
+  IAuthServiceSnapshotUser,
+  IRmqUser,
+  IUsersServiceSnapshotUser,
+} from '@app/types';
 import {
   DateField,
   EmailField,
@@ -55,4 +59,40 @@ export class UserRmqRequestDto implements IRmqUser {
     optional: true,
   })
   profilePicture?: string;
+}
+
+export class AuthServiceUserSnapshotRequestDto
+  implements IAuthServiceSnapshotUser
+{
+  @PhoneField({ optional: true })
+  phone?: string | undefined;
+  @EmailField()
+  email: string;
+  @StringField()
+  username: string;
+  @DateField()
+  birthDate: Date;
+  @IdField()
+  cid: string;
+  @StringField({
+    optional: true,
+  })
+  name?: string | undefined;
+  @StringField({
+    optional: true,
+  })
+  fbId?: string | undefined;
+}
+
+export class UsersServiceUserSnapshotRequestDto
+  implements IUsersServiceSnapshotUser
+{
+  @IdField()
+  cid: string;
+  @StringField({ optional: true })
+  name?: string | undefined;
+  @StringField({ optional: true })
+  description?: string | undefined;
+  @StringField({ optional: true })
+  profilePicture?: string | undefined;
 }

@@ -12,6 +12,7 @@ import { EventsFetcherController } from './events-fetcher.controller';
 import { EventsModule } from './events/events.module';
 import { TicketingPlatofrmsModule } from './ticketing-platofrm/ticketing-platofrm.module';
 import { UserModule } from './users/users.module';
+import { SnapshotModule } from './snapshot/snapshot.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { UserModule } from './users/users.module';
     EventsModule,
     UserModule,
     TicketingPlatofrmsModule,
+    SnapshotModule,
   ],
   controllers: [EventsFetcherController],
   providers: [],

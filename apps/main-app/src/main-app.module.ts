@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { FriendsModule } from './friends/friends.module';
 import { MainAppController } from './main-app.controller';
 import { UsersModule } from './users/users.module';
+import { SnapshotModule } from './snapshot/snapshot.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UsersModule } from './users/users.module';
     S3UploaderModule,
     UsersModule,
     FriendsModule,
+    SnapshotModule,
   ],
   controllers: [MainAppController],
 })

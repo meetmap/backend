@@ -1,5 +1,5 @@
 import { PopulatedDoc } from 'mongoose';
-import { ILocation } from '../location';
+import { ILocation, IPoint } from '../location';
 
 export interface IEvent {
   id: string;
@@ -91,4 +91,9 @@ export interface IEventStats {
 }
 export interface IEventWithUserStats extends IEvent {
   userStats: Pick<IEventsUsers, 'isUserLike' | 'userStatus'>;
+}
+
+export interface IMinimalEventByLocation
+  extends Pick<IEvent, 'id' | 'picture'> {
+  coordinates: IPoint['coordinates'];
 }

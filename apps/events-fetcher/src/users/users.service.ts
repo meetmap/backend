@@ -15,18 +15,6 @@ export class UsersService {
     return await this.dal.getEventsByUserAction(userCId, 'liked');
   }
 
-  public async getUserSavedEvents(
-    userCId: string,
-  ): Promise<EventResponseDto[]> {
-    return await this.dal.getEventsByUserAction(userCId, 'saved');
-  }
-
-  public async getUserWillGoEvents(
-    userCId: string,
-  ): Promise<EventResponseDto[]> {
-    return await this.dal.getEventsByUserAction(userCId, 'will-go');
-  }
-
   public async handleCreateUser(payload: UserRmqRequestDto) {
     await this.dal.createUser(payload);
   }

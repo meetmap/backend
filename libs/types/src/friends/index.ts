@@ -31,4 +31,6 @@ export enum FriendshipStatus {
   FRIENDS = 'friends',
 }
 
+export interface IUsersServiceSnapshotFriends extends IFriendsBase {}
+
 // export interface IFriend

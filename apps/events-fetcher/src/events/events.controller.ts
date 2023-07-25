@@ -4,6 +4,7 @@ import {
   EventResponseDto,
   EventStatsResponseDto,
   GetEventsByLocationRequestDto,
+  MinimalEventByLocationResponseDto,
   SingleEventResponseDto,
 } from '@app/dto/events-fetcher/events.dto';
 import { EventsServiceUserResponseDto } from '@app/dto/events-fetcher/users.dto';
@@ -16,6 +17,7 @@ import {
   Get,
   MaxFileSizeValidator,
   Param,
+  ParseArrayPipe,
   ParseFilePipe,
   Patch,
   Post,
@@ -44,6 +46,19 @@ export class EventsController {
   }
 
   @ApiOkResponse({
+    type: [EventResponseDto],
+  })
+  @UseMicroserviceAuthGuard()
+  @Get('/batch')
+  public async getEventsBatch(
+    @ExtractJwtPayload() jwt: IJwtUserPayload,
+    @Query('ids', new ParseArrayPipe({ items: String, separator: ',' }))
+    eventsIds: string[],
+  ): Promise<EventResponseDto[]> {
+    return this.eventsService.getEventsBatch(jwt.cid, eventsIds);
+  }
+
+  @ApiOkResponse({
     type: SingleEventResponseDto,
   })
   @Get('/:eventId')
@@ -56,14 +71,14 @@ export class EventsController {
   }
 
   @ApiOkResponse({
-    type: [EventResponseDto],
+    type: [MinimalEventByLocationResponseDto],
   })
   @UseMicroserviceAuthGuard()
   @Post('/location')
   public async getEventsByLocation(
     @ExtractJwtPayload() jwt: IJwtUserPayload,
     @Body() dto: GetEventsByLocationRequestDto,
-  ): Promise<EventResponseDto[]> {
+  ): Promise<MinimalEventByLocationResponseDto[]> {
     return this.eventsService.getEventsByLocation(jwt.cid, dto);
   }
 

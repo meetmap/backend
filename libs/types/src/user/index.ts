@@ -77,7 +77,6 @@ export interface IAuthUser
     | 'createdAt'
     | 'updatedAt'
     | 'birthDate'
-    // | 'authUserId'
     | 'cid'
     | 'fbId'
     | 'fbToken'
@@ -95,21 +94,6 @@ export interface ISafeAuthUser
     | 'cid'
     | 'name'
     | 'fbId'
-  > {}
-
-export interface IRmqUser
-  extends Pick<
-    IUser,
-    | 'id'
-    | 'phone'
-    | 'email'
-    | 'username'
-    | 'birthDate'
-    | 'cid'
-    | 'name'
-    | 'fbId'
-    | 'description'
-    | 'profilePicture'
   > {}
 
 export interface IAuthUserWithPassword extends IAuthUser {
@@ -131,4 +115,31 @@ export interface IEventsServiceUser
     | 'birthDate'
     | 'name'
     | 'description'
+  > {}
+
+export interface IRmqUser
+  extends Pick<
+    IUser,
+    | 'id'
+    | 'phone'
+    | 'email'
+    | 'username'
+    | 'birthDate'
+    | 'cid'
+    | 'name'
+    | 'fbId'
+    | 'description'
+    | 'profilePicture'
+  > {}
+
+export interface IAuthServiceSnapshotUser
+  extends Pick<
+    IAuthUser,
+    'phone' | 'email' | 'username' | 'birthDate' | 'cid' | 'name' | 'fbId'
+  > {}
+
+export interface IUsersServiceSnapshotUser
+  extends Pick<
+    IMainAppUser,
+    'cid' | 'name' | 'description' | 'profilePicture'
   > {}

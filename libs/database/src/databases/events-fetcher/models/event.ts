@@ -65,3 +65,16 @@ export const EventSchema = new mongoose.Schema<IEvent>(
     timestamps: true,
   },
 );
+
+EventSchema.index(
+  { description: 'text', title: 'text' } satisfies Partial<
+    Record<keyof IEvent, mongoose.IndexDirection>
+  >,
+  {
+    weights: {
+      title: 3,
+      description: 1,
+    },
+    default_language: 'english',
+  },
+);
