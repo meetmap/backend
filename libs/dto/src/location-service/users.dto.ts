@@ -8,10 +8,8 @@ export class UserLocationResponseDto implements ILocationServiceUser {
   id: string;
   @StringField()
   username: string;
-  @StringField({
-    optional: true,
-  })
-  name?: string | undefined;
+  @StringField()
+  name: string;
   @StringField({
     optional: true,
   })

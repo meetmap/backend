@@ -35,10 +35,8 @@ export class UserWithoutFriendsResponseDto
   id: string;
   @IdField()
   cid: string;
-  @StringField({
-    optional: true,
-  })
-  name?: string;
+  @StringField()
+  name: string;
   @StringField({
     optional: true,
   })
@@ -77,10 +75,8 @@ export class UserResponseDto implements IMainAppSafeUser {
     optional: true,
   })
   description?: string;
-  @StringField({
-    optional: true,
-  })
-  name?: string;
+  @StringField()
+  name: string;
   @StringField({
     optional: true,
   })
@@ -136,10 +132,8 @@ export class UserPartialResponseDto implements IMainAppSafePartialUser {
     optional: true,
   })
   description?: string;
-  @StringField({
-    optional: true,
-  })
-  name?: string;
+  @StringField()
+  name: string;
   @StringField({
     optional: true,
   })

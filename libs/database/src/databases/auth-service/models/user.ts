@@ -10,6 +10,7 @@ export const UserSchema = new mongoose.Schema<IAuthUser>(
     },
     name: {
       type: mongoose.SchemaTypes.String,
+      required: true,
     },
     refreshToken: {
       type: mongoose.SchemaTypes.String,
