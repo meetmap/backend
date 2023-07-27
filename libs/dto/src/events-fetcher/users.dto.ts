@@ -16,10 +16,8 @@ export class EventsServiceUserResponseDto implements IEventsServiceUser {
   profilePicture?: string;
   @DateField()
   birthDate: Date;
-  @StringField({
-    optional: true,
-  })
-  name?: string;
+  @StringField()
+  name: string;
   @StringField({
     optional: true,
   })

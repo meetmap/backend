@@ -46,10 +46,9 @@ export class UserRmqRequestDto implements IRmqUser {
   })
   fbId?: string;
   @StringField({
-    optional: true,
-    description: 'User name (optional)',
+    description: 'User name',
   })
-  name?: string;
+  name: string;
 
   @StringField({
     optional: true,
@@ -74,10 +73,8 @@ export class AuthServiceUserSnapshotRequestDto
   birthDate: Date;
   @IdField()
   cid: string;
-  @StringField({
-    optional: true,
-  })
-  name?: string | undefined;
+  @StringField()
+  name: string;
   @StringField({
     optional: true,
   })
@@ -89,8 +86,8 @@ export class UsersServiceUserSnapshotRequestDto
 {
   @IdField()
   cid: string;
-  @StringField({ optional: true })
-  name?: string | undefined;
+  @StringField()
+  name: string;
   @StringField({ optional: true })
   description?: string | undefined;
   @StringField({ optional: true })

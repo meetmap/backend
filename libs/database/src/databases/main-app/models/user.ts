@@ -10,6 +10,7 @@ export const UserSchema = new mongoose.Schema<IMainAppUser>(
     },
     name: {
       type: mongoose.SchemaTypes.String,
+      required: true,
     },
     birthDate: {
       type: mongoose.SchemaTypes.Date,

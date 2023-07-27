@@ -37,9 +37,8 @@ export class AuthUserResponseDto implements ISafeAuthUser {
 
   @StringField({
     example: 'User name',
-    optional: true,
   })
-  name?: string;
+  name: string;
 
   @DateField()
   birthDate: Date;
@@ -71,9 +70,8 @@ export class CreateUserRequestDto {
 
   @StringField({
     description: 'User name, optional',
-    optional: true,
   })
-  name?: string;
+  name: string;
 
   @StringField({
     description: 'Validation will be added soon',
@@ -105,9 +103,8 @@ export class SignUpWithAuthProviderRequestDto {
 
   @StringField({
     description: 'User name, optional',
-    optional: true,
   })
-  name?: string;
+  name: string;
 
   /**
    * @description birthDate should be in ISO 8601 format i.e 2003-04-01T21:00:00.000Z

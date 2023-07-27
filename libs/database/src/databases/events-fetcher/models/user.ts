@@ -18,6 +18,7 @@ export const UserSchema = new mongoose.Schema<IEventsServiceUser>(
     },
     name: {
       type: mongoose.SchemaTypes.String,
+      required: true,
     },
     birthDate: {
       type: mongoose.SchemaTypes.Date,

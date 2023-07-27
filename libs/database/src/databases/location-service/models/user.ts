@@ -18,6 +18,7 @@ export const UserSchema = new mongoose.Schema<ILocationServiceUser>(
     },
     name: {
       type: mongoose.SchemaTypes.String,
+      required: true,
     },
   },
   {

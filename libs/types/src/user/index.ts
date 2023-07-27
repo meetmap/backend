@@ -5,7 +5,7 @@ export interface IUser {
   id: string;
   username: string;
   //@todo name
-  name?: string;
+  name: string;
   description?: string;
   profilePicture?: string;
   phone?: string;
