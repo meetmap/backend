@@ -5,6 +5,7 @@ import {
   ICoordinates,
   ILocationServiceFriends,
   ILocationServiceUser,
+  IRedisUserLocation,
   IUserLocation,
 } from '@app/types';
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
@@ -17,7 +18,7 @@ export class LocationDal implements OnModuleInit {
   >;
   constructor(
     @Inject(RedisService.name)
-    private readonly redisClient: RedisService<IUserLocation>,
+    private readonly redisClient: RedisService<IRedisUserLocation>,
     private readonly db: LocationServiceDatabase,
   ) {}
   onModuleInit() {
@@ -35,7 +36,11 @@ export class LocationDal implements OnModuleInit {
     return await this.dataManipulation.friends.getUserFriends(cid, cid, 0, 0);
   }
 
-  public async updateUserLocation(cid: string, coordinates: ICoordinates) {
+  public async updateUserLocation(
+    cid: string,
+    coordinates: ICoordinates,
+  ): Promise<IUserLocation> {
+    const updatedAt = new Date();
     this.redisClient.set(
       cid,
       {
@@ -44,6 +49,7 @@ export class LocationDal implements OnModuleInit {
           lat: coordinates.lat,
           lng: coordinates.lng,
         },
+        updatedAt,
       },
       {
         EX: 60 * 60 * 24 * 3, //e.g 3d
@@ -55,25 +61,16 @@ export class LocationDal implements OnModuleInit {
         lat: coordinates.lat,
         lng: coordinates.lng,
       },
+      updatedAt,
     };
   }
   public async getUserLocation(userCid: string): Promise<IUserLocation | null> {
     return this.redisClient.get(userCid);
   }
 
-  // public async getUserFriendsCids(cid: string) {
-  //   const user = await this.db.models.users.findOne({
-  //     cid,
-  //   });
-  //   if (!user) {
-  //     return null;
-  //   }
-  //   return user.friendsCIds;
-  // }
-
   public async getUsersLocationBulk(
     userIds: string[],
-  ): Promise<{ location: ICoordinates | null; cid: string }[]> {
+  ): Promise<IUserLocation[]> {
     const response = await this.redisClient.getBulk(userIds);
 
     return response.map((loc, index) => ({
@@ -84,6 +81,7 @@ export class LocationDal implements OnModuleInit {
           }
         : null,
       cid: userIds[index],
+      updatedAt: loc?.updatedAt ?? null,
     }));
   }
 }

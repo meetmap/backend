@@ -2,7 +2,7 @@ import {
   GetUserWithLocationResponseDto,
   UpdateUserLocationRequestDto,
 } from '@app/dto/location-service/location.dto';
-import { ICoordinates, ILocationServiceUser } from '@app/types';
+import { ILocationServiceUser, IUserLocation } from '@app/types';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { LocationDal } from './location.dal';
 
@@ -22,10 +22,7 @@ export class LocationService {
       lat: dto.lat,
       lng: dto.lng,
     });
-    return LocationService.mapUserToUserWithLocation(
-      user,
-      updatedLocation.location,
-    );
+    return LocationService.mapUserToUserWithLocation(user, updatedLocation);
   }
   public async getFriendsLocation(
     cid: string,
@@ -40,24 +37,22 @@ export class LocationService {
     );
 
     return userFriends.map((user, index) =>
-      LocationService.mapUserToUserWithLocation(
-        user,
-        locations[index]?.location ?? null,
-      ),
+      LocationService.mapUserToUserWithLocation(user, locations[index]),
     );
   }
 
   static mapUserToUserWithLocation(
     user: ILocationServiceUser,
-    coordinates: ICoordinates | null,
+    userLocation: IUserLocation,
   ): GetUserWithLocationResponseDto {
     return {
       cid: user.cid,
       id: user.id,
-      location: coordinates,
+      location: userLocation.location,
       username: user.username,
       name: user.name,
       profilePicture: user.profilePicture,
+      locationUpdatedAt: userLocation.updatedAt,
     };
   }
 }
