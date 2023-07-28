@@ -3,7 +3,7 @@ import { AbstractBaseDatabase } from '../abstract.db';
 import { FriendsSchema, UserSchema } from './models';
 
 @Injectable()
-export class MainAppDatabase extends AbstractBaseDatabase {
+export class UsersServiceDatabase extends AbstractBaseDatabase {
   public async onModuleInit(): Promise<void> {
     await super.onModuleInit();
     for (const modelName in this.models) {

@@ -16,6 +16,7 @@ export class SnapshotDal {
         name: true,
         phone: true,
         username: true,
+        gender: true,
       } satisfies Record<keyof AppTypes.Transport.Snapshot.Users.IAuthServiceSnapshot, true>)
       .cursor({
         batchSize,

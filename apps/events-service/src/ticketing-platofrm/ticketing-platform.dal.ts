@@ -1,12 +1,12 @@
-import { EventsFetcherDb } from '@app/database';
-import { CreatorType, IApiKey, ITicketingPlatform } from '@app/types';
+import { EventsServiceDatabase } from '@app/database';
+import { AppTypes } from '@app/types';
 import { Injectable } from '@nestjs/common';
-import { randomBytes, randomUUID } from 'crypto';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class TicketingPlatformDal {
-  constructor(private readonly db: EventsFetcherDb) {}
+  constructor(private readonly db: EventsServiceDatabase) {}
 
   public async findPlatformById(id: string) {
     return await this.db.models.ticketingPlatform.findById(id);
@@ -20,7 +20,7 @@ export class TicketingPlatformDal {
 
   public async createPlatform(
     payload: Pick<
-      ITicketingPlatform,
+      AppTypes.TicketingPlatforms.System.ITicketingPlatform,
       | 'banner'
       | 'description'
       | 'image'
@@ -56,7 +56,7 @@ export class TicketingPlatformDal {
   public async updatePlatform(
     platformId: string,
     payload: Pick<
-      ITicketingPlatform,
+      AppTypes.TicketingPlatforms.System.ITicketingPlatform,
       'banner' | 'description' | 'image' | 'title' | 'websiteUrl'
     >,
   ) {
@@ -85,14 +85,18 @@ export class TicketingPlatformDal {
     });
     await this.db.models.event.deleteMany({
       'creator.creatorCid': platformId,
-      'creator.type': CreatorType.TICKETING_PLATFOFRM,
+      'creator.type':
+        AppTypes.EventsService.Event.CreatorType.TICKETING_PLATFOFRM,
     });
     return platformId;
   }
 
   public async issueApiKey(
     platformId: string,
-    payload: Pick<IApiKey, 'title' | 'description'>,
+    payload: Pick<
+      AppTypes.TicketingPlatforms.System.IApiKey,
+      'title' | 'description'
+    >,
   ) {
     /**
      * @todo make apiKeyModel istead

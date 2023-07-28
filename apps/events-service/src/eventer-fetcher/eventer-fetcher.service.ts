@@ -1,11 +1,4 @@
-import {
-  EventAccessibilityType,
-  EventType,
-  ICity,
-  IEvent,
-  IEventerFullEventResponse,
-  IEventerTicketsResponse,
-} from '@app/types';
+import { AppTypes } from '@app/types';
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import * as mongoose from 'mongoose';
@@ -39,7 +32,9 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
     console.log('Finished!');
   }
 
-  public async getValidEvent(eventSlug: string): Promise<IEvent | null> {
+  public async getValidEvent(
+    eventSlug: string,
+  ): Promise<AppTypes.EventsService.Event.IEvent | null> {
     const slug = eventSlug.toLowerCase();
     const dbEvent = await this.dal.getDbEventBySlug(slug);
     if (this.validateEventExpiry(dbEvent)) {
@@ -67,8 +62,8 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
   }
 
   public async extractCityFromEventerResponse(
-    event: IEventerFullEventResponse,
-  ): Promise<ICity | null> {
+    event: AppTypes.TicketingPlatforms.ThirdParty.EventerCoIl.IEventerFullEventResponse,
+  ): Promise<AppTypes.Shared.City.ICity | null> {
     const { longitude, latitude } = event.event.location;
     if (!longitude || !latitude) {
       return null;
@@ -82,16 +77,16 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
   }
 
   public mapEventerResponseToDbEvent(
-    event: IEventerFullEventResponse,
-    tickets: IEventerTicketsResponse | null,
-    city: ICity | null,
-  ): Omit<IEvent, 'id' | 'createdAt' | 'updatedAt'> | null {
+    event: AppTypes.TicketingPlatforms.ThirdParty.EventerCoIl.IEventerFullEventResponse,
+    tickets: AppTypes.TicketingPlatforms.ThirdParty.EventerCoIl.IEventerTicketsResponse | null,
+    city: AppTypes.Shared.City.ICity | null,
+  ): AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent> | null {
     const location = event.event.location;
     if (!location.latitude || !location.longitude) {
       return null;
     }
     return {
-      accessibility: EventAccessibilityType.PUBLIC,
+      accessibility: AppTypes.EventsService.Event.EventAccessibilityType.PUBLIC,
       title: event.event.name,
       ageLimit: event.event.guestInfoFields?.age.ageLimit ?? 1,
       picture: event.event.ticketPlatform.images?.imageSquare,
@@ -108,7 +103,7 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
           coordinates: [location.longitude, location.latitude],
         },
       },
-      eventType: EventType.PARTNER,
+      eventType: AppTypes.EventsService.Event.EventType.PARTNER,
       tickets: (tickets?.ticketTypes ?? []).map((ticket) => ({
         amount: ticket.remaining,
         description: ticket.description,
@@ -120,7 +115,9 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
       })),
     };
   }
-  public validateEventExpiry(event: IEvent | null): event is IEvent {
+  public validateEventExpiry(
+    event: AppTypes.EventsService.Event.IEvent | null,
+  ): event is AppTypes.EventsService.Event.IEvent {
     const ONE_HOUR = 60 * 60 * 1000;
     if (!event) {
       return false;

@@ -1,4 +1,4 @@
-import { FriendshipStatus, IFriendsBase, IUser } from '@app/types';
+import { AppTypes } from '@app/types';
 import {
   BadRequestException,
   ConflictException,
@@ -15,8 +15,11 @@ import {
 } from '../shared-aggregations';
 
 export class FriendsDataManipulation<
-  Friends extends IFriendsBase = IFriendsBase,
-  Users extends Pick<IUser, 'cid'> = IUser,
+  Friends extends AppTypes.Shared.Friends.IFriendsBase = AppTypes.Shared.Friends.IFriendsBase,
+  Users extends Pick<
+    AppTypes.Shared.Users.IUsersBase,
+    'cid'
+  > = AppTypes.Shared.Users.IUsersBase,
 > {
   constructor(
     private friends: mongoose.Model<Friends>,
@@ -77,7 +80,7 @@ export class FriendsDataManipulation<
         },
         {
           $set: {
-            status: FriendshipStatus.FRIENDS,
+            status: AppTypes.Shared.Friends.FriendshipStatus.FRIENDS,
           },
         },
         {
@@ -169,7 +172,7 @@ export class FriendsDataManipulation<
         },
         {
           $set: {
-            status: FriendshipStatus.REQUESTED,
+            status: AppTypes.Shared.Friends.FriendshipStatus.REQUESTED,
           },
         },
         {
@@ -185,7 +188,7 @@ export class FriendsDataManipulation<
     //   },
     //   {
     //     $set: {
-    //       status: FriendshipStatus.PENDING,
+    //       status: AppTypes.Shared.Friends.FriendshipStatus.PENDING,
     //     },
     //   },
     //   {
@@ -230,7 +233,7 @@ export class FriendsDataManipulation<
       .findOne({
         requesterCId: requesterCId,
         recipientCId: userCId,
-        status: FriendshipStatus.REQUESTED,
+        status: AppTypes.Shared.Friends.FriendshipStatus.REQUESTED,
       })
       .session(session);
 
@@ -246,7 +249,7 @@ export class FriendsDataManipulation<
         },
         {
           $set: {
-            status: FriendshipStatus.FRIENDS,
+            status: AppTypes.Shared.Friends.FriendshipStatus.FRIENDS,
           },
         },
       )
@@ -308,9 +311,9 @@ export class FriendsDataManipulation<
     }
 
     //i.e userCId rejects current frienship and makes requesterCId follower
-    if (friendDoc.status === FriendshipStatus.FRIENDS) {
+    if (friendDoc.status === AppTypes.Shared.Friends.FriendshipStatus.FRIENDS) {
       //delete existing
-      friendDoc.status = FriendshipStatus.REQUESTED;
+      friendDoc.status = AppTypes.Shared.Friends.FriendshipStatus.REQUESTED;
       friendDoc.recipientCId = userCId;
       friendDoc.requesterCId = requesterCId;
       await friendDoc.save({

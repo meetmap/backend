@@ -1,1 +1,1 @@
-export * from './eventsService';
+export * as EventsServiceDto from './eventsService';

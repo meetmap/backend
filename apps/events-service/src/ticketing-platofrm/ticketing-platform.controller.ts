@@ -3,20 +3,9 @@ import {
   ExtractPlatform,
   UseDashboardAuthGuard,
 } from '@app/auth/dashboard-jwt';
-import {
-  ApiKeyResponseDto,
-  CreateTicketingPlatformRequestDto,
-  CreateTicketingPlatformResponseDto,
-  EventForOrganizersResponseDto,
-  IssueApiKeyRequestDto,
-  IssueApiKeyResponseDto,
-  LoginPlatformRequestDto,
-  LoginPlatformResponseDto,
-  RefreshDashboardAtResponseDto,
-  RevokeApiKeyRequestDto,
-  UploadEventRequestDto,
-} from '@app/dto/events-service/ticketing-platform.dto';
-import { ITicketingPlatform } from '@app/types';
+import { AppDto } from '@app/dto';
+import { AppTypes } from '@app/types';
+
 import {
   BadRequestException,
   Body,
@@ -42,14 +31,16 @@ export class TicketingPlatformController {
   ) {}
 
   @ApiOkResponse({
-    type: CreateTicketingPlatformResponseDto,
+    type: AppDto.EventsServiceDto.TicketingPlatformsDto
+      .CreateTicketingPlatformResponseDto,
     description: 'User will get refresh token from "refreshToken" cookie',
   })
   @Post('/signup')
   public async createPlatform(
     @Res({ passthrough: true }) res: Response,
-    @Body() createTicketingPlatofrmDto: CreateTicketingPlatformRequestDto,
-  ): Promise<CreateTicketingPlatformResponseDto> {
+    @Body()
+    createTicketingPlatofrmDto: AppDto.EventsServiceDto.TicketingPlatformsDto.CreateTicketingPlatformRequestDto,
+  ): Promise<AppDto.EventsServiceDto.TicketingPlatformsDto.CreateTicketingPlatformResponseDto> {
     const platform = await this.ticketingPlatformService.createPlatform(
       createTicketingPlatofrmDto,
     );
@@ -72,14 +63,16 @@ export class TicketingPlatformController {
   }
 
   @ApiOkResponse({
-    type: LoginPlatformResponseDto,
+    type: AppDto.EventsServiceDto.TicketingPlatformsDto
+      .LoginPlatformResponseDto,
     description: 'User will get refresh token from "refreshToken" cookie',
   })
   @Post('/signin')
   public async loginPlatform(
-    @Body() payload: LoginPlatformRequestDto,
+    @Body()
+    payload: AppDto.EventsServiceDto.TicketingPlatformsDto.LoginPlatformRequestDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<LoginPlatformResponseDto> {
+  ): Promise<AppDto.EventsServiceDto.TicketingPlatformsDto.LoginPlatformResponseDto> {
     const platform = await this.ticketingPlatformService.loginPlatform(payload);
     const tokens = await this.ticketingPlatformService.getTokensAndRefreshRT(
       platform,
@@ -99,14 +92,15 @@ export class TicketingPlatformController {
   }
 
   @ApiOkResponse({
-    type: RefreshDashboardAtResponseDto,
+    type: AppDto.EventsServiceDto.TicketingPlatformsDto
+      .RefreshDashboardAtResponseDto,
     description:
       'User will get access token, need to have valid refreshToken in cookies',
   })
   @Post('/refresh')
   async refreshAccessToken(
     @Req() req: Request,
-  ): Promise<RefreshDashboardAtResponseDto> {
+  ): Promise<AppDto.EventsServiceDto.TicketingPlatformsDto.RefreshDashboardAtResponseDto> {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
       throw new ForbiddenException('refresh token not provided');
@@ -124,7 +118,8 @@ export class TicketingPlatformController {
   @Post('/logout')
   async logout(
     @Res({ passthrough: true }) res: Response,
-    @ExtractPlatform() platform: ITicketingPlatform,
+    @ExtractPlatform()
+    platform: AppTypes.TicketingPlatforms.System.ITicketingPlatform,
   ): Promise<void> {
     await this.ticketingPlatformService.updatePlatformsRefreshToken(
       platform.id,
@@ -138,13 +133,17 @@ export class TicketingPlatformController {
     });
   }
 
-  @ApiOkResponse({ type: IssueApiKeyResponseDto })
+  @ApiOkResponse({
+    type: AppDto.EventsServiceDto.TicketingPlatformsDto.IssueApiKeyResponseDto,
+  })
   @Post('/api-key')
   @UseDashboardAuthGuard()
   public async issueApiKey(
-    @Body() payload: IssueApiKeyRequestDto,
-    @ExtractPlatform() platform: ITicketingPlatform,
-  ): Promise<IssueApiKeyResponseDto> {
+    @Body()
+    payload: AppDto.EventsServiceDto.TicketingPlatformsDto.IssueApiKeyRequestDto,
+    @ExtractPlatform()
+    platform: AppTypes.TicketingPlatforms.System.ITicketingPlatform,
+  ): Promise<AppDto.EventsServiceDto.TicketingPlatformsDto.IssueApiKeyResponseDto> {
     return this.ticketingPlatformService.issueApiKey(platform.id, payload);
   }
 
@@ -152,56 +151,71 @@ export class TicketingPlatformController {
   @Delete('/api-key')
   @UseDashboardAuthGuard()
   public async revokeApiKey(
-    @Body() payload: RevokeApiKeyRequestDto,
-    @ExtractPlatform() platform: ITicketingPlatform,
+    @Body()
+    payload: AppDto.EventsServiceDto.TicketingPlatformsDto.RevokeApiKeyRequestDto,
+    @ExtractPlatform()
+    platform: AppTypes.TicketingPlatforms.System.ITicketingPlatform,
   ): Promise<void> {
     return this.ticketingPlatformService.revokeApiKey(platform.id, payload);
   }
 
   @ApiOkResponse({
-    type: [ApiKeyResponseDto],
+    type: [AppDto.EventsServiceDto.TicketingPlatformsDto.ApiKeyResponseDto],
   })
   @Get('/api-key')
   @UseDashboardAuthGuard()
   public async getPlatformApiKeys(
-    @ExtractPlatform() platform: ITicketingPlatform,
-  ): Promise<ApiKeyResponseDto[]> {
+    @ExtractPlatform()
+    platform: AppTypes.TicketingPlatforms.System.ITicketingPlatform,
+  ): Promise<
+    AppDto.EventsServiceDto.TicketingPlatformsDto.ApiKeyResponseDto[]
+  > {
     return this.ticketingPlatformService.getPlatformApiKeys(platform.id);
   }
 
   @ApiOkResponse({
-    type: [EventForOrganizersResponseDto],
+    type: [
+      AppDto.EventsServiceDto.TicketingPlatformsDto
+        .EventForOrganizersResponseDto,
+    ],
   })
   @Get('/events')
   @UseApiAuthGuard()
   public async getEvents(
-    @ExtractApiPlatform() platform: ITicketingPlatform,
-  ): Promise<EventForOrganizersResponseDto[]> {
+    @ExtractApiPlatform()
+    platform: AppTypes.TicketingPlatforms.System.ITicketingPlatform,
+  ): Promise<
+    AppDto.EventsServiceDto.TicketingPlatformsDto.EventForOrganizersResponseDto[]
+  > {
     throw new BadRequestException();
   }
 
   @ApiOkResponse({
-    type: EventForOrganizersResponseDto,
+    type: AppDto.EventsServiceDto.TicketingPlatformsDto
+      .EventForOrganizersResponseDto,
   })
   @Get('/events/:id')
   @UseApiAuthGuard()
   public async getEvent(
     @Param('id') id: string,
-    @ExtractApiPlatform() platform: ITicketingPlatform,
-  ): Promise<EventForOrganizersResponseDto> {
+    @ExtractApiPlatform()
+    platform: AppTypes.TicketingPlatforms.System.ITicketingPlatform,
+  ): Promise<AppDto.EventsServiceDto.TicketingPlatformsDto.EventForOrganizersResponseDto> {
     throw new BadRequestException();
   }
 
   @ApiOkResponse({
-    type: EventForOrganizersResponseDto,
+    type: AppDto.EventsServiceDto.TicketingPlatformsDto
+      .EventForOrganizersResponseDto,
   })
   @Post('/upload-event')
   @UseApiAuthGuard()
   public async uploadEvent(
-    @ExtractApiPlatform() platform: ITicketingPlatform,
+    @ExtractApiPlatform()
+    platform: AppTypes.TicketingPlatforms.System.ITicketingPlatform,
     @Body()
-    payload: UploadEventRequestDto,
-  ): Promise<EventForOrganizersResponseDto> {
+    payload: AppDto.EventsServiceDto.TicketingPlatformsDto.UploadEventRequestDto,
+  ): Promise<AppDto.EventsServiceDto.TicketingPlatformsDto.EventForOrganizersResponseDto> {
     throw new BadRequestException();
   }
 }

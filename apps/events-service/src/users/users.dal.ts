@@ -1,20 +1,16 @@
-import { EventsFetcherDb } from '@app/database';
+import { EventsServiceDatabase } from '@app/database';
 import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
-import {
-  IEventsServiceFriends,
-  IEventsServiceUser,
-  IEventWithUserStats,
-  IRmqUser,
-} from '@app/types';
+import { AppTypes } from '@app/types';
+
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { EventsDal } from '../events/events.dal';
 
 @Injectable()
 export class UsersDal implements OnModuleInit {
-  constructor(private readonly db: EventsFetcherDb) {}
+  constructor(private readonly db: EventsServiceDatabase) {}
   private dataManipulation: CommonDataManipulation<
-    IEventsServiceFriends,
-    IEventsServiceUser
+    AppTypes.EventsService.Friends.IFriends,
+    AppTypes.EventsService.Users.IUser
   >;
 
   onModuleInit() {
@@ -25,28 +21,30 @@ export class UsersDal implements OnModuleInit {
   }
 
   public async getEventsByUserAction(userCId: string, actionType: 'liked') {
-    return await this.db.models.eventsUsers.aggregate<IEventWithUserStats>([
-      {
-        $match: {
-          userCId: userCId,
-          isUserLike: actionType === 'liked',
+    return await this.db.models.eventsUsers.aggregate<AppTypes.EventsService.Event.IEventWithUserStats>(
+      [
+        {
+          $match: {
+            userCId: userCId,
+            isUserLike: actionType === 'liked',
+          },
         },
-      },
-      {
-        $lookup: {
-          from: 'events',
-          localField: 'event',
-          foreignField: '_id',
-          as: 'event',
+        {
+          $lookup: {
+            from: 'events',
+            localField: 'event',
+            foreignField: '_id',
+            as: 'event',
+          },
         },
-      },
-      { $unwind: '$event' },
-      { $replaceRoot: { newRoot: '$event' } },
-      ...EventsDal.getEventsWithUserStatsAggregation(userCId),
-    ]);
+        { $unwind: '$event' },
+        { $replaceRoot: { newRoot: '$event' } },
+        ...EventsDal.getEventsWithUserStatsAggregation(userCId),
+      ],
+    );
   }
 
-  public async createUser(payload: IRmqUser) {
+  public async createUser(payload: AppTypes.Transport.Users.IUser) {
     return await this.db.models.users.create({
       cid: payload.cid,
       birthDate: payload.birthDate,
@@ -54,9 +52,13 @@ export class UsersDal implements OnModuleInit {
       name: payload.name,
       profilePicture: payload.profilePicture,
       username: payload.username,
-    });
+      gender: payload.gender,
+    } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Users.IUser>);
   }
-  public async updateUser(cid: string, payload: IRmqUser) {
+  public async updateUser(
+    cid: string,
+    payload: AppTypes.Transport.Users.IUser,
+  ) {
     return await this.db.models.users.findOneAndUpdate(
       {
         cid,
@@ -69,7 +71,8 @@ export class UsersDal implements OnModuleInit {
           name: payload.name,
           profilePicture: payload.profilePicture,
           username: payload.username,
-        },
+          gender: payload.gender,
+        } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Users.IUser>,
       },
       {
         new: true,

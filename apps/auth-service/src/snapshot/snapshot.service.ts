@@ -69,6 +69,7 @@ export class SnapshotService {
       fbId: user.fbId,
       name: user.name,
       phone: user.phone,
+      gender: user.gender,
     }));
   }
 }

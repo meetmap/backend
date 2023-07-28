@@ -15,7 +15,8 @@ export class AuthModule {
       global: true,
       module: AuthModule,
       imports:
-        config.microserviceName === 'auth-service'
+        config.microserviceName ===
+        AppTypes.Other.Microservice.MicroServiceName.AUTH_SERVICE
           ? [PassportModule.register({})]
           : [],
       providers: jwtServicesMap[config.microserviceName],
@@ -28,8 +29,14 @@ const jwtServicesMap: Record<
   AppTypes.Other.Microservice.MicroServiceName,
   Type<any>[]
 > = {
-  'auth-service': [JwtService, FacebookStrategy],
-  'events-service': [JwtService, DashboardJwtService],
-  'location-service': [JwtService],
-  'users-service': [JwtService],
+  [AppTypes.Other.Microservice.MicroServiceName.AUTH_SERVICE]: [
+    JwtService,
+    FacebookStrategy,
+  ],
+  [AppTypes.Other.Microservice.MicroServiceName.EVENTS_SERVICE]: [
+    JwtService,
+    DashboardJwtService,
+  ],
+  [AppTypes.Other.Microservice.MicroServiceName.LOCATION_SERVICE]: [JwtService],
+  [AppTypes.Other.Microservice.MicroServiceName.USERS_SERVICE]: [JwtService],
 };

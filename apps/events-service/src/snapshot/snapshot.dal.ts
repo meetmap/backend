@@ -1,16 +1,14 @@
-import { EventsFetcherDb } from '@app/database';
-import {
-  AuthServiceUserSnapshotRequestDto,
-  UsersServiceFriendsSnapshotRequestDto,
-} from '@app/dto/rabbit-mq-common';
+import { EventsServiceDatabase } from '@app/database';
+import { AppDto } from '@app/dto';
+import { AppTypes } from '@app/types';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class SnapshotDal {
-  constructor(private readonly db: EventsFetcherDb) {}
+  constructor(private readonly db: EventsServiceDatabase) {}
 
   public async updateOrCreateUser(
-    payload: AuthServiceUserSnapshotRequestDto[],
+    payload: AppDto.TransportDto.Users.AuthServiceUserSnapshotRequestDto[],
   ) {
     await this.db.models.users.bulkWrite(
       payload.map((user) => ({
@@ -22,7 +20,8 @@ export class SnapshotDal {
               cid: user.cid,
               username: user.username,
               name: user.name,
-            },
+              gender: user.gender,
+            } satisfies Partial<AppTypes.EventsService.Users.IUser>,
           },
           upsert: true,
         },
@@ -30,7 +29,7 @@ export class SnapshotDal {
     );
   }
   public async updateOrCreateFriendship(
-    payload: UsersServiceFriendsSnapshotRequestDto[],
+    payload: AppDto.TransportDto.Friends.UsersServiceFriendsSnapshotRequestDto[],
   ) {
     await this.db.models.friends.bulkWrite(
       payload.map((friend) => ({

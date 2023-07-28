@@ -15,7 +15,7 @@ import { UsersModule } from './users/users.module';
       isGlobal: true,
     }),
     DatabaseModule.init({
-      connectionStringEnvPath: 'MAIN_APP_DATABASE_URL',
+      connectionStringEnvPath: 'USERS_SERVICE_DATABASE_URL',
       microserviceName: 'users-service',
     }),
     RabbitmqModule.forRoot(),

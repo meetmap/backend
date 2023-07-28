@@ -1,28 +1,22 @@
 import { eventerAxios } from '@app/axios';
-import { EventsFetcherDb } from '@app/database';
+import { EventsServiceDatabase } from '@app/database';
 
 import { RedisService } from '@app/redis';
-import {
-  IEvent,
-  IEventCache,
-  IEventerFullEventResponse,
-  IEventerSlideResponse,
-  IEventerTicketsResponse,
-} from '@app/types';
+import { AppTypes } from '@app/types';
+
 import { Inject, Injectable } from '@nestjs/common';
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 
 @Injectable()
 export class EventerFetcherDal {
   constructor(
     @Inject(RedisService.name)
-    private readonly eventsCacheClient: RedisService<IEventCache>,
-    private readonly database: EventsFetcherDb,
+    private readonly database: EventsServiceDatabase,
   ) {}
   public async updateEvent(
     eventId: string,
-    payload: Omit<IEvent, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<IEvent | null> {
+    payload: AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>,
+  ): Promise<AppTypes.EventsService.Event.IEvent | null> {
     return this.database.models.event.findByIdAndUpdate(eventId, {
       ...payload,
       updatedAt: undefined,
@@ -31,18 +25,22 @@ export class EventerFetcherDal {
     });
   }
   public async storeEvent(
-    payload: Omit<IEvent, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<IEvent> {
+    payload: AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>,
+  ): Promise<AppTypes.EventsService.Event.IEvent> {
     return await this.database.models.event.create(
-      payload as Omit<IEvent, 'id'>,
+      payload as AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>,
     );
   }
 
   public async fetchEventerList(
     keywords: string,
-  ): Promise<IEventerSlideResponse[]> {
+  ): Promise<
+    AppTypes.TicketingPlatforms.ThirdParty.EventerCoIl.IEventerSlideResponse[]
+  > {
     try {
-      const response = await eventerAxios.get<IEventerSlideResponse[]>(
+      const response = await eventerAxios.get<
+        AppTypes.TicketingPlatforms.ThirdParty.EventerCoIl.IEventerSlideResponse[]
+      >(
         'https://www.eventer.co.il/search/slides/'.concat(
           encodeURIComponent(keywords),
         ),
@@ -63,14 +61,15 @@ export class EventerFetcherDal {
 
   public async fetchEventerFullEvent(
     eventSlug: string,
-  ): Promise<IEventerFullEventResponse | null> {
+  ): Promise<AppTypes.TicketingPlatforms.ThirdParty.EventerCoIl.IEventerFullEventResponse | null> {
     try {
-      const response = await eventerAxios.get<IEventerFullEventResponse>(
-        `https://www.eventer.co.il/events/explainNames/${eventSlug}.js?isInEventerSite=true`,
-        {
-          timeout: 1000 * 5,
-        },
-      );
+      const response =
+        await eventerAxios.get<AppTypes.TicketingPlatforms.ThirdParty.EventerCoIl.IEventerFullEventResponse>(
+          `https://www.eventer.co.il/events/explainNames/${eventSlug}.js?isInEventerSite=true`,
+          {
+            timeout: 1000 * 5,
+          },
+        );
       return response.data;
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
@@ -91,14 +90,15 @@ export class EventerFetcherDal {
    */
   public async fetchEventerEventTickets(
     eventId: string,
-  ): Promise<IEventerTicketsResponse | null> {
+  ): Promise<AppTypes.TicketingPlatforms.ThirdParty.EventerCoIl.IEventerTicketsResponse | null> {
     try {
-      const response = await eventerAxios.get<IEventerTicketsResponse>(
-        `https://www.eventer.co.il/events/${eventId}/ticketTypes.js?isInEventerSite=true`,
-        {
-          timeout: 1000 * 5,
-        },
-      );
+      const response =
+        await eventerAxios.get<AppTypes.TicketingPlatforms.ThirdParty.EventerCoIl.IEventerTicketsResponse>(
+          `https://www.eventer.co.il/events/${eventId}/ticketTypes.js?isInEventerSite=true`,
+          {
+            timeout: 1000 * 5,
+          },
+        );
       return response.data;
     } catch (error) {
       if (error instanceof AxiosError && error.response) {

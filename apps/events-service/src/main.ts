@@ -3,7 +3,7 @@ import {
   getMicroservicePath,
   SERVER_PREFIX,
 } from '@app/constants';
-import { MicroServiceName } from '@app/types';
+import { AppTypes } from '@app/types';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -11,7 +11,8 @@ import cookieParser from 'cookie-parser';
 import { EventsFetcherModule } from './events-service.module';
 
 async function bootstrap() {
-  const microserviceName: MicroServiceName = 'events-service';
+  const microserviceName: AppTypes.Other.Microservice.MicroServiceName =
+    AppTypes.Other.Microservice.MicroServiceName.EVENTS_SERVICE;
   const app = await NestFactory.create(EventsFetcherModule);
   const PORT = process.env.PORT ?? 3000;
 

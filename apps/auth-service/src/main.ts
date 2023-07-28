@@ -11,7 +11,7 @@ import { AuthServiceModule } from './auth-service.module';
 
 async function bootstrap() {
   const microserviceName: AppTypes.Other.Microservice.MicroServiceName =
-    'auth-service';
+    AppTypes.Other.Microservice.MicroServiceName.AUTH_SERVICE;
   const app = await NestFactory.create(AuthServiceModule);
   const PORT = process.env.PORT ?? 3003;
 

@@ -1,17 +1,15 @@
 import { JwtService } from '@app/auth/jwt/jwt.service';
-import { MainAppDatabase } from '@app/database';
+import { UsersServiceDatabase } from '@app/database';
 import {
   applyDecorators,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
   Injectable,
-  NotFoundException,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
-import { Observable } from 'rxjs';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { Request } from 'express';
 /**
  * @deprecated Probably we don't need it since we are using rmq bus
  */
@@ -19,7 +17,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 export class IsApiAuthenticatedGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly database: MainAppDatabase,
+    private readonly database: UsersServiceDatabase,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {

@@ -1,4 +1,4 @@
-import { MainAppDatabase } from '@app/database';
+import { UsersServiceDatabase } from '@app/database';
 import {
   IGetUserListWithFriendshipStatusAggregationResult,
   sortUsersAggregationPipeline,
@@ -18,7 +18,7 @@ export class UsersDal implements OnModuleInit {
     IMainAppUser
   >;
   constructor(
-    private readonly db: MainAppDatabase,
+    private readonly db: UsersServiceDatabase,
     private readonly s3Service: S3UploaderService,
   ) {}
   onModuleInit() {
