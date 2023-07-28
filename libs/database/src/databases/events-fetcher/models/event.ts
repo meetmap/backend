@@ -1,74 +1,75 @@
-import { EventAccessibilityType, EventType, IEvent } from '@app/types';
+import { AppTypes } from '@app/types';
 import * as mongoose from 'mongoose';
 import { CreatorSchema } from './creator-schema';
 import { LocationSchema } from './location';
 import { TicketSchema } from './ticket';
 
-export const EventSchema = new mongoose.Schema<IEvent>(
-  {
-    description: {
-      type: mongoose.SchemaTypes.String,
+export const EventSchema =
+  new mongoose.Schema<AppTypes.EventsService.Event.IEvent>(
+    {
+      description: {
+        type: mongoose.SchemaTypes.String,
+      },
+      link: {
+        type: mongoose.SchemaTypes.String,
+        // required: true,
+      },
+      picture: {
+        type: mongoose.SchemaTypes.String,
+      },
+      ageLimit: {
+        type: mongoose.SchemaTypes.Number,
+        required: true,
+      },
+      endTime: {
+        type: mongoose.SchemaTypes.Date,
+        required: true,
+      },
+      startTime: {
+        type: mongoose.SchemaTypes.Date,
+        required: true,
+      },
+      title: {
+        type: mongoose.SchemaTypes.String,
+        required: true,
+      },
+      slug: {
+        type: mongoose.SchemaTypes.String,
+        required: true,
+        unique: true,
+      },
+      location: {
+        type: LocationSchema,
+        required: true,
+      },
+      eventType: {
+        type: mongoose.SchemaTypes.String,
+        enum: AppTypes.EventsService.Event.EventType,
+        required: true,
+      },
+      accessibility: {
+        type: mongoose.SchemaTypes.String,
+        enum: AppTypes.EventsService.Event.EventAccessibilityType,
+        required: true,
+        default: AppTypes.EventsService.Event.EventAccessibilityType.PUBLIC,
+      },
+      tickets: {
+        type: [TicketSchema],
+        requried: true,
+      },
+      creator: {
+        type: CreatorSchema,
+      },
     },
-    link: {
-      type: mongoose.SchemaTypes.String,
-      // required: true,
+    {
+      id: true,
+      timestamps: true,
     },
-    picture: {
-      type: mongoose.SchemaTypes.String,
-    },
-    ageLimit: {
-      type: mongoose.SchemaTypes.Number,
-      required: true,
-    },
-    endTime: {
-      type: mongoose.SchemaTypes.Date,
-      required: true,
-    },
-    startTime: {
-      type: mongoose.SchemaTypes.Date,
-      required: true,
-    },
-    title: {
-      type: mongoose.SchemaTypes.String,
-      required: true,
-    },
-    slug: {
-      type: mongoose.SchemaTypes.String,
-      required: true,
-      unique: true,
-    },
-    location: {
-      type: LocationSchema,
-      required: true,
-    },
-    eventType: {
-      type: mongoose.SchemaTypes.String,
-      enum: EventType,
-      required: true,
-    },
-    accessibility: {
-      type: mongoose.SchemaTypes.String,
-      enum: EventAccessibilityType,
-      required: true,
-      default: EventAccessibilityType.PUBLIC,
-    },
-    tickets: {
-      type: [TicketSchema],
-      requried: true,
-    },
-    creator: {
-      type: CreatorSchema,
-    },
-  },
-  {
-    id: true,
-    timestamps: true,
-  },
-);
+  );
 
 EventSchema.index(
   { description: 'text', title: 'text' } satisfies Partial<
-    Record<keyof IEvent, mongoose.IndexDirection>
+    Record<keyof AppTypes.EventsService.Event.IEvent, mongoose.IndexDirection>
   >,
   {
     weights: {

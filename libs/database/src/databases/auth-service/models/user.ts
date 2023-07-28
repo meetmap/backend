@@ -1,7 +1,7 @@
-import { IAuthUser } from '@app/types';
+import { AppTypes } from '@app/types';
 import * as mongoose from 'mongoose';
 
-export const UserSchema = new mongoose.Schema<IAuthUser>(
+export const UserSchema = new mongoose.Schema<AppTypes.AuthService.Users.IUser>(
   {
     username: {
       type: mongoose.SchemaTypes.String,
