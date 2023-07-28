@@ -1,4 +1,3 @@
-import { ISafeAuthUser } from '@app/types';
 import {
   BooleanField,
   DateField,
@@ -8,7 +7,8 @@ import {
   PasswordField,
   PhoneField,
   StringField,
-} from '../decorators';
+} from '@app/dto/decorators';
+import { AppTypes } from '@app/types';
 
 export class TokensResponseDto {
   @StringField({
@@ -21,7 +21,7 @@ export class TokensResponseDto {
   rt: string;
 }
 
-export class AuthUserResponseDto implements ISafeAuthUser {
+export class UserResponseDto implements AppTypes.AuthService.Users.ISafeUser {
   @IdField()
   id: string;
   @EmailField()
@@ -45,20 +45,29 @@ export class AuthUserResponseDto implements ISafeAuthUser {
 
   @IdField()
   cid: string;
+
+  @StringField({ optional: true })
+  fbId?: string | undefined;
+  @StringField({ enum: AppTypes.Shared.Users.Gender })
+  gender: AppTypes.Shared.Users.Gender;
+  @DateField()
+  createdAt: Date;
+  @DateField()
+  updatedAt: Date;
 }
 
-export class LoginResponseDto {
+export class SignInResponseDto {
   @NestedField(TokensResponseDto, {
     description: 'Tokens',
   })
   tokens: TokensResponseDto;
-  @NestedField(AuthUserResponseDto, {
+  @NestedField(UserResponseDto, {
     description: 'User',
   })
-  user: AuthUserResponseDto;
+  user: UserResponseDto;
 }
 
-export class CreateUserRequestDto {
+export class SignUpRequestDto {
   @PasswordField()
   password: string;
 
@@ -84,6 +93,8 @@ export class CreateUserRequestDto {
    */
   @DateField()
   birthDate: Date;
+  @StringField({ enum: AppTypes.Shared.Users.Gender })
+  gender: AppTypes.Shared.Users.Gender;
 }
 
 export class SignUpWithAuthProviderRequestDto {
@@ -119,7 +130,7 @@ export class SignUpWithAuthProviderRequestDto {
   token: string;
 }
 
-export class LoginWithAuthProviderRequestDto {
+export class SignInWithAuthProviderRequestDto {
   @StringField({
     description: 'Short-live auth provider token',
   })
@@ -133,7 +144,7 @@ export class LinkFacebookRequestDto {
   token: string;
 }
 
-export class LoginWithPasswordDto {
+export class SignInWithPasswordDto {
   @StringField({
     description: 'Password',
   })
@@ -163,19 +174,12 @@ export class RefreshAccessTokenRequestDto {
   refreshToken: string;
 }
 
-export class RefreshAtResponseDto {
-  @StringField({
-    description: 'Access token',
-  })
-  accessToken: string;
-}
-
 export class EntityIsFreeResponseDto {
   @BooleanField()
   free: boolean;
 }
 
-export class UpdateUsersUsernameRequestDto {
+export class UpdateUsernameRequestDto {
   @StringField({
     description: 'username',
   })

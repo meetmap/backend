@@ -1,41 +1,30 @@
 import {
-  CreatorType,
-  EventAccessibilityType,
-  EventsUsersStatusType,
-  EventType,
-  ICity,
-  ICreator,
-  IEvent,
-  IEventStats,
-  IEventsUsers,
-  ILocation,
-  IMinimalEventByLocation,
-  IPoint,
-  IPrice,
-  ITicket,
-} from '@app/types';
-import { ApiProperty } from '@nestjs/swagger';
-import { PopulatedDoc, Types } from 'mongoose';
-import { z } from 'zod';
-import {
   BooleanField,
   DateField,
   IdField,
   NestedField,
   NumberField,
   StringField,
-} from '../decorators';
+} from '@app/dto/decorators';
+import { AppTypes } from '@app/types';
+import { ApiProperty } from '@nestjs/swagger';
+import { PopulatedDoc, Types } from 'mongoose';
+import { z } from 'zod';
 
 export class EventUserStatsResponseDto
-  implements Pick<IEventsUsers, 'isUserLike' | 'userStatus'>
+  implements
+    Pick<
+      AppTypes.EventsService.Event.IEventsUsers,
+      'isUserLike' | 'userStatus'
+    >
 {
   @BooleanField()
   isUserLike: boolean;
   @StringField({
-    enum: EventsUsersStatusType,
+    enum: AppTypes.EventsService.Event.EventsUsersStatusType,
     optional: true,
   })
-  userStatus?: EventsUsersStatusType;
+  userStatus?: AppTypes.EventsService.Event.EventsUsersStatusType;
 }
 
 export class GetEventsByLocationRequestDto {
@@ -54,7 +43,7 @@ export class GetEventsByLocationRequestDto {
   radius: number;
 }
 
-export class PointResponseDto implements IPoint {
+export class PointResponseDto implements AppTypes.Shared.Location.IPoint {
   @StringField({
     enum: ['Point'],
   })
@@ -68,23 +57,23 @@ export class PointResponseDto implements IPoint {
   coordinates: [number, number];
 }
 
-export class LocationResponseDto implements ILocation {
+export class LocationResponseDto implements AppTypes.Shared.Location.ILocation {
   @StringField()
   country: string;
   @IdField({ optional: true })
-  cityId?: PopulatedDoc<ICity, Types.ObjectId | undefined>;
+  cityId?: PopulatedDoc<AppTypes.Shared.City.ICity, Types.ObjectId | undefined>;
   @NestedField(PointResponseDto)
   coordinates: PointResponseDto;
 }
 
-export class PriceDto implements IPrice {
+export class PriceDto implements AppTypes.EventsService.Event.IPrice {
   @StringField()
   currency: string;
   @NumberField()
   amount: number;
 }
 
-export class TicketDto implements ITicket {
+export class TicketDto implements AppTypes.EventsService.Event.ITicket {
   @StringField()
   name: string;
   @StringField({ optional: true })
@@ -98,13 +87,19 @@ export class TicketDto implements ITicket {
   amount: number;
 }
 
-export class CreatorResponseDto implements ICreator {
-  type: CreatorType;
+export class CreatorResponseDto
+  implements AppTypes.EventsService.Event.ICreator
+{
+  type: AppTypes.EventsService.Event.CreatorType;
   creatorCid: string;
 }
 
 export class MinimalEventByLocationResponseDto
-  implements Pick<IMinimalEventByLocation, 'id' | 'picture' | 'coordinates'>
+  implements
+    Pick<
+      AppTypes.EventsService.Event.IMinimalEventByLocation,
+      'id' | 'picture' | 'coordinates'
+    >
 {
   @IdField()
   id: string;
@@ -122,7 +117,7 @@ export class MinimalEventByLocationResponseDto
 export class EventResponseDto
   implements
     Pick<
-      IEvent,
+      AppTypes.EventsService.Event.IEvent,
       | 'id'
       | 'slug'
       | 'title'
@@ -159,21 +154,23 @@ export class EventResponseDto
   @NestedField(LocationResponseDto)
   location: LocationResponseDto;
   @StringField({
-    enum: EventType,
+    enum: AppTypes.EventsService.Event.EventType,
   })
-  eventType: EventType;
+  eventType: AppTypes.EventsService.Event.EventType;
   @NestedField(EventUserStatsResponseDto, {})
   userStats: EventUserStatsResponseDto;
 
   @StringField({ optional: true })
   description?: string | undefined;
   @StringField({
-    enum: EventAccessibilityType,
+    enum: AppTypes.EventsService.Event.EventAccessibilityType,
   })
-  accessibility: EventAccessibilityType;
+  accessibility: AppTypes.EventsService.Event.EventAccessibilityType;
 }
 
-export class EventStatsResponseDto implements IEventStats {
+export class EventStatsResponseDto
+  implements AppTypes.EventsService.Event.IEventStats
+{
   @NumberField()
   likes: number;
 
@@ -184,7 +181,9 @@ export class EventStatsResponseDto implements IEventStats {
   wantGo: number;
 }
 
-export class SingleEventResponseDto implements IEvent {
+export class SingleEventResponseDto
+  implements AppTypes.EventsService.Event.IEvent
+{
   @IdField()
   id: string;
   @StringField()
@@ -206,8 +205,8 @@ export class SingleEventResponseDto implements IEvent {
   @NumberField()
   ageLimit: number;
 
-  @StringField({ enum: EventAccessibilityType })
-  accessibility: EventAccessibilityType;
+  @StringField({ enum: AppTypes.EventsService.Event.EventAccessibilityType })
+  accessibility: AppTypes.EventsService.Event.EventAccessibilityType;
 
   @NestedField(CreatorResponseDto, {
     optional: true,
@@ -216,9 +215,9 @@ export class SingleEventResponseDto implements IEvent {
   @NestedField(LocationResponseDto)
   location: LocationResponseDto;
   @StringField({
-    enum: EventType,
+    enum: AppTypes.EventsService.Event.EventType,
   })
-  eventType: EventType;
+  eventType: AppTypes.EventsService.Event.EventType;
   @NestedField([TicketDto])
   tickets: TicketDto[];
   @NestedField(EventStatsResponseDto, {})
@@ -242,8 +241,9 @@ export class CreateEventRequestDto {
         description: 'description',
         endTime: new Date('2003-04-01T21:00:00.000Z'),
         startTime: new Date('2003-04-01T21:00:00.000Z'),
-        accessibility: EventAccessibilityType.PUBLIC,
-        eventType: EventType.USER,
+        accessibility:
+          AppTypes.EventsService.Event.EventAccessibilityType.PUBLIC,
+        eventType: AppTypes.EventsService.Event.EventType.USER,
         location: {
           lat: 1,
           lng: 1,
@@ -285,8 +285,10 @@ export const CreateEventSchema = z.object({
   title: z.string(),
   description: z.string().optional().nullable().default(null),
   slug: z.string(),
-  eventType: z.nativeEnum(EventType),
-  accessibility: z.nativeEnum(EventAccessibilityType),
+  eventType: z.nativeEnum(AppTypes.EventsService.Event.EventType),
+  accessibility: z.nativeEnum(
+    AppTypes.EventsService.Event.EventAccessibilityType,
+  ),
   startTime: z.coerce.date(),
   endTime: z.coerce.date(),
   ageLimit: z.number().min(1).max(120),

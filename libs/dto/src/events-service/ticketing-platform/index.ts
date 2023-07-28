@@ -1,13 +1,4 @@
 import {
-  EventType,
-  IApiKey,
-  IEvent,
-  ISafeApiKey,
-  ISafeTicketingPlatform,
-  ITicketingPlatform,
-} from '@app/types';
-import { ApiProperty } from '@nestjs/swagger';
-import {
   DateField,
   EmailField,
   IdField,
@@ -15,13 +6,15 @@ import {
   NumberField,
   PasswordField,
   StringField,
-} from '../decorators';
-import { EventStatsResponseDto, LocationResponseDto } from './events.dto';
+} from '@app/dto/decorators';
+import { AppTypes } from '@app/types';
+import { ApiProperty } from '@nestjs/swagger';
+import { EventStatsResponseDto, LocationResponseDto } from '../events';
 
 export class EventForOrganizersResponseDto
   implements
     Pick<
-      IEvent,
+      AppTypes.EventsService.Event.IEvent,
       | 'id'
       | 'slug'
       | 'title'
@@ -52,14 +45,16 @@ export class EventForOrganizersResponseDto
   @NestedField(LocationResponseDto)
   location: LocationResponseDto;
   @StringField({
-    enum: EventType,
+    enum: AppTypes.EventsService.Event.EventType,
   })
-  eventType: EventType;
+  eventType: AppTypes.EventsService.Event.EventType;
   @NestedField(EventStatsResponseDto, {})
   stats: EventStatsResponseDto;
 }
 
-export class TicketingPlatformResponseDto implements ISafeTicketingPlatform {
+export class TicketingPlatformResponseDto
+  implements AppTypes.TicketingPlatforms.System.ISafeTicketingPlatform
+{
   @IdField()
   id: string;
   @StringField()
@@ -81,7 +76,7 @@ export class TicketingPlatformResponseDto implements ISafeTicketingPlatform {
 }
 
 export class CreateTicketingPlatformRequestDto
-  implements Omit<ITicketingPlatform, 'id'>
+  implements Omit<AppTypes.TicketingPlatforms.System.ITicketingPlatform, 'id'>
 {
   @EmailField()
   email: string;
@@ -107,9 +102,7 @@ export class CreateTicketingPlatformRequestDto
 }
 
 export class CreateTicketingPlatformResponseDto {
-  @ApiProperty({
-    type: TicketingPlatformResponseDto,
-  })
+  @NestedField(TicketingPlatformResponseDto)
   platform: TicketingPlatformResponseDto;
   @StringField({
     description: 'Access token',
@@ -141,7 +134,8 @@ export class RefreshDashboardAtResponseDto {
 }
 
 export class IssueApiKeyRequestDto
-  implements Pick<IApiKey, 'title' | 'description'>
+  implements
+    Pick<AppTypes.TicketingPlatforms.System.IApiKey, 'title' | 'description'>
 {
   @StringField()
   title: string;
@@ -149,7 +143,9 @@ export class IssueApiKeyRequestDto
   description: string;
 }
 
-export class RevokeApiKeyRequestDto implements Pick<IApiKey, 'key'> {
+export class RevokeApiKeyRequestDto
+  implements Pick<AppTypes.TicketingPlatforms.System.IApiKey, 'key'>
+{
   @StringField()
   key: string;
 }
@@ -157,7 +153,7 @@ export class RevokeApiKeyRequestDto implements Pick<IApiKey, 'key'> {
 export class IssueApiKeyResponseDto
   implements
     Pick<
-      IApiKey,
+      AppTypes.TicketingPlatforms.System.IApiKey,
       'id' | 'title' | 'description' | 'expires' | 'createdAt' | 'key'
     >
 {
@@ -180,7 +176,9 @@ export class IssueApiKeyResponseDto
   expires?: Date | undefined;
 }
 
-export class ApiKeyResponseDto implements ISafeApiKey {
+export class ApiKeyResponseDto
+  implements AppTypes.TicketingPlatforms.System.ISafeApiKey
+{
   @IdField()
   id: string;
   @StringField()
@@ -223,7 +221,7 @@ export class TicketRequestDto {
 export class UploadEventRequestDto
   implements
     Pick<
-      IEvent,
+      AppTypes.EventsService.Event.IEvent,
       | 'link'
       | 'title'
       | 'picture'
