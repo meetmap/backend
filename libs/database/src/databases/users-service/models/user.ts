@@ -1,41 +1,51 @@
 import { AppTypes } from '@app/types';
 import * as mongoose from 'mongoose';
 
-export const TicketingPlatformSchema =
-  new mongoose.Schema<AppTypes.TicketingPlatforms.System.ITicketingPlatform>(
+export const UserSchema =
+  new mongoose.Schema<AppTypes.UsersService.Users.IUser>(
     {
+      username: {
+        type: mongoose.SchemaTypes.String,
+        unique: true,
+        required: true,
+      },
+      name: {
+        type: mongoose.SchemaTypes.String,
+        required: true,
+      },
+      birthDate: {
+        type: mongoose.SchemaTypes.Date,
+        required: true,
+      },
       email: {
         type: mongoose.SchemaTypes.String,
         unique: true,
         required: true,
       },
-      password: {
+      phone: {
         type: mongoose.SchemaTypes.String,
-        required: true,
+        unique: true,
+        sparse: true,
       },
-      title: {
+      cid: {
         type: mongoose.SchemaTypes.String,
         required: true,
         unique: true,
       },
-      banner: {
+      fbId: {
+        type: mongoose.SchemaTypes.String,
+        unique: true,
+        sparse: true,
+      },
+      profilePicture: {
         type: mongoose.SchemaTypes.String,
       },
       description: {
         type: mongoose.SchemaTypes.String,
       },
-      image: {
-        type: mongoose.SchemaTypes.String,
-      },
-      websiteUrl: {
-        type: mongoose.SchemaTypes.String,
-        required: true,
-      },
-      refreshToken: {
-        type: mongoose.SchemaTypes.String,
-      },
     },
     {
       id: true,
+      timestamps: true,
     },
   );

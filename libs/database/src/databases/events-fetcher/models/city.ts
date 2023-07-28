@@ -1,8 +1,8 @@
-import { ICity } from '@app/types';
+import { AppTypes } from '@app/types';
 import * as mongoose from 'mongoose';
 import { PolygonSchema } from '../../../shared-models/poylgon';
 
-export const CitySchema = new mongoose.Schema<ICity>(
+export const CitySchema = new mongoose.Schema<AppTypes.Shared.City.ICity>(
   {
     name: {
       type: mongoose.SchemaTypes.String,
