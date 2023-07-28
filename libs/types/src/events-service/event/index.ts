@@ -1,5 +1,5 @@
 import { Shared } from '@app/types/shared';
-import { PopulatedDoc } from 'mongoose';
+import { IEventsUsers } from '../events-users';
 
 export interface IEvent {
   id: string;
@@ -53,12 +53,6 @@ export enum EventAccessibilityType {
   PRIVATE = 'private',
 }
 
-export enum EventsUsersStatusType {
-  WANT_GO = 'want-go',
-  APPROVED = 'approved',
-  TICKETS_PURCHASED = 'tickets-purchased',
-}
-
 export interface ITicket {
   name: string;
   description?: string;
@@ -75,13 +69,6 @@ export interface IPrice {
   currency: string;
 
   amount: number;
-}
-
-export interface IEventsUsers {
-  event: PopulatedDoc<IEvent>;
-  userCId: string;
-  userStatus?: EventsUsersStatusType;
-  isUserLike: boolean;
 }
 
 export interface IEventStats {

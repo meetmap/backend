@@ -11,7 +11,10 @@ export interface IUser extends Shared.Users.IUsersBase {
 }
 
 export interface ISafeUser
-  extends Omit<IUser, 'fbToken' | 'password' | 'refreshToken'> {}
+  extends Omit<
+    IUser,
+    'fbToken' | 'password' | 'refreshToken' | 'updatedAt' | 'createdAt'
+  > {}
 
 export interface IUserWithPassword extends IUser {
   password: string;

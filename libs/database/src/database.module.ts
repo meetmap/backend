@@ -1,4 +1,4 @@
-import { MicroServiceName } from '@app/types';
+import { AppTypes } from '@app/types';
 import { DynamicModule } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -12,7 +12,7 @@ import './mongoose-defaults';
 
 export interface IDatabaseModuleConfig {
   connectionStringEnvPath: string;
-  microserviceName: MicroServiceName;
+  microserviceName: AppTypes.Other.Microservice.MicroServiceName;
   // connectionString: string;
 }
 export class DatabaseModule {
@@ -40,11 +40,11 @@ export class DatabaseModule {
 }
 
 const microserviceDatabaseMap: Record<
-  MicroServiceName,
+  AppTypes.Other.Microservice.MicroServiceName,
   typeof AbstractBaseDatabase
 > = {
-  'events-fetcher': EventsFetcherDb,
+  'events-service': EventsFetcherDb,
   'location-service': LocationServiceDatabase,
-  'main-app': MainAppDatabase,
+  'users-service': MainAppDatabase,
   'auth-service': AuthServiceDatabase,
 };

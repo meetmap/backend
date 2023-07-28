@@ -1,6 +1,5 @@
 import { MicroServiceName } from '@app/types';
-import { HttpService } from '@nestjs/axios';
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 
@@ -26,9 +25,9 @@ export class InternalAxiosService {
   }
   get instance(): Record<MicroServiceName, AxiosInstance> {
     return {
-      'events-fetcher': this.eventsFetcherAxios,
+      'events-service': this.eventsFetcherAxios,
       'location-service': this.locationServiceAxios,
-      'main-app': this.mainAppAxios,
+      'users-service': this.mainAppAxios,
       'auth-service': this.authServiceAxios,
     };
   }

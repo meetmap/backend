@@ -1,13 +1,12 @@
-import { MainAppDatabase } from '@app/database';
-import { MicroServiceName } from '@app/types';
-import { DynamicModule, Global, Module, Type } from '@nestjs/common';
+import { AppTypes } from '@app/types';
+import { DynamicModule, Type } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { DashboardJwtService } from './dashboard-jwt';
 import { FacebookStrategy } from './facebook-auth';
 import { JwtService } from './jwt';
 
 export interface IAuthModuleConfig {
-  microserviceName: MicroServiceName;
+  microserviceName: AppTypes.Other.Microservice.MicroServiceName;
 }
 
 export class AuthModule {
@@ -25,9 +24,12 @@ export class AuthModule {
   }
 }
 
-const jwtServicesMap: Record<MicroServiceName, Type<any>[]> = {
+const jwtServicesMap: Record<
+  AppTypes.Other.Microservice.MicroServiceName,
+  Type<any>[]
+> = {
   'auth-service': [JwtService, FacebookStrategy],
-  'events-fetcher': [JwtService, DashboardJwtService],
+  'events-service': [JwtService, DashboardJwtService],
   'location-service': [JwtService],
-  'main-app': [JwtService],
+  'users-service': [JwtService],
 };

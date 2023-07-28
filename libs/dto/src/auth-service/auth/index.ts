@@ -50,10 +50,6 @@ export class UserResponseDto implements AppTypes.AuthService.Users.ISafeUser {
   fbId?: string | undefined;
   @StringField({ enum: AppTypes.Shared.Users.Gender })
   gender: AppTypes.Shared.Users.Gender;
-  @DateField()
-  createdAt: Date;
-  @DateField()
-  updatedAt: Date;
 }
 
 export class SignInResponseDto {
@@ -117,6 +113,11 @@ export class SignUpWithAuthProviderRequestDto {
   })
   name: string;
 
+  @StringField({
+    enum: AppTypes.Shared.Users.Gender,
+  })
+  gender: AppTypes.Shared.Users.Gender;
+
   /**
    * @description birthDate should be in ISO 8601 format i.e 2003-04-01T21:00:00.000Z
    */
@@ -144,7 +145,7 @@ export class LinkFacebookRequestDto {
   token: string;
 }
 
-export class SignInWithPasswordDto {
+export class SignInWithPasswordRequestDto {
   @StringField({
     description: 'Password',
   })
@@ -172,6 +173,13 @@ export class RefreshAccessTokenRequestDto {
     description: 'Refresh token',
   })
   refreshToken: string;
+}
+
+export class RefreshAccessTokenResponseDto {
+  @StringField({
+    description: 'Access token',
+  })
+  accessToken: string;
 }
 
 export class EntityIsFreeResponseDto {

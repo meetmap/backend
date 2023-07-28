@@ -1,6 +1,7 @@
 import { IAuthProviderUser } from '@app/auth-providers/types';
 import { AuthServiceDatabase } from '@app/database';
-import { IAuthUser, IAuthUserWithPassword, ISafeAuthUser } from '@app/types';
+import { AppTypes } from '@app/types';
+
 import { ConflictException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
@@ -11,8 +12,14 @@ export class AuthDal {
   constructor(private readonly db: AuthServiceDatabase) {}
   public async createUser(
     payload: Pick<
-      IAuthUserWithPassword,
-      'email' | 'username' | 'phone' | 'password' | 'birthDate' | 'name'
+      AppTypes.AuthService.Users.IUserWithPassword,
+      | 'gender'
+      | 'email'
+      | 'username'
+      | 'phone'
+      | 'password'
+      | 'birthDate'
+      | 'name'
     >,
   ) {
     return await this.db.models.users.create({
@@ -20,6 +27,7 @@ export class AuthDal {
       username: payload.username,
       name: payload.name,
       phone: payload.phone,
+      gender: payload.gender,
       password: await this.hashPassword(payload.password),
       birthDate: payload.birthDate,
       cid: randomUUID(),
@@ -34,8 +42,15 @@ export class AuthDal {
 
   public async createUserWithAuthProvider(
     payload: Pick<
-      IAuthUser,
-      'email' | 'username' | 'phone' | 'birthDate' | 'fbId' | 'fbToken' | 'name'
+      AppTypes.AuthService.Users.IUser,
+      | 'gender'
+      | 'email'
+      | 'username'
+      | 'phone'
+      | 'birthDate'
+      | 'fbId'
+      | 'fbToken'
+      | 'name'
     >,
   ) {
     return await this.db.models.users.create({
@@ -45,6 +60,7 @@ export class AuthDal {
       birthDate: payload.birthDate,
       cid: randomUUID(),
       name: payload.name,
+      gender: payload.gender,
       //user has signed in with facebook
       fbId: payload.fbId,
       fbToken: payload.fbToken,
@@ -76,7 +92,9 @@ export class AuthDal {
       .limit(15);
   }
 
-  public async findUserById(userId: string): Promise<IAuthUser | null> {
+  public async findUserById(
+    userId: string,
+  ): Promise<AppTypes.AuthService.Users.IUser | null> {
     return await this.db.models.users.findById(userId);
   }
 
@@ -104,7 +122,10 @@ export class AuthDal {
   public async updateUser(
     id: string,
     payload: Partial<
-      Pick<IAuthUser, 'email' | 'phone' | 'password' | 'username' | 'name'>
+      Pick<
+        AppTypes.AuthService.Users.IUser,
+        'email' | 'phone' | 'password' | 'username' | 'name'
+      >
     >,
   ) {
     if (payload.email && (await this.findUserByEmail(payload.email))) {
@@ -122,7 +143,7 @@ export class AuthDal {
         `User with phone ${payload.phone} already exists`,
       );
     }
-    return this.db.models.users.findByIdAndUpdate<ISafeAuthUser>(
+    return this.db.models.users.findByIdAndUpdate<AppTypes.AuthService.Users.ISafeUser>(
       id,
       {
         $set: {
@@ -147,7 +168,7 @@ export class AuthDal {
 
   public async getUserByIdBulk(
     userIds: string[],
-  ): Promise<(IAuthUser | null)[]> {
+  ): Promise<(AppTypes.AuthService.Users.IUser | null)[]> {
     return await this.db.models.users.find({
       id: {
         $in: userIds.map((id) => new mongoose.Types.ObjectId(id)),

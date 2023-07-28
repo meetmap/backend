@@ -1,6 +1,6 @@
 import { RMQConstants } from '@app/constants';
-import { UpdateFriendshipRMQRequestDto } from '@app/dto/main-app/friends.dto';
 import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
+import { UpdateFriendshipRMQRequestDto } from '@app/dto/users-service/friends.dto';
 import {
   RabbitPayload,
   RabbitRequest,
