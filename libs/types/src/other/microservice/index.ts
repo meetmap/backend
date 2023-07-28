@@ -1,5 +1,5 @@
 export type MicroServiceName =
-  | 'events-fetcher'
-  | 'main-app'
+  | 'events-service'
+  | 'users-service'
   | 'location-service'
   | 'auth-service';

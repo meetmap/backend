@@ -12,13 +12,13 @@
         "tsConfigPath": "apps/location-service/tsconfig.app.json"
       }
     },
-    "events-fetcher": {
+    "events-service": {
       "type": "application",
-      "root": "apps/events-fetcher",
+      "root": "apps/events-service",
       "entryFile": "main",
-      "sourceRoot": "apps/events-fetcher/src",
+      "sourceRoot": "apps/events-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/events-fetcher/tsconfig.app.json"
+        "tsConfigPath": "apps/events-service/tsconfig.app.json"
       }
     },
     "redis": {
@@ -57,13 +57,13 @@
         "tsConfigPath": "libs/axios/tsconfig.lib.json"
       }
     },
-    "main-app": {
+    "users-service": {
       "type": "application",
-      "root": "apps/main-app",
+      "root": "apps/users-service",
       "entryFile": "main",
-      "sourceRoot": "apps/main-app/src",
+      "sourceRoot": "apps/users-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/main-app/tsconfig.app.json"
+        "tsConfigPath": "apps/users-service/tsconfig.app.json"
       }
     },
     "constants": {

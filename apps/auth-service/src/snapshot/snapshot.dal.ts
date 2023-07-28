@@ -1,5 +1,5 @@
 import { AuthServiceDatabase } from '@app/database';
-import { IAuthServiceSnapshotUser } from '@app/types';
+import { AppTypes } from '@app/types';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class SnapshotDal {
         name: true,
         phone: true,
         username: true,
-      } satisfies Record<keyof IAuthServiceSnapshotUser, true>)
+      } satisfies Record<keyof AppTypes.Transport.Snapshot.Users.IAuthServiceSnapshot, true>)
       .cursor({
         batchSize,
       });

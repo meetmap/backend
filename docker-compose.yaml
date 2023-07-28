@@ -9,20 +9,20 @@ services:
     networks:
       - public
     depends_on:
-      events-fetcher:
+      events-service:
         condition: service_healthy
-      main-app:
+      users-service:
         condition: service_healthy
       auth-service:
         condition: service_healthy
       location-service:
         condition: service_healthy
 
-  events-fetcher:
+  events-service:
     platform: linux/amd64
     build:
       context: ./
-      dockerfile: apps/events-fetcher/Dockerfile.dev
+      dockerfile: apps/events-service/Dockerfile.dev
     volumes:
       - ./:/app # Maps host directory to container directory
     networks:
@@ -36,7 +36,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      main-app:
+      users-service:
         condition: service_healthy
     healthcheck:
       test:
@@ -44,16 +44,16 @@ services:
           "CMD",
           "curl",
           "-f",
-          "http://localhost:3000/events-fetcher"
+          "http://localhost:3000/events-service"
         ]
       interval: 5s
       timeout: 20s
       retries: 10
-  main-app:
+  users-service:
     platform: linux/amd64
     build:
       context: ./
-      dockerfile: apps/main-app/Dockerfile.dev
+      dockerfile: apps/users-service/Dockerfile.dev
     volumes:
       - ./:/app
     networks:
@@ -71,7 +71,7 @@ services:
         condition: service_healthy
 
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3001/main-app" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:3001/users-service" ]
       interval: 5s
       timeout: 20s
       retries: 10

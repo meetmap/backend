@@ -14,17 +14,17 @@ import { z } from 'zod';
 export class EventUserStatsResponseDto
   implements
     Pick<
-      AppTypes.EventsService.Event.IEventsUsers,
+      AppTypes.EventsService.EventsUsers.IEventsUsers,
       'isUserLike' | 'userStatus'
     >
 {
   @BooleanField()
   isUserLike: boolean;
   @StringField({
-    enum: AppTypes.EventsService.Event.EventsUsersStatusType,
+    enum: AppTypes.EventsService.EventsUsers.EventsUsersStatusType,
     optional: true,
   })
-  userStatus?: AppTypes.EventsService.Event.EventsUsersStatusType;
+  userStatus?: AppTypes.EventsService.EventsUsers.EventsUsersStatusType;
 }
 
 export class GetEventsByLocationRequestDto {

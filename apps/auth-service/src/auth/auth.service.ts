@@ -1,16 +1,9 @@
 import { FacebookAuthProvider } from '@app/auth-providers/facebook';
 import { JwtService } from '@app/auth/jwt';
 import { MAX_AGE, MIN_AGE, RMQConstants } from '@app/constants';
-import {
-  CreateUserRequestDto,
-  LoginWithAuthProviderRequestDto,
-  LoginWithPasswordDto,
-  SignUpWithAuthProviderRequestDto,
-  UpdateUsersUsernameRequestDto,
-} from '@app/dto/auth-service/auth.dto';
-import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
+import { AppDto } from '@app/dto';
 import { RabbitmqService } from '@app/rabbitmq';
-import { IAuthUser, ISafeAuthUser } from '@app/types';
+import { AppTypes } from '@app/types';
 import {
   BadRequestException,
   ConflictException,
@@ -30,7 +23,9 @@ export class AuthService {
     private readonly fbAuthProvider: FacebookAuthProvider,
   ) {}
 
-  public async createUser(payload: CreateUserRequestDto) {
+  public async createUser(
+    payload: AppDto.AuthService.AuthDto.SignUpRequestDto,
+  ) {
     if (!this.isValidBirthDate(payload.birthDate)) {
       throw new BadRequestException(
         `Invalid birth date, min age is ${MIN_AGE} years and max age is ${MAX_AGE} years`,
@@ -47,13 +42,15 @@ export class AuthService {
     this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
       RMQConstants.exchanges.USERS.routingKeys.USER_CREATED,
-      AuthService.mapUserDbToRmqRequest(user) satisfies UserRmqRequestDto,
+      AuthService.mapUserDbToRmqRequest(
+        user,
+      ) satisfies AppDto.TransportDto.Users.UserRmqRequestDto,
     );
     return safeUser;
   }
 
   public async getTokensAndRefreshRT(
-    user: Pick<IAuthUser, 'id' | 'username' | 'cid'>,
+    user: Pick<AppTypes.AuthService.Users.IUser, 'id' | 'username' | 'cid'>,
   ) {
     const jwt = await this.jwtService.getTokens({
       sub: user.id,
@@ -64,7 +61,9 @@ export class AuthService {
     return jwt;
   }
 
-  public async loginWithPassword(payload: LoginWithPasswordDto) {
+  public async loginWithPassword(
+    payload: AppDto.AuthService.AuthDto.SignInWithPasswordRequestDto,
+  ) {
     if (payload.username) {
       return this.loginWithUsernameAndPassword(
         payload.username,
@@ -159,7 +158,7 @@ export class AuthService {
   }
   public async updateUsersUsername(
     userId: string,
-    payload: UpdateUsersUsernameRequestDto,
+    payload: AppDto.AuthService.AuthDto.UpdateUsernameRequestDto,
   ) {
     const updatedUser = await this.dal.updateUser(userId, {
       username: payload.username,
@@ -173,7 +172,7 @@ export class AuthService {
       RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
       AuthService.mapUserDbToRmqRequest(
         updatedUser,
-      ) satisfies UserRmqRequestDto,
+      ) satisfies AppDto.TransportDto.Users.UserRmqRequestDto,
     );
     return safeUser;
   }
@@ -194,7 +193,9 @@ export class AuthService {
     );
   }
 
-  public async signUpWithFacebook(payload: SignUpWithAuthProviderRequestDto) {
+  public async signUpWithFacebook(
+    payload: AppDto.AuthService.AuthDto.SignUpWithAuthProviderRequestDto,
+  ) {
     const longLiveToken = await this.fbAuthProvider.getLongLiveToken(
       payload.token,
     );
@@ -233,18 +234,23 @@ export class AuthService {
       fbToken: fbUser.token,
       phone: phone,
       name: name,
+      gender: payload.gender,
     });
 
     const safeUser = AuthService.mapUserDbToResponseUser(user);
     this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
       RMQConstants.exchanges.USERS.routingKeys.USER_CREATED,
-      AuthService.mapUserDbToRmqRequest(user) satisfies UserRmqRequestDto,
+      AuthService.mapUserDbToRmqRequest(
+        user,
+      ) satisfies AppDto.TransportDto.Users.UserRmqRequestDto,
     );
     return safeUser;
   }
 
-  public async loginWithFacebook(payload: LoginWithAuthProviderRequestDto) {
+  public async loginWithFacebook(
+    payload: AppDto.AuthService.AuthDto.SignInWithAuthProviderRequestDto,
+  ) {
     const longLiveToken = await this.fbAuthProvider.getLongLiveToken(
       payload.token,
     );
@@ -258,7 +264,10 @@ export class AuthService {
     return safeUser;
   }
 
-  public async linkFacebook(user: IAuthUser, token: string) {
+  public async linkFacebook(
+    user: AppTypes.AuthService.Users.IUser,
+    token: string,
+  ) {
     const longLiveToken = await this.fbAuthProvider.getLongLiveToken(token);
     const fbUser = await this.fbAuthProvider.getUser(longLiveToken);
     const fbUserExists = await this.dal.getUserByFbId(fbUser.id);
@@ -274,12 +283,14 @@ export class AuthService {
       RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
       AuthService.mapUserDbToRmqRequest(
         updatedUser,
-      ) satisfies UserRmqRequestDto,
+      ) satisfies AppDto.TransportDto.Users.UserRmqRequestDto,
     );
     return updatedUser;
   }
 
-  static mapUserDbToRmqRequest(user: ISafeAuthUser): UserRmqRequestDto {
+  static mapUserDbToRmqRequest(
+    user: AppTypes.AuthService.Users.ISafeUser,
+  ): AppDto.TransportDto.Users.UserRmqRequestDto {
     return {
       id: user.id,
       email: user.email,
@@ -287,13 +298,16 @@ export class AuthService {
       username: user.username,
       birthDate: user.birthDate,
       cid: user.cid,
+      gender: user.gender,
       // authUserId: user.id,
       fbId: user.fbId,
       name: user.name,
     };
   }
 
-  static mapUserDbToResponseUser(user: ISafeAuthUser): ISafeAuthUser {
+  static mapUserDbToResponseUser(
+    user: AppTypes.AuthService.Users.ISafeUser,
+  ): AppTypes.AuthService.Users.ISafeUser {
     return {
       id: user.id,
       email: user.email,
@@ -303,6 +317,7 @@ export class AuthService {
       cid: user.cid,
       name: user.name,
       fbId: user.fbId,
+      gender: user.gender,
     };
   }
 }
