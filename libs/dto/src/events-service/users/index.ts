@@ -1,7 +1,10 @@
-import { IEventsServiceUser } from '@app/types';
-import { DateField, IdField, StringField } from '../decorators';
+import { DateField, IdField, StringField } from '@app/dto/decorators';
+import { AppTypes } from '@app/types';
 
-export class EventsServiceUserResponseDto implements IEventsServiceUser {
+export class EventsServiceUserResponseDto
+  implements
+    Omit<AppTypes.EventsService.Users.IUser, 'createdAt' | 'updatedAt'>
+{
   @IdField()
   id: string;
   @StringField({
@@ -22,4 +25,6 @@ export class EventsServiceUserResponseDto implements IEventsServiceUser {
     optional: true,
   })
   description?: string;
+  @StringField({ enum: AppTypes.Shared.Users.Gender })
+  gender: AppTypes.Shared.Users.Gender;
 }

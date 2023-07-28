@@ -1,16 +1,20 @@
-import { ICoordinates } from '@app/types';
+import { DateField, NumberField } from '@app/dto/decorators';
+import { AppTypes } from '@app/types';
 import { ApiProperty } from '@nestjs/swagger';
-import { DateField, NumberField } from '../decorators';
-import { UserLocationResponseDto } from './users.dto';
+import { UserLocationResponseDto } from '../users';
 
-export class UpdateUserLocationRequestDto implements ICoordinates {
+export class UpdateUserLocationRequestDto
+  implements AppTypes.LocationService.Users.ICoordinates
+{
   @NumberField()
   lat: number;
   @NumberField()
   lng: number;
 }
 
-export class LocationResponseDto implements ICoordinates {
+export class LocationResponseDto
+  implements AppTypes.LocationService.Users.ICoordinates
+{
   @NumberField()
   lat: number;
   @NumberField()
@@ -24,6 +28,6 @@ export class GetUserWithLocationResponseDto extends UserLocationResponseDto {
     nullable: true,
   })
   location: LocationResponseDto | null;
-  @DateField()
+  @DateField({ optional: true })
   locationUpdatedAt: Date | null;
 }

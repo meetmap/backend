@@ -1,10 +1,4 @@
 import {
-  FriendshipStatus,
-  IMainAppSafePartialUser,
-  IMainAppSafeUser,
-  IMainAppSafeUserWithoutFriends,
-} from '@app/types';
-import {
   DateField,
   EmailField,
   IdField,
@@ -12,10 +6,11 @@ import {
   NestedField,
   PhoneField,
   StringField,
-} from '../decorators';
+} from '@app/dto/decorators';
+import { AppTypes } from '@app/types';
 
 export class UserWithoutFriendsResponseDto
-  implements IMainAppSafeUserWithoutFriends
+  implements AppTypes.UsersService.Users.IUserWithoutFriends
 {
   @StringField({
     optional: true,
@@ -46,13 +41,17 @@ export class UserWithoutFriendsResponseDto
   })
   fbId?: string;
   @StringField({
-    enum: FriendshipStatus,
+    enum: AppTypes.Shared.Friends.FriendshipStatus,
     nullable: true,
   })
-  friendshipStatus: FriendshipStatus | null;
+  friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus | null;
+  @StringField({
+    enum: AppTypes.Shared.Users.Gender,
+  })
+  gender: AppTypes.Shared.Users.Gender;
 }
 
-export class UserResponseDto implements IMainAppSafeUser {
+export class UserResponseDto implements AppTypes.UsersService.Users.ISafeUser {
   @IdField()
   id: string;
   @EmailField()
@@ -96,17 +95,29 @@ export class UserResponseDto implements IMainAppSafeUser {
   cid: string;
 
   @StringField({
-    enum: FriendshipStatus,
+    enum: AppTypes.Shared.Friends.FriendshipStatus,
+    optional: true,
   })
-  friendshipStatus: FriendshipStatus | null;
+  friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus | null;
+  @StringField({ enum: AppTypes.Shared.Users.Gender })
+  gender: AppTypes.Shared.Users.Gender;
 }
 
-export class UserPartialResponseDto implements IMainAppSafePartialUser {
+export class UserPartialResponseDto
+  implements AppTypes.UsersService.Users.ISafePartialUser
+{
+  @NestedField([UserWithoutFriendsResponseDto])
+  friends: UserWithoutFriendsResponseDto[];
   @StringField({
-    enum: FriendshipStatus,
+    enum: AppTypes.Shared.Users.Gender,
+  })
+  gender: AppTypes.Shared.Users.Gender;
+
+  @StringField({
+    enum: AppTypes.Shared.Friends.FriendshipStatus,
     nullable: true,
   })
-  friendshipStatus: FriendshipStatus | null;
+  friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus | null;
   @IdField()
   id: string;
   @EmailField()

@@ -1,17 +1,13 @@
 import {
-  IAuthServiceSnapshotUser,
-  IRmqUser,
-  IUsersServiceSnapshotUser,
-} from '@app/types';
-import {
   DateField,
   EmailField,
   IdField,
   PhoneField,
   StringField,
-} from '../decorators';
+} from '@app/dto/decorators';
+import { AppTypes } from '@app/types';
 
-export class UserRmqRequestDto implements IRmqUser {
+export class UserRmqRequestDto implements AppTypes.Transport.Users.IUser {
   @IdField()
   id: string;
 
@@ -58,10 +54,14 @@ export class UserRmqRequestDto implements IRmqUser {
     optional: true,
   })
   profilePicture?: string;
+  @StringField({
+    enum: AppTypes.Shared.Users.Gender,
+  })
+  gender: AppTypes.Shared.Users.Gender;
 }
 
 export class AuthServiceUserSnapshotRequestDto
-  implements IAuthServiceSnapshotUser
+  implements AppTypes.Transport.Snapshot.Users.IAuthServiceSnapshot
 {
   @PhoneField({ optional: true })
   phone?: string | undefined;
@@ -82,7 +82,7 @@ export class AuthServiceUserSnapshotRequestDto
 }
 
 export class UsersServiceUserSnapshotRequestDto
-  implements IUsersServiceSnapshotUser
+  implements AppTypes.Transport.Snapshot.Users.IUsersServiceSnapshot
 {
   @IdField()
   cid: string;
