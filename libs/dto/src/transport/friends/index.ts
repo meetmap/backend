@@ -13,3 +13,16 @@ export class UsersServiceFriendsSnapshotRequestDto
   })
   status: AppTypes.Shared.Friends.FriendshipStatus;
 }
+
+export class UpdateFriendshipRequestDto {
+  @IdField()
+  friendCId: string;
+}
+
+export class UpdateFriendshipRMQRequestDto {
+  @IdField()
+  userCId: string;
+
+  @IdField()
+  friendCId: string;
+}

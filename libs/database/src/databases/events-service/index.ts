@@ -11,7 +11,7 @@ import {
 } from './models';
 
 @Injectable()
-export class EventsFetcherDb extends AbstractBaseDatabase {
+export class EventsServiceDatabase extends AbstractBaseDatabase {
   public async onModuleInit(): Promise<void> {
     await super.onModuleInit();
     for (const modelName in this.models) {

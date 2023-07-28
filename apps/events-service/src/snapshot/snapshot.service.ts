@@ -1,8 +1,6 @@
 import { RMQConstants } from '@app/constants';
-import {
-  AuthServiceUserSnapshotRequestDto,
-  UsersServiceFriendsSnapshotRequestDto,
-} from '@app/dto/rabbit-mq-common';
+import { AppDto } from '@app/dto';
+
 import { RabbitPayload, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, ParseArrayPipe } from '@nestjs/common';
 import { SnapshotDal } from './snapshot.dal';
@@ -21,10 +19,10 @@ export class SnapshotService {
   public async handleUserSnapshot(
     @RabbitPayload(
       new ParseArrayPipe({
-        items: AuthServiceUserSnapshotRequestDto,
+        items: AppDto.TransportDto.Users.AuthServiceUserSnapshotRequestDto,
       }),
     )
-    payload: AuthServiceUserSnapshotRequestDto[],
+    payload: AppDto.TransportDto.Users.AuthServiceUserSnapshotRequestDto[],
   ) {
     console.log('Users sync');
     try {
@@ -42,10 +40,11 @@ export class SnapshotService {
   public async handleFriendSnapshot(
     @RabbitPayload(
       new ParseArrayPipe({
-        items: UsersServiceFriendsSnapshotRequestDto,
+        items:
+          AppDto.TransportDto.Friends.UsersServiceFriendsSnapshotRequestDto,
       }),
     )
-    payload: UsersServiceFriendsSnapshotRequestDto[],
+    payload: AppDto.TransportDto.Friends.UsersServiceFriendsSnapshotRequestDto[],
   ) {
     try {
       console.log('Friends sync');

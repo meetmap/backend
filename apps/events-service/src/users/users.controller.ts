@@ -1,9 +1,7 @@
 import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import { RMQConstants } from '@app/constants';
-import { EventResponseDto } from '@app/dto/events-service/events.dto';
-import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
-import { UpdateFriendshipRMQRequestDto } from '@app/dto/users-service/friends.dto';
-import { IJwtUserPayload } from '@app/types/jwt';
+import { AppDto } from '@app/dto';
+import { AppTypes } from '@app/types';
 import {
   RabbitPayload,
   RabbitRequest,
@@ -30,7 +28,7 @@ export class UsersController {
     queue: RMQConstants.exchanges.USERS.queues.EVENTS_SERVICE,
   })
   public async handleUser(
-    @RabbitPayload() payload: UserRmqRequestDto,
+    @RabbitPayload() payload: AppDto.TransportDto.Users.UserRmqRequestDto,
     @RabbitRequest() req: { fields: RequestOptions },
   ) {
     const routingKey = req.fields.routingKey;
@@ -77,7 +75,8 @@ export class UsersController {
     queue: RMQConstants.exchanges.FRIENDS.queues.EVENTS_SERVICE,
   })
   public async handleFriendship(
-    @RabbitPayload() payload: UpdateFriendshipRMQRequestDto,
+    @RabbitPayload()
+    payload: AppDto.TransportDto.Friends.UpdateFriendshipRMQRequestDto,
     @RabbitRequest() req: { fields: RequestOptions },
   ) {
     const routingKey = req.fields.routingKey;
@@ -129,13 +128,13 @@ export class UsersController {
 
   //endpoints for user
   @ApiOkResponse({
-    type: [EventResponseDto],
+    type: [AppDto.EventsServiceDto.EventsDto.EventResponseDto],
   })
   @Get('/events/liked')
   @UseMicroserviceAuthGuard()
   public async getUserLikedEvents(
-    @ExtractJwtPayload() jwt: IJwtUserPayload,
-  ): Promise<EventResponseDto[]> {
+    @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto[]> {
     return this.usersService.getUserLikedEvents(jwt.cid);
   }
 

@@ -1,3 +1,5 @@
+import { AppTypes } from '@app/types';
+
 export enum Gender {
   MALE = 'male',
   FEMALE = 'female',
@@ -13,3 +15,9 @@ export interface IUsersBase {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface IAnyUser
+  extends AppTypes.AuthService.Users.IUser,
+    AppTypes.EventsService.Users.IUser,
+    AppTypes.LocationService.Users.IUser,
+    AppTypes.UsersService.Users.IUser {}

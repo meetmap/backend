@@ -21,6 +21,11 @@ export const UserSchema =
         type: mongoose.SchemaTypes.String,
         required: true,
       },
+      gender: {
+        type: mongoose.SchemaTypes.String,
+        enum: AppTypes.Shared.Users.Gender,
+        required: true,
+      },
     },
     {
       id: true,

@@ -7,6 +7,7 @@ import { AuthModule } from '@app/auth';
 import { RabbitmqModule } from '@app/rabbitmq';
 import { RedisModule } from '@app/redis';
 import { S3UploaderModule } from '@app/s3-uploader';
+import { AppTypes } from '@app/types';
 import { EventerFetcherModule } from './eventer-fetcher/eventer-fetcher.module';
 import { EventsFetcherController } from './events-service.controller';
 import { EventsModule } from './events/events.module';
@@ -21,11 +22,13 @@ import { UserModule } from './users/users.module';
     }),
     RedisModule,
     DatabaseModule.init({
-      connectionStringEnvPath: 'EVENTS_FETCHER_DATABASE_URL',
-      microserviceName: 'events-service',
+      connectionStringEnvPath: 'EVENTS_SERVICE_DATABASE_URL',
+      microserviceName:
+        AppTypes.Other.Microservice.MicroServiceName.EVENTS_SERVICE,
     }),
     AuthModule.init({
-      microserviceName: 'events-service',
+      microserviceName:
+        AppTypes.Other.Microservice.MicroServiceName.EVENTS_SERVICE,
     }),
     S3UploaderModule,
     RabbitmqModule.forRoot(),

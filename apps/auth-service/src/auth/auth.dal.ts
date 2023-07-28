@@ -31,7 +31,7 @@ export class AuthDal {
       password: await this.hashPassword(payload.password),
       birthDate: payload.birthDate,
       cid: randomUUID(),
-    });
+    } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.AuthService.Users.IUser>);
   }
 
   public async getUserByFbId(fbId: string) {
@@ -64,7 +64,7 @@ export class AuthDal {
       //user has signed in with facebook
       fbId: payload.fbId,
       fbToken: payload.fbToken,
-    });
+    } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.AuthService.Users.IUser>);
   }
 
   public async comparePassword(password: string, hash?: string) {

@@ -1,5 +1,6 @@
-export type MicroServiceName =
-  | 'events-service'
-  | 'users-service'
-  | 'location-service'
-  | 'auth-service';
+export enum MicroServiceName {
+  EVENTS_SERVICE = 'events',
+  USERS_SERVICE = 'users',
+  LOCATION_SERVICE = 'location',
+  AUTH_SERVICE = 'auth',
+}

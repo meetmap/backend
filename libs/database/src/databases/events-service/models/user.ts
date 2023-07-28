@@ -28,6 +28,11 @@ export const UserSchema =
       description: {
         type: mongoose.SchemaTypes.String,
       },
+      gender: {
+        type: mongoose.SchemaTypes.String,
+        enum: AppTypes.Shared.Users.Gender,
+        required: true,
+      },
     },
     {
       id: true,

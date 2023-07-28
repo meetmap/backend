@@ -1,17 +1,15 @@
 import { JwtService } from '@app/auth/jwt/jwt.service';
-import { AuthServiceDatabase, MainAppDatabase } from '@app/database';
+import { AuthServiceDatabase } from '@app/database';
 import {
   applyDecorators,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
   Injectable,
-  NotFoundException,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
-import { Observable } from 'rxjs';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { Request } from 'express';
 
 @Injectable()
 export class IsAuthenticatedGuard implements CanActivate {

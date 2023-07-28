@@ -1,4 +1,4 @@
-import { MainAppDatabase } from '@app/database';
+import { UsersServiceDatabase } from '@app/database';
 import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
 import { IMainAppFriends, IMainAppUser } from '@app/types';
 import { Injectable, OnModuleInit } from '@nestjs/common';
@@ -9,7 +9,7 @@ export class FriendsDal implements OnModuleInit {
     IMainAppFriends,
     IMainAppUser
   >;
-  constructor(private readonly db: MainAppDatabase) {}
+  constructor(private readonly db: UsersServiceDatabase) {}
   onModuleInit() {
     this.dataManipulation = new CommonDataManipulation(
       this.db.models.friends,

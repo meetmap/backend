@@ -3,9 +3,9 @@ import { DynamicModule } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   AuthServiceDatabase,
-  EventsFetcherDb,
+  EventsServiceDatabase,
   LocationServiceDatabase,
-  MainAppDatabase,
+  UsersServiceDatabase,
 } from './databases';
 import { AbstractBaseDatabase } from './databases/abstract.db';
 import './mongoose-defaults';
@@ -43,8 +43,12 @@ const microserviceDatabaseMap: Record<
   AppTypes.Other.Microservice.MicroServiceName,
   typeof AbstractBaseDatabase
 > = {
-  'events-service': EventsFetcherDb,
-  'location-service': LocationServiceDatabase,
-  'users-service': MainAppDatabase,
-  'auth-service': AuthServiceDatabase,
+  [AppTypes.Other.Microservice.MicroServiceName.EVENTS_SERVICE]:
+    EventsServiceDatabase,
+  [AppTypes.Other.Microservice.MicroServiceName.LOCATION_SERVICE]:
+    LocationServiceDatabase,
+  [AppTypes.Other.Microservice.MicroServiceName.USERS_SERVICE]:
+    UsersServiceDatabase,
+  [AppTypes.Other.Microservice.MicroServiceName.AUTH_SERVICE]:
+    AuthServiceDatabase,
 };

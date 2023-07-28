@@ -79,6 +79,8 @@ export class AuthServiceUserSnapshotRequestDto
     optional: true,
   })
   fbId?: string | undefined;
+  @StringField({ enum: AppTypes.Shared.Users.Gender })
+  gender: AppTypes.Shared.Users.Gender;
 }
 
 export class UsersServiceUserSnapshotRequestDto

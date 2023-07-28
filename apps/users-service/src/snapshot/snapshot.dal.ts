@@ -1,4 +1,4 @@
-import { MainAppDatabase } from '@app/database';
+import { UsersServiceDatabase } from '@app/database';
 import { AuthServiceUserSnapshotRequestDto } from '@app/dto/rabbit-mq-common';
 import {
   IUsersServiceSnapshotFriends,
@@ -8,7 +8,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class SnapshotDal {
-  constructor(private readonly db: MainAppDatabase) {}
+  constructor(private readonly db: UsersServiceDatabase) {}
 
   public async updateOrCreateUser(
     payload: AuthServiceUserSnapshotRequestDto[],

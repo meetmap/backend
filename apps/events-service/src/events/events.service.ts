@@ -1,17 +1,5 @@
-import {
-  CreateEventSchema,
-  EventResponseDto,
-  EventStatsResponseDto,
-  GetEventsByLocationRequestDto,
-  MinimalEventByLocationResponseDto,
-  SingleEventResponseDto,
-} from '@app/dto/events-service/events.dto';
-import {
-  IEvent,
-  IEventStats,
-  IEventWithUserStats,
-  IMinimalEventByLocation,
-} from '@app/types';
+import { AppDto } from '@app/dto';
+import { AppTypes } from '@app/types';
 import {
   BadRequestException,
   Injectable,
@@ -38,7 +26,7 @@ export class EventsService {
   public async getEventById(
     cid: string,
     eventId: string,
-  ): Promise<SingleEventResponseDto> {
+  ): Promise<AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto> {
     const event = await this.dal.getEventById(eventId);
     if (!event) {
       throw new NotFoundException('Event not found');
@@ -56,7 +44,7 @@ export class EventsService {
     userCId: string,
     eventId: string,
     type: 'like' | 'want-go',
-  ): Promise<EventStatsResponseDto> {
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventStatsResponseDto> {
     const event = await this.dal.getEventById(eventId);
     if (!event) {
       throw new NotFoundException('Event not found');
@@ -73,7 +61,7 @@ export class EventsService {
     userCId: string,
     eventId: string,
     type: 'like' | 'want-go',
-  ): Promise<EventStatsResponseDto> {
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventStatsResponseDto> {
     const event = await this.dal.getEventById(eventId);
     if (!event) {
       throw new NotFoundException('Event not found');
@@ -85,8 +73,10 @@ export class EventsService {
 
   public async getEventsByLocation(
     userCId: string,
-    dto: GetEventsByLocationRequestDto,
-  ): Promise<MinimalEventByLocationResponseDto[]> {
+    dto: AppDto.EventsServiceDto.EventsDto.GetEventsByLocationRequestDto,
+  ): Promise<
+    AppDto.EventsServiceDto.EventsDto.MinimalEventByLocationResponseDto[]
+  > {
     const { latitude, longitude, radius } = dto;
     const events = await this.dal.getEventsByLocation(
       userCId,
@@ -100,7 +90,7 @@ export class EventsService {
   public async getEventsBatch(
     userCId: string,
     eventIds: string[],
-  ): Promise<EventResponseDto[]> {
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto[]> {
     const events = await this.dal.getEventsBatch(userCId, eventIds);
     return events.map(EventsService.mapDbEventToEventResponse);
   }
@@ -109,10 +99,11 @@ export class EventsService {
     body: string,
     userCid: string,
     image: Express.Multer.File,
-  ): Promise<EventResponseDto> {
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto> {
     try {
       const parsedJson = JSON.parse(body);
-      const eventData = CreateEventSchema.parse(parsedJson);
+      const eventData =
+        AppDto.EventsServiceDto.EventsDto.CreateEventSchema.parse(parsedJson);
 
       const event = await this.dal.createUserEvent(eventData, userCid);
       const imageUrl = await this.dal.uploadToPublicEventsAssestsBucket(
@@ -144,8 +135,8 @@ export class EventsService {
   }
 
   static mapDbEventToEventResponse(
-    event: IEventWithUserStats,
-  ): EventResponseDto {
+    event: AppTypes.EventsService.Event.IEventWithUserStats,
+  ): AppDto.EventsServiceDto.EventsDto.EventResponseDto {
     return {
       id: event.id,
       ageLimit: event.ageLimit,
@@ -164,8 +155,8 @@ export class EventsService {
   }
 
   static mapDbEventToMinimalEventByLocationResponse(
-    event: IMinimalEventByLocation,
-  ): MinimalEventByLocationResponseDto {
+    event: AppTypes.EventsService.Event.IMinimalEventByLocation,
+  ): AppDto.EventsServiceDto.EventsDto.MinimalEventByLocationResponseDto {
     return {
       coordinates: event.coordinates,
       id: event.id,
@@ -174,10 +165,10 @@ export class EventsService {
   }
 
   static mapDbEventToSingleEventResponse(
-    event: IEvent,
-    eventStats: IEventStats,
-    userStats: IEventWithUserStats['userStats'],
-  ): SingleEventResponseDto {
+    event: AppTypes.EventsService.Event.IEvent,
+    eventStats: AppTypes.EventsService.Event.IEventStats,
+    userStats: AppTypes.EventsService.Event.IEventWithUserStats['userStats'],
+  ): AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto {
     return {
       id: event.id,
       ageLimit: event.ageLimit,

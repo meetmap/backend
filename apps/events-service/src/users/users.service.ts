@@ -1,7 +1,5 @@
-import { EventResponseDto } from '@app/dto/events-service/events.dto';
-import { EventsServiceUserResponseDto } from '@app/dto/events-service/users.dto';
-import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common';
-import { IEventsServiceUser } from '@app/types';
+import { AppDto } from '@app/dto';
+import { AppTypes } from '@app/types';
 import { Injectable } from '@nestjs/common';
 import { UsersDal } from './users.dal';
 
@@ -11,19 +9,25 @@ export class UsersService {
 
   public async getUserLikedEvents(
     userCId: string,
-  ): Promise<EventResponseDto[]> {
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto[]> {
     return await this.dal.getEventsByUserAction(userCId, 'liked');
   }
 
-  public async handleCreateUser(payload: UserRmqRequestDto) {
+  public async handleCreateUser(
+    payload: AppDto.TransportDto.Users.UserRmqRequestDto,
+  ) {
     await this.dal.createUser(payload);
   }
 
-  public async handleUpdateUser(payload: UserRmqRequestDto) {
+  public async handleUpdateUser(
+    payload: AppDto.TransportDto.Users.UserRmqRequestDto,
+  ) {
     await this.dal.updateUser(payload.cid, payload);
   }
 
-  public async handleDeleteUser(payload: UserRmqRequestDto) {
+  public async handleDeleteUser(
+    payload: AppDto.TransportDto.Users.UserRmqRequestDto,
+  ) {
     await this.dal.deleteUser(payload.cid);
   }
 
@@ -40,8 +44,8 @@ export class UsersService {
   }
 
   static mapUserDbToResponseUser(
-    payload: IEventsServiceUser,
-  ): EventsServiceUserResponseDto {
+    payload: AppTypes.EventsService.Users.IUser,
+  ): AppDto.EventsServiceDto.UsersDto.EventsServiceUserResponseDto {
     return {
       birthDate: payload.birthDate,
       cid: payload.cid,
@@ -50,6 +54,7 @@ export class UsersService {
       description: payload.description,
       name: payload.name,
       profilePicture: payload.profilePicture,
+      gender: payload.gender,
     };
   }
 }

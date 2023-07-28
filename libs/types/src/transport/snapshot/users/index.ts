@@ -4,7 +4,14 @@ import { UsersService } from '@app/types/users-service';
 export interface IAuthServiceSnapshot
   extends Pick<
     AuthService.Users.ISafeUser,
-    'phone' | 'email' | 'username' | 'birthDate' | 'cid' | 'name' | 'fbId'
+    | 'phone'
+    | 'email'
+    | 'username'
+    | 'birthDate'
+    | 'cid'
+    | 'name'
+    | 'fbId'
+    | 'gender'
   > {}
 
 export interface IUsersServiceSnapshot

@@ -1,19 +1,6 @@
 import { DashboardJwtService } from '@app/auth/dashboard-jwt';
-import {
-  ApiKeyResponseDto,
-  CreateTicketingPlatformRequestDto,
-  IssueApiKeyRequestDto,
-  IssueApiKeyResponseDto,
-  LoginPlatformRequestDto,
-  RevokeApiKeyRequestDto,
-  TicketingPlatformResponseDto,
-} from '@app/dto/events-service/ticketing-platform.dto';
-import {
-  IApiKey,
-  ISafeApiKey,
-  ISafeTicketingPlatform,
-  ITicketingPlatform,
-} from '@app/types';
+import { AppDto } from '@app/dto';
+import { AppTypes } from '@app/types';
 import {
   Injectable,
   InternalServerErrorException,
@@ -31,8 +18,8 @@ export class TicketingPlatformService {
 
   public async issueApiKey(
     platformId: string,
-    payload: IssueApiKeyRequestDto,
-  ): Promise<IssueApiKeyResponseDto> {
+    payload: AppDto.EventsServiceDto.TicketingPlatformsDto.IssueApiKeyRequestDto,
+  ): Promise<AppDto.EventsServiceDto.TicketingPlatformsDto.IssueApiKeyResponseDto> {
     const apiKey = await this.dal.issueApiKey(platformId, payload);
     if (!apiKey) {
       throw new InternalServerErrorException('Failed to create api key');
@@ -49,7 +36,7 @@ export class TicketingPlatformService {
 
   public async revokeApiKey(
     platformId: string,
-    payload: RevokeApiKeyRequestDto,
+    payload: AppDto.EventsServiceDto.TicketingPlatformsDto.RevokeApiKeyRequestDto,
   ) {
     const deletedApiKey = await this.dal.revokeApiKey(platformId, payload.key);
     if (!deletedApiKey) {
@@ -59,14 +46,16 @@ export class TicketingPlatformService {
   }
 
   public async createPlatform(
-    payload: CreateTicketingPlatformRequestDto,
-  ): Promise<TicketingPlatformResponseDto> {
+    payload: AppDto.EventsServiceDto.TicketingPlatformsDto.CreateTicketingPlatformRequestDto,
+  ): Promise<AppDto.EventsServiceDto.TicketingPlatformsDto.TicketingPlatformResponseDto> {
     //@todo make as event creation with zod and images uploading
     const platform = await this.dal.createPlatform(payload);
     return TicketingPlatformService.toSafeTicketingPlatformMapper(platform);
   }
 
-  public async loginPlatform(payload: LoginPlatformRequestDto) {
+  public async loginPlatform(
+    payload: AppDto.EventsServiceDto.TicketingPlatformsDto.LoginPlatformRequestDto,
+  ) {
     const platform = await this.dal.findPlatformByEmail(payload.email);
     if (!platform) {
       throw new UnauthorizedException('Email or password is wrong');
@@ -92,7 +81,10 @@ export class TicketingPlatformService {
   }
 
   public async getTokensAndRefreshRT(
-    platform: Pick<ITicketingPlatform, 'id' | 'title'>,
+    platform: Pick<
+      AppTypes.TicketingPlatforms.System.ITicketingPlatform,
+      'id' | 'title'
+    >,
   ) {
     const jwt = await this.dashboardJwtService.getTokens({
       companyName: platform.title,
@@ -111,14 +103,18 @@ export class TicketingPlatformService {
 
   public async getPlatformApiKeys(
     platformId: string,
-  ): Promise<ApiKeyResponseDto[]> {
+  ): Promise<
+    AppDto.EventsServiceDto.TicketingPlatformsDto.ApiKeyResponseDto[]
+  > {
     const apiKeys = await this.dal.getPlatformApiKeys(platformId);
     return apiKeys.map((apiKey) =>
       TicketingPlatformService.toSafeApiKeyMapper(apiKey),
     );
   }
 
-  static toSafeApiKeyMapper(apiKey: IApiKey): ISafeApiKey {
+  static toSafeApiKeyMapper(
+    apiKey: AppTypes.TicketingPlatforms.System.IApiKey,
+  ): AppTypes.TicketingPlatforms.System.ISafeApiKey {
     return {
       createdAt: apiKey.createdAt,
       description: apiKey.description,
@@ -129,8 +125,8 @@ export class TicketingPlatformService {
   }
 
   static toSafeTicketingPlatformMapper(
-    platform: ITicketingPlatform,
-  ): ISafeTicketingPlatform {
+    platform: AppTypes.TicketingPlatforms.System.ITicketingPlatform,
+  ): AppTypes.TicketingPlatforms.System.ISafeTicketingPlatform {
     return {
       id: platform.id,
       title: platform.title,

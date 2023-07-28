@@ -1,30 +1,22 @@
 import { RADIANS_PER_KILOMETER } from '@app/constants';
-import { EventsFetcherDb } from '@app/database';
-import { CreateEventSchema } from '@app/dto/events-service/events.dto';
+import { EventsServiceDatabase } from '@app/database';
+import { AppDto } from '@app/dto';
 import { S3UploaderService } from '@app/s3-uploader';
-import {
-  CreatorType,
-  EventsUsersStatusType,
-  ICity,
-  IEvent,
-  IEventsServiceUser,
-  IEventStats,
-  IEventWithUserStats,
-  ILocation,
-  IMinimalEventByLocation,
-  ITicket,
-} from '@app/types';
+import { AppTypes } from '@app/types';
+
 import { Injectable, NotFoundException } from '@nestjs/common';
 import * as mongoose from 'mongoose';
 import { z } from 'zod';
 @Injectable()
 export class EventsDal {
   constructor(
-    private readonly db: EventsFetcherDb,
+    private readonly db: EventsServiceDatabase,
     private readonly s3Service: S3UploaderService,
   ) {}
 
-  public async getEventById(eventId: string): Promise<IEvent | null> {
+  public async getEventById(
+    eventId: string,
+  ): Promise<AppTypes.EventsService.Event.IEvent | null> {
     const event = await this.db.models.event.findById(eventId);
     if (!event) {
       return null;
@@ -33,24 +25,26 @@ export class EventsDal {
   }
 
   public async getUsersLikedAnEvent(eventId: string) {
-    return await this.db.models.eventsUsers.aggregate<IEventsServiceUser>([
-      {
-        $match: {
-          isUserLike: true,
-          event: new mongoose.Types.ObjectId(eventId),
+    return await this.db.models.eventsUsers.aggregate<AppTypes.EventsService.Users.IUser>(
+      [
+        {
+          $match: {
+            isUserLike: true,
+            event: new mongoose.Types.ObjectId(eventId),
+          },
         },
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userCId',
-          foreignField: 'cid',
-          as: 'user',
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userCId',
+            foreignField: 'cid',
+            as: 'user',
+          },
         },
-      },
-      { $unwind: '$user' },
-      { $replaceRoot: { newRoot: '$user' } },
-    ]);
+        { $unwind: '$user' },
+        { $replaceRoot: { newRoot: '$user' } },
+      ],
+    );
   }
 
   public async userAction(
@@ -67,7 +61,9 @@ export class EventsDal {
         $set: {
           isUserLike: action === 'like' ? true : undefined,
           userStatus:
-            action === 'want-go' ? EventsUsersStatusType.WANT_GO : undefined,
+            action === 'want-go'
+              ? AppTypes.EventsService.EventsUsers.EventsUsersStatusType.WANT_GO
+              : undefined,
         },
       },
       {
@@ -107,7 +103,7 @@ export class EventsDal {
   public async getEventUserStats(
     eventId: string,
     userCId: string,
-  ): Promise<IEventWithUserStats['userStats']> {
+  ): Promise<AppTypes.EventsService.Event.IEventWithUserStats['userStats']> {
     const stats = await this.db.models.eventsUsers.findOne({
       event: new mongoose.Types.ObjectId(eventId),
       userCId,
@@ -119,45 +115,62 @@ export class EventsDal {
     };
   }
 
-  public async getEventStats(eventId: string): Promise<IEventStats> {
-    const [stats] = await this.db.models.eventsUsers.aggregate<IEventStats>([
-      {
-        $match: {
-          event: new mongoose.Types.ObjectId(eventId),
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          likes: { $sum: { $cond: [{ $eq: ['$isUserLike', true] }, 1, 0] } },
-          wantGo: {
-            $sum: {
-              $cond: [
-                { $eq: ['$userStatus', EventsUsersStatusType.WANT_GO] },
-                1,
-                0,
-              ],
+  public async getEventStats(
+    eventId: string,
+  ): Promise<AppTypes.EventsService.Event.IEventStats> {
+    const [stats] =
+      await this.db.models.eventsUsers.aggregate<AppTypes.EventsService.Event.IEventStats>(
+        [
+          {
+            $match: {
+              event: new mongoose.Types.ObjectId(eventId),
             },
           },
-          ticketsPurchased: {
-            $sum: {
-              $cond: [
-                {
-                  $eq: ['$userStatus', EventsUsersStatusType.TICKETS_PURCHASED],
+          {
+            $group: {
+              _id: null,
+              likes: {
+                $sum: { $cond: [{ $eq: ['$isUserLike', true] }, 1, 0] },
+              },
+              wantGo: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: [
+                        '$userStatus',
+                        AppTypes.EventsService.EventsUsers.EventsUsersStatusType
+                          .WANT_GO,
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
                 },
-                1,
-                0,
-              ],
+              },
+              ticketsPurchased: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: [
+                        '$userStatus',
+                        AppTypes.EventsService.EventsUsers.EventsUsersStatusType
+                          .TICKETS_PURCHASED,
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
             },
           },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-        },
-      },
-    ]);
+          {
+            $project: {
+              _id: 0,
+            },
+          },
+        ],
+      );
 
     if (!stats) {
       return {
@@ -166,12 +179,12 @@ export class EventsDal {
         wantGo: 0,
       };
     }
-    return stats satisfies IEventStats;
+    return stats satisfies AppTypes.EventsService.Event.IEventStats;
   }
   public async getEventsByKeywords(
     userCId: string,
     keywords: string,
-  ): Promise<IEventWithUserStats[]> {
+  ): Promise<AppTypes.EventsService.Event.IEventWithUserStats[]> {
     const regex = new RegExp(keywords, 'i');
     return await this.db.models.event.aggregate([
       {
@@ -192,7 +205,7 @@ export class EventsDal {
   public async getEventsBatch(
     userCId: string,
     eventIds: string[],
-  ): Promise<IEventWithUserStats[]> {
+  ): Promise<AppTypes.EventsService.Event.IEventWithUserStats[]> {
     return await this.db.models.event.aggregate([
       {
         $match: {
@@ -211,36 +224,38 @@ export class EventsDal {
     longitude: number,
     latitude: number,
     radius: number,
-  ): Promise<IMinimalEventByLocation[]> {
-    return await this.db.models.event.aggregate<IMinimalEventByLocation>([
-      {
-        $match: {
-          endTime: {
-            //exclude events that ended more than a day ago
-            $gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
-          },
-          'location.coordinates': {
-            $geoWithin: {
-              $centerSphere: [
-                [longitude, latitude],
-                this.getRadiusInRadians(radius),
-              ],
+  ): Promise<AppTypes.EventsService.Event.IMinimalEventByLocation[]> {
+    return await this.db.models.event.aggregate<AppTypes.EventsService.Event.IMinimalEventByLocation>(
+      [
+        {
+          $match: {
+            endTime: {
+              //exclude events that ended more than a day ago
+              $gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+            },
+            'location.coordinates': {
+              $geoWithin: {
+                $centerSphere: [
+                  [longitude, latitude],
+                  this.getRadiusInRadians(radius),
+                ],
+              },
             },
           },
         },
-      },
-      {
-        $project: {
-          picture: 1,
-          coordinates: '$location.coordinates.coordinates',
-          id: {
-            $toString: '$_id',
+        {
+          $project: {
+            picture: 1,
+            coordinates: '$location.coordinates.coordinates',
+            id: {
+              $toString: '$_id',
+            },
+            _id: 0,
           },
-          _id: 0,
         },
-      },
-      // ...EventsDal.getEventsWithUserStatsAggregation(userCId),
-    ]);
+        // ...EventsDal.getEventsWithUserStatsAggregation(userCId),
+      ],
+    );
   }
   /**
    *
@@ -256,7 +271,7 @@ export class EventsDal {
   }: {
     lat: number;
     lng: number;
-  }): Promise<ICity | null> {
+  }): Promise<AppTypes.Shared.City.ICity | null> {
     return await this.db.models.city.findOne({
       location: {
         $geoIntersects: {
@@ -274,7 +289,9 @@ export class EventsDal {
    * @description without picture
    */
   public async createUserEvent(
-    payload: z.infer<typeof CreateEventSchema>,
+    payload: z.infer<
+      typeof AppDto.EventsServiceDto.EventsDto.CreateEventSchema
+    >,
     creatorCid: string,
   ) {
     const city = await this.getCityByEventCoordinates({
@@ -285,9 +302,9 @@ export class EventsDal {
       ageLimit: payload.ageLimit,
       creator: {
         creatorCid: creatorCid,
-        type: CreatorType.USER,
-      } satisfies IEvent['creator'],
-      description: payload.description,
+        type: AppTypes.EventsService.Event.CreatorType.USER,
+      } satisfies AppTypes.EventsService.Event.IEvent['creator'],
+      description: payload.description ?? undefined,
       //@todo check if enums are working
       accessibility: payload.accessibility,
       eventType: payload.eventType, // EventType[payload.eventType] ?? EventType.USER,
@@ -301,7 +318,7 @@ export class EventsDal {
           coordinates: [payload.location.lng, payload.location.lat],
         },
         country: 'Israel',
-      } as ILocation,
+      } as AppTypes.Shared.Location.ILocation,
       slug: payload.slug,
       tickets: payload.tickets.map((ticket) => ({
         amount: ticket.amount,
@@ -311,15 +328,15 @@ export class EventsDal {
           currency: 'ILS',
         },
         description: ticket.description,
-      })) as ITicket[],
-    } as IEvent);
+      })) as AppTypes.EventsService.Event.ITicket[],
+    } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>);
     return createdEvent;
   }
 
   public async updatePictureForEvent(
     eventId: string,
     picture: string,
-  ): Promise<IEvent> {
+  ): Promise<AppTypes.EventsService.Event.IEvent> {
     const event = await this.db.models.event.findByIdAndUpdate(
       eventId,
       {
@@ -383,7 +400,9 @@ export class EventsDal {
               },
             ],
           },
-        } satisfies Partial<Record<keyof IEventWithUserStats, any>>,
+        } satisfies Partial<
+          Record<keyof AppTypes.EventsService.Event.IEventWithUserStats, any>
+        >,
       },
     ];
   }
