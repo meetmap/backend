@@ -28,6 +28,24 @@ export class SnapshotDal {
       })),
     );
   }
+
+  public async updateUserAgainstUserService(
+    payload: AppDto.TransportDto.Users.UsersServiceUserSnapshotRequestDto[],
+  ) {
+    await this.db.models.users.bulkWrite(
+      payload.map((user) => ({
+        updateOne: {
+          filter: { cid: user.cid },
+          update: {
+            $set: {
+              profilePicture: user.profilePicture,
+            } satisfies Partial<AppTypes.LocationService.Users.IUser>,
+          },
+        },
+      })),
+    );
+  }
+
   public async updateOrCreateFriendship(
     payload: AppDto.TransportDto.Friends.UsersServiceFriendsSnapshotRequestDto[],
   ) {

@@ -88,8 +88,6 @@ export class UsersServiceUserSnapshotRequestDto
 {
   @IdField()
   cid: string;
-  @StringField()
-  name: string;
   @StringField({ optional: true })
   description?: string | undefined;
   @StringField({ optional: true })

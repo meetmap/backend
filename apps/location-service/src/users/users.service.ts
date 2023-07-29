@@ -1,7 +1,6 @@
 import { IGetUserListWithFriendshipStatusAggregationResult } from '@app/database/shared-aggregations';
-import { UserLocationResponseDto } from '@app/dto/location-service/users.dto';
-import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
-import { ILocationServiceUser } from '@app/types';
+import { AppDto } from '@app/dto';
+import { AppTypes } from '@app/types';
 import { Injectable } from '@nestjs/common';
 import { UsersDal } from './users.dal';
 
@@ -9,15 +8,21 @@ import { UsersDal } from './users.dal';
 export class UsersService {
   constructor(private readonly dal: UsersDal) {}
 
-  public async handleCreateUser(payload: UserRmqRequestDto) {
+  public async handleCreateUser(
+    payload: AppDto.TransportDto.Users.UserRmqRequestDto,
+  ) {
     await this.dal.createUser(payload);
   }
 
-  public async handleUpdateUser(payload: UserRmqRequestDto) {
+  public async handleUpdateUser(
+    payload: AppDto.TransportDto.Users.UserRmqRequestDto,
+  ) {
     await this.dal.updateUser(payload.cid, payload);
   }
 
-  public async handleDeleteUser(payload: UserRmqRequestDto) {
+  public async handleDeleteUser(
+    payload: AppDto.TransportDto.Users.UserRmqRequestDto,
+  ) {
     await this.dal.deleteUser(payload.cid);
   }
 
@@ -34,8 +39,8 @@ export class UsersService {
   }
 
   static mapUserToUserResponseDto(
-    user: IGetUserListWithFriendshipStatusAggregationResult<ILocationServiceUser>,
-  ): UserLocationResponseDto {
+    user: IGetUserListWithFriendshipStatusAggregationResult<AppTypes.LocationService.Users.IUser>,
+  ): AppDto.LocationServiceDto.Users.UserLocationResponseDto {
     return {
       cid: user.cid,
       id: user.id,

@@ -1,24 +1,19 @@
 import { LocationServiceDatabase } from '@app/database';
 import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
 import { RedisService } from '@app/redis';
-import {
-  ICoordinates,
-  ILocationServiceFriends,
-  ILocationServiceUser,
-  IRedisUserLocation,
-  IUserLocation,
-} from '@app/types';
+import { AppTypes } from '@app/types';
+
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 
 @Injectable()
 export class LocationDal implements OnModuleInit {
   private dataManipulation: CommonDataManipulation<
-    ILocationServiceFriends,
-    ILocationServiceUser
+    AppTypes.LocationService.Friends.IFriends,
+    AppTypes.LocationService.Users.IUser
   >;
   constructor(
     @Inject(RedisService.name)
-    private readonly redisClient: RedisService<IRedisUserLocation>,
+    private readonly redisClient: RedisService<AppTypes.LocationService.Users.IRedisLocation>,
     private readonly db: LocationServiceDatabase,
   ) {}
   onModuleInit() {
@@ -38,8 +33,8 @@ export class LocationDal implements OnModuleInit {
 
   public async updateUserLocation(
     cid: string,
-    coordinates: ICoordinates,
-  ): Promise<IUserLocation> {
+    coordinates: AppTypes.LocationService.Users.ICoordinates,
+  ): Promise<AppTypes.LocationService.Users.ILocation> {
     const updatedAt = new Date();
     this.redisClient.set(
       cid,
@@ -64,13 +59,15 @@ export class LocationDal implements OnModuleInit {
       updatedAt,
     };
   }
-  public async getUserLocation(userCid: string): Promise<IUserLocation | null> {
+  public async getUserLocation(
+    userCid: string,
+  ): Promise<AppTypes.LocationService.Users.ILocation | null> {
     return this.redisClient.get(userCid);
   }
 
   public async getUsersLocationBulk(
     userIds: string[],
-  ): Promise<IUserLocation[]> {
+  ): Promise<AppTypes.LocationService.Users.ILocation[]> {
     const response = await this.redisClient.getBulk(userIds);
 
     return response.map((loc, index) => ({

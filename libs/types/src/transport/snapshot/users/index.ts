@@ -17,5 +17,5 @@ export interface IAuthServiceSnapshot
 export interface IUsersServiceSnapshot
   extends Pick<
     UsersService.Users.ISafeUser,
-    'cid' | 'name' | 'description' | 'profilePicture'
+    'cid' | 'description' | 'profilePicture'
   > {}

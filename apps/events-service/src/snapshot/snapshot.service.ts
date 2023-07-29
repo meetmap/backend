@@ -33,6 +33,30 @@ export class SnapshotService {
   }
 
   @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.name,
+    routingKey: [
+      RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.routingKeys.SYNC,
+    ],
+    queue:
+      RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.queues.EVENTS_SERVICE,
+  })
+  public async handleUserFromUserServiceSnapshot(
+    @RabbitPayload(
+      new ParseArrayPipe({
+        items: AppDto.TransportDto.Users.UsersServiceUserSnapshotRequestDto,
+      }),
+    )
+    payload: AppDto.TransportDto.Users.UsersServiceUserSnapshotRequestDto[],
+  ) {
+    console.log('Users agains users service sync');
+    try {
+      await this.dal.updateUserAgainstUserService(payload);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  @RabbitSubscribe({
     exchange: RMQConstants.exchanges.FRIENDS_SNAPSHOT.name,
     routingKey: [RMQConstants.exchanges.FRIENDS_SNAPSHOT.routingKeys.SYNC],
     queue: RMQConstants.exchanges.FRIENDS_SNAPSHOT.queues.EVENTS_SERVICE,
