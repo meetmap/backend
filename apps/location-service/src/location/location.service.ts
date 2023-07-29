@@ -1,8 +1,5 @@
-import {
-  GetUserWithLocationResponseDto,
-  UpdateUserLocationRequestDto,
-} from '@app/dto/location-service/location.dto';
-import { ILocationServiceUser, IUserLocation } from '@app/types';
+import { AppDto } from '@app/dto';
+import { AppTypes } from '@app/types';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { LocationDal } from './location.dal';
 
@@ -12,7 +9,7 @@ export class LocationService {
 
   public async updateUserLocation(
     cid: string,
-    dto: UpdateUserLocationRequestDto,
+    dto: AppDto.LocationServiceDto.LocationDto.UpdateUserLocationRequestDto,
   ) {
     const user = await this.dal.getUserByCid(cid);
     if (!user) {
@@ -26,7 +23,9 @@ export class LocationService {
   }
   public async getFriendsLocation(
     cid: string,
-  ): Promise<GetUserWithLocationResponseDto[]> {
+  ): Promise<
+    AppDto.LocationServiceDto.LocationDto.GetUserWithLocationResponseDto[]
+  > {
     const userFriends = await this.dal.getSelfUserFriends(cid);
 
     if (!userFriends) {
@@ -42,9 +41,9 @@ export class LocationService {
   }
 
   static mapUserToUserWithLocation(
-    user: ILocationServiceUser,
-    userLocation: IUserLocation,
-  ): GetUserWithLocationResponseDto {
+    user: AppTypes.LocationService.Users.IUser,
+    userLocation: AppTypes.LocationService.Users.ILocation,
+  ): AppDto.LocationServiceDto.LocationDto.GetUserWithLocationResponseDto {
     return {
       cid: user.cid,
       id: user.id,

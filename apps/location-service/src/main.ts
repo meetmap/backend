@@ -3,7 +3,7 @@ import {
   getMicroservicePath,
   SERVER_PREFIX,
 } from '@app/constants';
-import { MicroServiceName } from '@app/types';
+import { AppTypes } from '@app/types';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -11,7 +11,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { LocationServiceModule } from './location-service.module';
 
 async function bootstrap() {
-  const microserviceName: MicroServiceName = 'location-service';
+  const microserviceName: AppTypes.Other.Microservice.MicroServiceName =
+    AppTypes.Other.Microservice.MicroServiceName.LOCATION_SERVICE;
   const app = await NestFactory.create(LocationServiceModule);
   const PORT = process.env.PORT ?? 3002;
 

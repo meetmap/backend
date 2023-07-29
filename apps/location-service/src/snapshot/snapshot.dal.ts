@@ -1,8 +1,6 @@
 import { LocationServiceDatabase } from '@app/database';
-import {
-  AuthServiceUserSnapshotRequestDto,
-  UsersServiceFriendsSnapshotRequestDto,
-} from '@app/dto/rabbit-mq-common';
+import { AppDto } from '@app/dto';
+import { AppTypes } from '@app/types';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -10,7 +8,7 @@ export class SnapshotDal {
   constructor(private readonly db: LocationServiceDatabase) {}
 
   public async updateOrCreateUser(
-    payload: AuthServiceUserSnapshotRequestDto[],
+    payload: AppDto.TransportDto.Users.AuthServiceUserSnapshotRequestDto[],
   ) {
     await this.db.models.users.bulkWrite(
       payload.map((user) => ({
@@ -20,7 +18,8 @@ export class SnapshotDal {
             $set: {
               username: user.username,
               name: user.name,
-            },
+              gender: user.gender,
+            } satisfies Partial<AppTypes.LocationService.Users.IUser>,
           },
           upsert: true,
         },
@@ -28,8 +27,25 @@ export class SnapshotDal {
     );
   }
 
+  public async updateUserAgainstUserService(
+    payload: AppDto.TransportDto.Users.UsersServiceUserSnapshotRequestDto[],
+  ) {
+    await this.db.models.users.bulkWrite(
+      payload.map((user) => ({
+        updateOne: {
+          filter: { cid: user.cid },
+          update: {
+            $set: {
+              profilePicture: user.profilePicture,
+            } satisfies Partial<AppTypes.LocationService.Users.IUser>,
+          },
+        },
+      })),
+    );
+  }
+
   public async updateOrCreateFriendship(
-    payload: UsersServiceFriendsSnapshotRequestDto[],
+    payload: AppDto.TransportDto.Friends.UsersServiceFriendsSnapshotRequestDto[],
   ) {
     await this.db.models.friends.bulkWrite(
       payload.map((friend) => ({
@@ -41,7 +57,7 @@ export class SnapshotDal {
           update: {
             $set: {
               status: friend.status,
-            },
+            } satisfies Partial<AppTypes.LocationService.Friends.IFriends>,
           },
           upsert: true,
         },

@@ -1,9 +1,6 @@
 import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
-import {
-  GetUserWithLocationResponseDto,
-  UpdateUserLocationRequestDto,
-} from '@app/dto/location-service/location.dto';
-import { IJwtUserPayload } from '@app/types/jwt';
+import { AppDto } from '@app/dto';
+import { AppTypes } from '@app/types';
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
 import { LocationService } from './location.service';
@@ -14,25 +11,30 @@ export class LocationController {
   @Post('/update')
   @UseMicroserviceAuthGuard()
   @ApiOkResponse({
-    type: GetUserWithLocationResponseDto,
+    type: AppDto.LocationServiceDto.LocationDto.GetUserWithLocationResponseDto,
     description: 'Update self location',
   })
   public async updateUserLocation(
-    @Body() payload: UpdateUserLocationRequestDto,
-    @ExtractJwtPayload() jwt: IJwtUserPayload,
-  ): Promise<GetUserWithLocationResponseDto> {
+    @Body()
+    payload: AppDto.LocationServiceDto.LocationDto.UpdateUserLocationRequestDto,
+    @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
+  ): Promise<AppDto.LocationServiceDto.LocationDto.GetUserWithLocationResponseDto> {
     return this.locationService.updateUserLocation(jwt.cid, payload);
   }
 
   @ApiOkResponse({
-    type: [GetUserWithLocationResponseDto],
+    type: [
+      AppDto.LocationServiceDto.LocationDto.GetUserWithLocationResponseDto,
+    ],
     description: 'Get friends location',
   })
   @UseMicroserviceAuthGuard()
   @Get('/friends')
   public async getFriendsLocation(
-    @ExtractJwtPayload() jwt: IJwtUserPayload,
-  ): Promise<GetUserWithLocationResponseDto[]> {
+    @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
+  ): Promise<
+    AppDto.LocationServiceDto.LocationDto.GetUserWithLocationResponseDto[]
+  > {
     return await this.locationService.getFriendsLocation(jwt.cid);
   }
 }
