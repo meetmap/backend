@@ -1,14 +1,8 @@
 import { RMQConstants } from '@app/constants';
-import { UpdateFriendshipRMQRequestDto } from '@app/dto/users-service/friends.dto';
-import { UserPartialResponseDto } from '@app/dto/users-service/users.dto';
+import { AppDto } from '@app/dto';
 import { RabbitmqService } from '@app/rabbitmq';
-import {
-  FriendshipStatus,
-  IMainAppSafePartialUser,
-  IMainAppSafeUser,
-  IMainAppUser,
-  IUser,
-} from '@app/types';
+import { AppTypes } from '@app/types';
+
 import {
   BadRequestException,
   ForbiddenException,
@@ -45,7 +39,7 @@ export class FriendsService {
       {
         friendCId: friendCid,
         userCId: requestorCid,
-      } satisfies UpdateFriendshipRMQRequestDto,
+      } satisfies AppDto.TransportDto.Friends.UpdateFriendshipRMQRequestDto,
     );
     const updatedFriendUser = await this.dal.getUserByCId(
       requestorCid,
@@ -102,12 +96,12 @@ export class FriendsService {
       {
         friendCId: requesterUser.cid,
         userCId: user.cid,
-      } satisfies UpdateFriendshipRMQRequestDto,
+      } satisfies AppDto.TransportDto.Friends.UpdateFriendshipRMQRequestDto,
     );
 
     return UsersService.mapUserDbToResponsePartialUser({
       ...requesterUser,
-      friendshipStatus: FriendshipStatus.FRIENDS,
+      friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus.FRIENDS,
     });
   }
   public async rejectFriendshipRequest(
@@ -134,7 +128,7 @@ export class FriendsService {
       {
         userCId: user.cid,
         friendCId: requesterUser.cid,
-      } satisfies UpdateFriendshipRMQRequestDto,
+      } satisfies AppDto.TransportDto.Friends.UpdateFriendshipRMQRequestDto,
     );
 
     const updatedUser = await this.dal.getUserByCId(
@@ -152,9 +146,9 @@ export class FriendsService {
   }
 
   public isValidFriend(
-    user: Pick<IMainAppUser, 'id' | 'cid'>,
-    friend: IUser | IMainAppSafeUser | IMainAppSafePartialUser | null,
-  ): friend is IMainAppUser {
+    user: Pick<AppTypes.UsersService.Users.IUser, 'id' | 'cid'>,
+    friend: AppTypes.UsersService.Users.IUser | null,
+  ): friend is AppTypes.UsersService.Users.IUser {
     if (!friend) {
       throw new NotFoundException(`User not found`);
     }
@@ -171,7 +165,7 @@ export class FriendsService {
     searchUserCId: string,
     limit: number,
     page: number,
-  ): Promise<UserPartialResponseDto[]> {
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto[]> {
     const user = await this.dal.getUserByCId(cuurentUserCId, searchUserCId);
     if (!user) {
       throw new NotFoundException('User not found');

@@ -5,7 +5,7 @@ import {
 } from '@app/database/shared-aggregations';
 import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
 import { S3UploaderService } from '@app/s3-uploader';
-import { IMainAppFriends, IMainAppUser, IRmqUser } from '@app/types';
+import { AppTypes } from '@app/types';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import * as mongoose from 'mongoose';
@@ -14,8 +14,8 @@ import * as path from 'path';
 @Injectable()
 export class UsersDal implements OnModuleInit {
   private dataManipulation: CommonDataManipulation<
-    IMainAppFriends,
-    IMainAppUser
+    AppTypes.UsersService.Friends.IFriends,
+    AppTypes.UsersService.Users.IUser
   >;
   constructor(
     private readonly db: UsersServiceDatabase,
@@ -27,19 +27,7 @@ export class UsersDal implements OnModuleInit {
       this.db.models.users,
     );
   }
-  public async createUser(
-    payload: Pick<
-      IRmqUser,
-      | 'birthDate'
-      | 'email'
-      | 'username'
-      | 'phone'
-      // | 'authUserId'
-      | 'cid'
-      | 'fbId'
-      | 'name'
-    >,
-  ) {
+  public async createUser(payload: AppTypes.Transport.Users.IUser) {
     const user = await this.db.models.users.create({
       birthDate: payload.birthDate,
       email: payload.email,
@@ -49,7 +37,8 @@ export class UsersDal implements OnModuleInit {
       cid: payload.cid,
       fbId: payload.fbId,
       name: payload.name,
-    });
+      gender: payload.gender,
+    } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.UsersService.Users.IUser>);
     return user.toObject();
   }
 
@@ -103,7 +92,7 @@ export class UsersDal implements OnModuleInit {
     cid: string,
     payload: Partial<
       Pick<
-        IMainAppUser,
+        AppTypes.UsersService.Users.IUser,
         | 'phone'
         | 'email'
         | 'username'
@@ -137,34 +126,10 @@ export class UsersDal implements OnModuleInit {
   }
 
   public async deleteUser(cid: string) {
-    //delete user
-    const user = await this.db.models.users.findOneAndDelete({
-      cid: cid,
-    });
-    if (!user) {
-      return;
-    }
-    //pull out this user from friends list of every friend
-    await this.db.models.users.updateMany(
-      {
-        friendsCIds: user.id,
-      },
-      {
-        $pull: {
-          friendsCIds: user.id,
-        },
-      },
+    await this.db.session((session) =>
+      this.dataManipulation.users.deleteUser(cid, session),
     );
-    //delete all friends recordings where this user
-    await this.db.models.friends.deleteMany({
-      $or: [
-        { recipient: user.id },
-        {
-          requester: user.id,
-        },
-      ],
-    });
-    return user.id;
+    return cid;
   }
 
   public async findUserByEmail(email: string) {
@@ -207,7 +172,7 @@ export class UsersDal implements OnModuleInit {
   public async findUserByCidWithFirends(
     currentUserCId: string,
     cid: string,
-  ): Promise<IGetUserListWithFriendshipStatusAggregationResult<IMainAppUser> | null> {
+  ): Promise<IGetUserListWithFriendshipStatusAggregationResult<AppTypes.UsersService.Users.IUser> | null> {
     const [user] =
       await this.dataManipulation.users.getUsersWithFriendshipStatus(
         currentUserCId,
@@ -215,7 +180,9 @@ export class UsersDal implements OnModuleInit {
           {
             $match: {
               cid: cid,
-            } satisfies Partial<Record<keyof IMainAppUser, any>>,
+            } satisfies Partial<
+              Record<keyof AppTypes.UsersService.Users.IUser, any>
+            >,
           },
         ],
       );

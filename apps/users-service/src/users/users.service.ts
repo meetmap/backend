@@ -1,18 +1,8 @@
 import { RMQConstants } from '@app/constants';
 import { IGetUserListWithFriendshipStatusAggregationResult } from '@app/database/shared-aggregations';
-import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
-import {
-  UserPartialResponseDto,
-  UserResponseDto,
-} from '@app/dto/users-service/users.dto';
+import { AppDto } from '@app/dto';
 import { RabbitmqService } from '@app/rabbitmq';
-import {
-  IMainAppSafeUser,
-  IMainAppSafeUserWithoutFriends,
-  IMainAppUser,
-  IRmqUser,
-  IUser,
-} from '@app/types';
+import { AppTypes } from '@app/types';
 import {
   ForbiddenException,
   Injectable,
@@ -28,8 +18,8 @@ export class UsersService {
   ) {}
 
   public async createUser(
-    payload: UserRmqRequestDto,
-  ): Promise<UserResponseDto> {
+    payload: AppDto.TransportDto.Users.UserRmqRequestDto,
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
     const user = await this.dal.createUser(payload);
     return UsersService.mapUserDbToResponseUser(
       { ...user, friendshipStatus: null },
@@ -38,8 +28,8 @@ export class UsersService {
   }
 
   public async updateUser(
-    payload: UserRmqRequestDto,
-  ): Promise<UserResponseDto | null> {
+    payload: AppDto.TransportDto.Users.UserRmqRequestDto,
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto | null> {
     const user = await this.dal.updateUser(payload.cid, payload);
     if (!user) {
       return null;
@@ -57,7 +47,9 @@ export class UsersService {
     return userId;
   }
 
-  public async getUserSelf(cid: string): Promise<UserResponseDto> {
+  public async getUserSelf(
+    cid: string,
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
     const user = await this.dal.findUserByCId(cid);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -73,7 +65,7 @@ export class UsersService {
   public async findUsers(
     userCId: string,
     query: string,
-  ): Promise<UserPartialResponseDto[]> {
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto[]> {
     const users = await this.dal.findUsersByQueryUsername(userCId, query);
     return users.map((user) =>
       UsersService.mapUserDbToResponsePartialUser(user),
@@ -83,7 +75,7 @@ export class UsersService {
   public async getUserByCid(
     currentCid: string,
     cid: string,
-  ): Promise<IMainAppSafeUser> {
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
     const user = await this.dal.findUserByCidWithFirends(currentCid, cid);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -105,7 +97,7 @@ export class UsersService {
 
     const url = await this.dal.uploadUserProfilePicture(cid, photo);
     // user.profilePicture = url
-    const updatedUser: IUser = {
+    const updatedUser: AppTypes.UsersService.Users.IUser = {
       ...user,
       profilePicture: url,
     };
@@ -123,7 +115,9 @@ export class UsersService {
     );
   }
 
-  static mapDbUserToRmqUser(user: IMainAppUser): IRmqUser {
+  static mapDbUserToRmqUser(
+    user: AppTypes.UsersService.Users.IUser,
+  ): AppDto.TransportDto.Users.UserRmqRequestDto {
     return {
       birthDate: user.birthDate,
       cid: user.cid,
@@ -135,13 +129,14 @@ export class UsersService {
       fbId: user.fbId,
       name: user.name,
       profilePicture: user.profilePicture,
+      gender: user.gender,
     };
   }
 
   static mapUserDbToResponseUser(
-    user: IGetUserListWithFriendshipStatusAggregationResult<IMainAppUser>,
-    friends: IMainAppSafeUserWithoutFriends[],
-  ): UserResponseDto {
+    user: IGetUserListWithFriendshipStatusAggregationResult<AppTypes.UsersService.Users.IUser>,
+    friends: AppTypes.UsersService.Users.IUserWithoutFriends[],
+  ): AppDto.UsersServiceDto.UsersDto.UserResponseDto {
     return {
       id: user.id,
       birthDate: user.birthDate,
@@ -155,12 +150,13 @@ export class UsersService {
       name: user.name,
       profilePicture: user.profilePicture,
       friendshipStatus: user.friendshipStatus,
+      gender: user.gender,
     };
   }
 
   static mapUserDbToResponsePartialUser(
-    user: IGetUserListWithFriendshipStatusAggregationResult<IMainAppUser>,
-  ): UserPartialResponseDto {
+    user: IGetUserListWithFriendshipStatusAggregationResult<AppTypes.UsersService.Users.IUser>,
+  ): AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto {
     return {
       id: user.id,
       birthDate: user.birthDate,
@@ -173,6 +169,7 @@ export class UsersService {
       name: user.name,
       profilePicture: user.profilePicture,
       friendshipStatus: user.friendshipStatus,
+      gender: user.gender,
     };
   }
 }
