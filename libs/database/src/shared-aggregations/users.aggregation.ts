@@ -1,4 +1,4 @@
-import { FriendshipStatus, IUser } from '@app/types';
+import { AppTypes } from '@app/types';
 import { PipelineStage } from 'mongoose';
 
 type FieldsToOmit = 'password' | 'refreshToken' | 'fbToken';
@@ -68,20 +68,21 @@ export const getFriendsipStatusForUserFromUsersAggregation = (
                           {
                             $eq: [
                               '$friendshipDetails.status',
-                              FriendshipStatus.REQUESTED,
+                              AppTypes.Shared.Friends.FriendshipStatus
+                                .REQUESTED,
                             ],
                           },
                           {
                             $eq: [
                               '$friendshipDetails.status',
-                              FriendshipStatus.PENDING,
+                              AppTypes.Shared.Friends.FriendshipStatus.PENDING,
                             ],
                           },
                         ],
                       },
                     ],
                   },
-                  then: FriendshipStatus.REQUESTED,
+                  then: AppTypes.Shared.Friends.FriendshipStatus.REQUESTED,
                 },
                 {
                   case: {
@@ -93,20 +94,21 @@ export const getFriendsipStatusForUserFromUsersAggregation = (
                           {
                             $eq: [
                               '$friendshipDetails.status',
-                              FriendshipStatus.REQUESTED,
+                              AppTypes.Shared.Friends.FriendshipStatus
+                                .REQUESTED,
                             ],
                           },
                           {
                             $eq: [
                               '$friendshipDetails.status',
-                              FriendshipStatus.PENDING,
+                              AppTypes.Shared.Friends.FriendshipStatus.PENDING,
                             ],
                           },
                         ],
                       },
                     ],
                   },
-                  then: FriendshipStatus.PENDING,
+                  then: AppTypes.Shared.Friends.FriendshipStatus.PENDING,
                 },
               ],
               default: '$friendshipDetails.status',
@@ -133,8 +135,11 @@ export const getFriendsipStatusForUserFromUsersAggregation = (
       updatedAt: 1,
       _id: 1,
       friendshipStatus: 1,
+      gender: 1,
     } satisfies Record<
-      keyof Omit<IUser, FieldsToOmit> | '_id' | 'friendshipStatus',
+      | keyof Omit<AppTypes.Shared.Users.IAnyUser, FieldsToOmit>
+      | '_id'
+      | 'friendshipStatus',
       1
     >,
   },
@@ -195,7 +200,7 @@ export const sortUsersAggregationPipeline: PipelineStage[] = [
 ];
 
 export type IGetUserListWithFriendshipStatusAggregationResult<
-  User extends Partial<IUser>,
+  User extends Partial<AppTypes.Shared.Users.IAnyUser>,
 > = Omit<User, FieldsToOmit> & {
-  friendshipStatus: FriendshipStatus | null;
+  friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus | null;
 };

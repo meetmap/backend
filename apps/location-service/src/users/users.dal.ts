@@ -1,13 +1,13 @@
 import { LocationServiceDatabase } from '@app/database';
 import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
-import { ILocationServiceFriends, ILocationServiceUser } from '@app/types';
+import { AppTypes } from '@app/types';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 
 @Injectable()
 export class UsersDal implements OnModuleInit {
   private dataManipulation: CommonDataManipulation<
-    ILocationServiceFriends,
-    ILocationServiceUser
+    AppTypes.LocationService.Friends.IFriends,
+    AppTypes.LocationService.Users.IUser
   >;
   constructor(private readonly db: LocationServiceDatabase) {}
 
@@ -20,8 +20,8 @@ export class UsersDal implements OnModuleInit {
 
   public async createUser(
     payload: Pick<
-      ILocationServiceUser,
-      'cid' | 'username' | 'profilePicture' | 'name'
+      AppTypes.LocationService.Users.IUser,
+      'cid' | 'username' | 'profilePicture' | 'name' | 'gender'
     >,
   ) {
     return await this.db.models.users.create({
@@ -30,12 +30,16 @@ export class UsersDal implements OnModuleInit {
       profilePicture: payload.profilePicture,
       name: payload.name,
       username: payload.username,
-    });
+      gender: payload.gender,
+    } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.LocationService.Users.IUser>);
   }
 
   public async updateUser(
     cid: string,
-    payload: Pick<ILocationServiceUser, 'profilePicture' | 'name' | 'username'>,
+    payload: Pick<
+      AppTypes.LocationService.Users.IUser,
+      'profilePicture' | 'name' | 'username' | 'gender'
+    >,
   ) {
     return await this.db.models.users.findOneAndUpdate(
       {
@@ -47,7 +51,8 @@ export class UsersDal implements OnModuleInit {
           name: payload.name,
           username: payload.username,
           cid: cid,
-        },
+          gender: payload.gender,
+        } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.LocationService.Users.IUser>,
       },
       { new: true, upsert: true },
     );

@@ -3,14 +3,15 @@ import {
   getMicroservicePath,
   SERVER_PREFIX,
 } from '@app/constants';
-import { MicroServiceName } from '@app/types';
+import { AppTypes } from '@app/types';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AuthServiceModule } from './auth-service.module';
 
 async function bootstrap() {
-  const microserviceName: MicroServiceName = 'auth-service';
+  const microserviceName: AppTypes.Other.Microservice.MicroServiceName =
+    AppTypes.Other.Microservice.MicroServiceName.AUTH_SERVICE;
   const app = await NestFactory.create(AuthServiceModule);
   const PORT = process.env.PORT ?? 3003;
 

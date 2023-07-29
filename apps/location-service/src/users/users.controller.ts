@@ -1,6 +1,5 @@
 import { RMQConstants } from '@app/constants';
-import { UpdateFriendshipRMQRequestDto } from '@app/dto/main-app/friends.dto';
-import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common/users.dto';
+import { AppDto } from '@app/dto';
 import {
   RabbitPayload,
   RabbitRequest,
@@ -24,7 +23,7 @@ export class UsersController {
     queue: RMQConstants.exchanges.USERS.queues.LOCATION_SERVICE,
   })
   public async handleUser(
-    @RabbitPayload() payload: UserRmqRequestDto,
+    @RabbitPayload() payload: AppDto.TransportDto.Users.UserRmqRequestDto,
     @RabbitRequest() req: { fields: RequestOptions },
   ) {
     const routingKey = req.fields.routingKey;
@@ -72,7 +71,8 @@ export class UsersController {
     queue: RMQConstants.exchanges.FRIENDS.queues.LOCATION_SERVICE,
   })
   public async handleFriendship(
-    @RabbitPayload() payload: UpdateFriendshipRMQRequestDto,
+    @RabbitPayload()
+    payload: AppDto.TransportDto.Friends.UpdateFriendshipRMQRequestDto,
     @RabbitRequest() req: { fields: RequestOptions },
   ) {
     const routingKey = req.fields.routingKey;

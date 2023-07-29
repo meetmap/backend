@@ -1,5 +1,6 @@
-import { EventsFetcherDb } from '@app/database';
-import { IApiKey, ITicketingPlatform } from '@app/types';
+import { EventsServiceDatabase } from '@app/database';
+import { AppTypes } from '@app/types';
+
 import {
   applyDecorators,
   CanActivate,
@@ -10,11 +11,10 @@ import {
 } from '@nestjs/common';
 import { ApiSecurity } from '@nestjs/swagger';
 import { Request } from 'express';
-import { Observable } from 'rxjs';
 
 @Injectable()
 export class IsAuthenticatedApiGuard implements CanActivate {
-  constructor(private readonly db: EventsFetcherDb) {}
+  constructor(private readonly db: EventsServiceDatabase) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
       const request = context.switchToHttp().getRequest<Request>();
@@ -24,11 +24,17 @@ export class IsAuthenticatedApiGuard implements CanActivate {
         throw new ForbiddenException('Api key required');
       }
       const dbResponse = await this.db.models.apiKey
-        .findOne<{ issuedTo: ITicketingPlatform } | null>({
+        .findOne<{
+          issuedTo: AppTypes.TicketingPlatforms.System.ITicketingPlatform;
+        } | null>({
           key: apiKey,
         })
-        .populate('issuedTo' satisfies keyof IApiKey)
-        .select('issuedTo' satisfies keyof IApiKey);
+        .populate(
+          'issuedTo' satisfies keyof AppTypes.TicketingPlatforms.System.IApiKey,
+        )
+        .select(
+          'issuedTo' satisfies keyof AppTypes.TicketingPlatforms.System.IApiKey,
+        );
 
       if (!dbResponse || !dbResponse.issuedTo) {
         throw new ForbiddenException('Invalid Api key');

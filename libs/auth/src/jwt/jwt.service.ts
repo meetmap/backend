@@ -1,6 +1,5 @@
+import { AppTypes } from '@app/types';
 import { Injectable } from '@nestjs/common';
-
-import { IJwtUserPayload } from '@app/types/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
 
@@ -29,13 +28,15 @@ export class JwtService {
     return at;
   }
 
-  async getTokens(payload: Pick<IJwtUserPayload, 'sub' | 'username' | 'cid'>) {
+  async getTokens(
+    payload: Pick<AppTypes.JWT.User.IJwtPayload, 'sub' | 'username' | 'cid'>,
+  ) {
     const at = await this.signAt(payload);
     const rt = await this.signRt(payload);
     return { rt, at };
   }
 
-  public async verifyRt(rt: string): Promise<IJwtUserPayload> {
+  public async verifyRt(rt: string): Promise<AppTypes.JWT.User.IJwtPayload> {
     return new Promise((res, rej) => {
       jwt.verify(
         rt,
@@ -47,13 +48,13 @@ export class JwtService {
           if (err) return rej(err);
           typeof dec === 'string'
             ? rej('Invalid jwt')
-            : res(dec as IJwtUserPayload);
+            : res(dec as AppTypes.JWT.User.IJwtPayload);
         },
       );
     });
   }
 
-  public async verifyAt(at: string): Promise<IJwtUserPayload> {
+  public async verifyAt(at: string): Promise<AppTypes.JWT.User.IJwtPayload> {
     return new Promise((res, rej) => {
       jwt.verify(
         at,
@@ -65,14 +66,14 @@ export class JwtService {
           if (err) return rej(err);
           typeof dec === 'string'
             ? rej('Invalid jwt')
-            : res(dec as IJwtUserPayload);
+            : res(dec as AppTypes.JWT.User.IJwtPayload);
         },
       );
     });
   }
 
   private async signRt(
-    payload: Pick<IJwtUserPayload, 'sub' | 'username' | 'cid'>,
+    payload: Pick<AppTypes.JWT.User.IJwtPayload, 'sub' | 'username' | 'cid'>,
   ): Promise<string> {
     return new Promise((res, rej) => {
       jwt.sign(
@@ -93,7 +94,7 @@ export class JwtService {
   }
 
   private async signAt(
-    payload: Pick<IJwtUserPayload, 'sub' | 'username' | 'cid'>,
+    payload: Pick<AppTypes.JWT.User.IJwtPayload, 'sub' | 'username' | 'cid'>,
   ): Promise<string> {
     return new Promise((res, rej) => {
       jwt.sign(
