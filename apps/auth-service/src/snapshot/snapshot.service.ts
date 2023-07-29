@@ -1,7 +1,9 @@
 import { RMQConstants } from '@app/constants';
-import { AuthServiceUserSnapshotRequestDto } from '@app/dto/rabbit-mq-common';
+import { AppDto } from '@app/dto';
+
 import { RabbitmqService } from '@app/rabbitmq';
-import { IAuthServiceSnapshotUser, ISafeAuthUser } from '@app/types';
+import { AppTypes } from '@app/types';
+
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { SnapshotDal } from './snapshot.dal';
@@ -18,7 +20,7 @@ export class SnapshotService {
     const batchSize = 50;
     console.log('Users snapshot task started');
     const usersCursor = this.dal.getAllUsersCursor(batchSize);
-    const userBatch: ISafeAuthUser[] = [];
+    const userBatch: AppTypes.AuthService.Users.ISafeUser[] = [];
     let multiplier = 0;
     for await (const userDoc of usersCursor) {
       userBatch.push(userDoc.toObject());
@@ -43,7 +45,9 @@ export class SnapshotService {
     console.log('Users snapshot task ended');
   }
 
-  private async publishBatch(userBatch: Array<IAuthServiceSnapshotUser>) {
+  private async publishBatch(
+    userBatch: Array<AppTypes.Transport.Snapshot.Users.IAuthServiceSnapshot>,
+  ) {
     const snapshotBatch = this.getSnapshotBatch(userBatch);
     await this.rmq.amqp.publish(
       RMQConstants.exchanges.AUTH_SERVICE_USERS_SNAPSHOT.name,
@@ -55,8 +59,8 @@ export class SnapshotService {
   }
 
   private getSnapshotBatch(
-    userBatch: Array<IAuthServiceSnapshotUser>,
-  ): AuthServiceUserSnapshotRequestDto[] {
+    userBatch: Array<AppTypes.Transport.Snapshot.Users.IAuthServiceSnapshot>,
+  ): AppDto.TransportDto.Users.AuthServiceUserSnapshotRequestDto[] {
     return userBatch.map((user) => ({
       birthDate: user.birthDate,
       cid: user.cid,
@@ -65,6 +69,7 @@ export class SnapshotService {
       fbId: user.fbId,
       name: user.name,
       phone: user.phone,
+      gender: user.gender,
     }));
   }
 }

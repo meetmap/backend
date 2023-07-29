@@ -1,27 +1,21 @@
-import {
-  AuthServiceDatabase,
-  EventsFetcherDb,
-  MainAppDatabase,
-} from '@app/database';
+import { EventsServiceDatabase } from '@app/database';
 import {
   applyDecorators,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
   Injectable,
-  NotFoundException,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
-import { Observable } from 'rxjs';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { Request } from 'express';
 import { DashboardJwtService } from '../dashboard-jwt.service';
 
 @Injectable()
 export class IsDashboardAuthenticatedGuard implements CanActivate {
   constructor(
     private readonly jwtService: DashboardJwtService,
-    private readonly database: EventsFetcherDb,
+    private readonly database: EventsServiceDatabase,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {

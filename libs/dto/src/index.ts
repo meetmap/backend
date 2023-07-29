@@ -1,1 +1,1 @@
-export {};
+export * as AppDto from './dto';

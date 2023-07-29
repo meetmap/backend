@@ -2,6 +2,7 @@ import { AuthModule as LibAuthModule } from '@app/auth';
 import { AuthProvidersModule } from '@app/auth-providers';
 import { DatabaseModule } from '@app/database';
 import { RabbitmqModule } from '@app/rabbitmq';
+import { AppTypes } from '@app/types';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthServiceController } from './auth-service.controller';
@@ -15,12 +16,14 @@ import { SnapshotModule } from './snapshot/snapshot.module';
     }),
     DatabaseModule.init({
       connectionStringEnvPath: 'AUTH_SERVICE_DATABASE_URL',
-      microserviceName: 'auth-service',
+      microserviceName:
+        AppTypes.Other.Microservice.MicroServiceName.AUTH_SERVICE,
     }),
     RabbitmqModule.forRoot(),
     // InternalAxiosModule,
     LibAuthModule.init({
-      microserviceName: 'auth-service',
+      microserviceName:
+        AppTypes.Other.Microservice.MicroServiceName.AUTH_SERVICE,
     }),
     AuthProvidersModule,
     AuthModule,

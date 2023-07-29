@@ -1,18 +1,6 @@
 import { ExtractUser, JwtService, UseAuthGuard } from '@app/auth/jwt';
-import {
-  AuthUserResponseDto,
-  CreateUserRequestDto,
-  EntityIsFreeResponseDto,
-  LinkFacebookRequestDto,
-  LoginResponseDto,
-  LoginWithAuthProviderRequestDto,
-  LoginWithPasswordDto,
-  RefreshAccessTokenRequestDto,
-  RefreshAtResponseDto,
-  SignUpWithAuthProviderRequestDto,
-  UpdateUsersUsernameRequestDto,
-} from '@app/dto/auth-service/auth.dto';
-import { IAuthUser } from '@app/types';
+import { AppDto } from '@app/dto';
+import { AppTypes } from '@app/types';
 import {
   BadRequestException,
   Body,
@@ -36,13 +24,13 @@ export class AuthController {
   ) {}
 
   @ApiOkResponse({
-    type: LoginResponseDto,
+    type: AppDto.AuthService.AuthDto.SignInResponseDto,
     description: 'User created response',
   })
   @Post('/signup')
   public async createUser(
-    @Body() payload: CreateUserRequestDto,
-  ): Promise<LoginResponseDto> {
+    @Body() payload: AppDto.AuthService.AuthDto.SignUpRequestDto,
+  ): Promise<AppDto.AuthService.AuthDto.SignInResponseDto> {
     const user = await this.authService.createUser(payload);
     const tokens = await this.authService.getTokensAndRefreshRT(user);
 
@@ -53,13 +41,13 @@ export class AuthController {
   }
 
   @ApiOkResponse({
-    type: LoginResponseDto,
+    type: AppDto.AuthService.AuthDto.SignInResponseDto,
     description: 'User created response',
   })
   @Post('/login')
   public async loginWithPassword(
-    @Body() payload: LoginWithPasswordDto,
-  ): Promise<LoginResponseDto> {
+    @Body() payload: AppDto.AuthService.AuthDto.SignInWithPasswordRequestDto,
+  ): Promise<AppDto.AuthService.AuthDto.SignInResponseDto> {
     if (!(payload.username || payload.email || payload.phone)) {
       throw new BadRequestException(
         'You should use at least once login method by username, email or phone number',
@@ -77,52 +65,52 @@ export class AuthController {
     };
   }
   @ApiOkResponse({
-    type: EntityIsFreeResponseDto,
+    type: AppDto.AuthService.AuthDto.EntityIsFreeResponseDto,
     description: 'Username is free to use',
   })
   @Get('/check-username/:username')
   public async usernameIsFree(
     @Query('username') username: string,
-  ): Promise<EntityIsFreeResponseDto> {
+  ): Promise<AppDto.AuthService.AuthDto.EntityIsFreeResponseDto> {
     const usernameIsFree = await this.authService.usernameIsFree(username);
 
     return { free: usernameIsFree };
   }
   @ApiOkResponse({
-    type: EntityIsFreeResponseDto,
+    type: AppDto.AuthService.AuthDto.EntityIsFreeResponseDto,
     description: 'Phone is free to use',
   })
   @Get('/check-phone/:phone')
   public async phoneIsFree(
     @Query('phone') phone: string,
-  ): Promise<EntityIsFreeResponseDto> {
+  ): Promise<AppDto.AuthService.AuthDto.EntityIsFreeResponseDto> {
     const usernameIsFree = await this.authService.phoneIsFree(phone);
 
     return { free: usernameIsFree };
   }
 
   @ApiOkResponse({
-    type: AuthUserResponseDto,
+    type: AppDto.AuthService.AuthDto.UserResponseDto,
     description: 'User updated response',
   })
   @UseAuthGuard()
   @Put('username')
   public async updateUsersUsername(
-    @Body() payload: UpdateUsersUsernameRequestDto,
-    @ExtractUser() user: IAuthUser,
-  ): Promise<AuthUserResponseDto> {
+    @Body() payload: AppDto.AuthService.AuthDto.UpdateUsernameRequestDto,
+    @ExtractUser() user: AppTypes.AuthService.Users.IUser,
+  ): Promise<AppDto.AuthService.AuthDto.UserResponseDto> {
     return this.authService.updateUsersUsername(user.id, payload);
   }
 
   @ApiOkResponse({
-    type: RefreshAtResponseDto,
+    type: AppDto.AuthService.AuthDto.RefreshAccessTokenResponseDto,
     description: 'Refresh access token response',
   })
   @Post('refresh')
   public async refreshAccessToken(
-    @Body() dto: RefreshAccessTokenRequestDto,
+    @Body() dto: AppDto.AuthService.AuthDto.RefreshAccessTokenRequestDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<RefreshAtResponseDto> {
+  ): Promise<AppDto.AuthService.AuthDto.RefreshAccessTokenResponseDto> {
     const accessToken = await this.authService.refreshAccessToken(
       dto.refreshToken,
     );
@@ -131,13 +119,14 @@ export class AuthController {
   }
 
   @ApiOkResponse({
-    type: LoginResponseDto,
+    type: AppDto.AuthService.AuthDto.SignInResponseDto,
     description: 'User created response',
   })
   @Post('/facebook/signup')
   public async signUpWithFacebook(
-    @Body() payload: SignUpWithAuthProviderRequestDto,
-  ): Promise<LoginResponseDto> {
+    @Body()
+    payload: AppDto.AuthService.AuthDto.SignUpWithAuthProviderRequestDto,
+  ): Promise<AppDto.AuthService.AuthDto.SignInResponseDto> {
     const user = await this.authService.signUpWithFacebook(payload);
     const tokens = await this.authService.getTokensAndRefreshRT(user);
 
@@ -148,13 +137,14 @@ export class AuthController {
   }
 
   @ApiOkResponse({
-    type: LoginResponseDto,
+    type: AppDto.AuthService.AuthDto.SignInResponseDto,
     description: 'User logged in response',
   })
   @Post('/facebook/signin')
   public async loginWithFacebook(
-    @Body() payload: LoginWithAuthProviderRequestDto,
-  ): Promise<LoginResponseDto> {
+    @Body()
+    payload: AppDto.AuthService.AuthDto.SignUpWithAuthProviderRequestDto,
+  ): Promise<AppDto.AuthService.AuthDto.SignInResponseDto> {
     const user = await this.authService.loginWithFacebook(payload);
     const tokens = await this.authService.getTokensAndRefreshRT(user);
 
@@ -165,15 +155,15 @@ export class AuthController {
   }
 
   @ApiOkResponse({
-    type: LoginResponseDto,
+    type: AppDto.AuthService.AuthDto.UserResponseDto,
     description: 'User logged in response',
   })
   @Post('/facebook/link')
   @UseAuthGuard()
   public async linkFacebook(
-    @Body() payload: LinkFacebookRequestDto,
-    @ExtractUser() user: IAuthUser,
-  ): Promise<AuthUserResponseDto> {
+    @Body() payload: AppDto.AuthService.AuthDto.LinkFacebookRequestDto,
+    @ExtractUser() user: AppTypes.AuthService.Users.IUser,
+  ): Promise<AppDto.AuthService.AuthDto.UserResponseDto> {
     const dbUser = await this.authService.linkFacebook(user, payload.token);
     if (!dbUser) {
       throw new ForbiddenException('User not found');

@@ -1,4 +1,4 @@
-import { IFriendsBase, IUser } from '@app/types';
+import { AppTypes } from '@app/types';
 import * as mongoose from 'mongoose';
 import {
   getFriendsipStatusForUserFromUsersAggregation,
@@ -6,8 +6,11 @@ import {
 } from '../shared-aggregations/users.aggregation';
 
 export class UsersDataManipulation<
-  Friends extends IFriendsBase = IFriendsBase,
-  Users extends Pick<IUser, 'cid'> = IUser,
+  Friends extends AppTypes.Shared.Friends.IFriendsBase = AppTypes.Shared.Friends.IFriendsBase,
+  Users extends Pick<
+    AppTypes.Shared.Users.IUsersBase,
+    'cid'
+  > = AppTypes.Shared.Users.IUsersBase,
 > {
   constructor(
     private readonly friends: mongoose.Model<Friends>,

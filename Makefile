@@ -1,10 +1,10 @@
-.PHONY: build-events-fetcher
-build-events-fetcher:
-	docker buildx build --platform linux/amd64 -t meetmap:events-fetcher -f apps/events-fetcher/Dockerfile . && docker tag meetmap:events-fetcher 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-events-fetcher:latest
+.PHONY: build-events-service
+build-events-service:
+	docker buildx build --platform linux/amd64 -t meetmap:events-service -f apps/events-service/Dockerfile . && docker tag meetmap:events-service 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-events-service:latest
 
-.PHONY: push-image-events-fetcher
-push-image-events-fetcher:
-	docker push 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-events-fetcher:latest
+.PHONY: push-image-events-service
+push-image-events-service:
+	docker push 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-events-service:latest
 
 
 .PHONY: build-location-service
@@ -27,46 +27,46 @@ push-image-auth-service:
 
 
 
-.PHONY: build-main-app
-build-main-app:
-	docker buildx build --platform linux/amd64 -t meetmap:main-app -f apps/main-app/Dockerfile . && docker tag meetmap:main-app 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-main-app:latest
+.PHONY: build-users-service
+build-users-service:
+	docker buildx build --platform linux/amd64 -t meetmap:users-service -f apps/users-service/Dockerfile . && docker tag meetmap:users-service 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-users-service:latest
 
-.PHONY: push-image-main-app
-push-image-main-app:
-	docker push 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-main-app:latest
+.PHONY: push-image-users-service
+push-image-users-service:
+	docker push 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-users-service:latest
 
 
 .PHONY: build-microservices
-build-all-microservices: build-events-fetcher build-location-service build-main-app
+build-all-microservices: build-events-service build-location-service build-users-service
 
 .PHONY: run-all-microservices
-run-all-microservices: run-events-fetcher run-main-app run-location-service
+run-all-microservices: run-events-service run-users-service run-location-service
 
-.PHONY: run-events-fetcher
-run-events-fetcher:
-	docker run -d -p 3000:3000 --env-file .env meetmap:events-fetcher
+.PHONY: run-events-service
+run-events-service:
+	docker run -d -p 3000:3000 --env-file .env meetmap:events-service
 
-.PHONY: run-main-app
-run-main-app:
-	docker run -d -p 3001:3001 --env-file .env meetmap:main-app
+.PHONY: run-users-service
+run-users-service:
+	docker run -d -p 3001:3001 --env-file .env meetmap:users-service
 
 .PHONY: run-location-service
 run-location-service:
 	docker run -d -p 3002:3002 --env-file .env meetmap:location-service
 
-.PHONY: deploy-events-fetcher
-deploy-events-fetcher:
+.PHONY: deploy-events-service
+deploy-events-service:
 	make registry-login && \
-	make build-events-fetcher && \
-	make push-image-events-fetcher && \
-	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service events-fetcher --force-new-deployment --no-cli-pager
+	make build-events-service && \
+	make push-image-events-service && \
+	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service events-service --force-new-deployment --no-cli-pager
 
-.PHONY: deploy-main-app
-deploy-main-app:
+.PHONY: deploy-users-service
+deploy-users-service:
 	make registry-login && \
-	make build-main-app && \
-	make push-image-main-app && \
-	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service main-app --force-new-deployment --no-cli-pager
+	make build-users-service && \
+	make push-image-users-service && \
+	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service users-service --force-new-deployment --no-cli-pager
 
 .PHONY: deploy-location-service
 deploy-location-service:
@@ -84,7 +84,7 @@ deploy-auth-service:
 
 .PHONY: deploy-all
 make deploy-all:
-	make deploy-main-app && make deploy-location-service && make deploy-auth-service && make deploy-events-fetcher
+	make deploy-users-service && make deploy-location-service && make deploy-auth-service && make deploy-events-service
 
 .PHONY: registry-login
 registry-login:

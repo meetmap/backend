@@ -1,12 +1,1 @@
-export * from './redis';
-export * from './location';
-export * from './event';
-export * from './eventer-co-il';
-export * from './city';
-export * from './region';
-export * from './other';
-export * from './user';
-export * from './friends';
-export * from './user-location';
-export * from './events-api';
-export * from './ticketing-platform';
+export * as AppTypes from './types';

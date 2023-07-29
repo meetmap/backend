@@ -1,8 +1,5 @@
 import { RMQConstants } from '@app/constants';
-import {
-  AuthServiceUserSnapshotRequestDto,
-  UsersServiceFriendsSnapshotRequestDto,
-} from '@app/dto/rabbit-mq-common';
+import { AppDto } from '@app/dto';
 import { RabbitPayload, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, ParseArrayPipe } from '@nestjs/common';
 import { SnapshotDal } from './snapshot.dal';
@@ -22,14 +19,39 @@ export class SnapshotService {
   public async handleUserSnapshot(
     @RabbitPayload(
       new ParseArrayPipe({
-        items: AuthServiceUserSnapshotRequestDto,
+        items: AppDto.TransportDto.Users.AuthServiceUserSnapshotRequestDto,
       }),
     )
-    payload: AuthServiceUserSnapshotRequestDto[],
+    payload: AppDto.TransportDto.Users.AuthServiceUserSnapshotRequestDto[],
   ) {
     try {
       console.log('Users sync');
       await this.dal.updateOrCreateUser(payload);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.name,
+    routingKey: [
+      RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.routingKeys.SYNC,
+    ],
+    queue:
+      RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.queues
+        .LOCATION_SERVICE,
+  })
+  public async handleUserFromUserServiceSnapshot(
+    @RabbitPayload(
+      new ParseArrayPipe({
+        items: AppDto.TransportDto.Users.UsersServiceUserSnapshotRequestDto,
+      }),
+    )
+    payload: AppDto.TransportDto.Users.UsersServiceUserSnapshotRequestDto[],
+  ) {
+    try {
+      console.log('Users agains users-service sync');
+      await this.dal.updateUserAgainstUserService(payload);
     } catch (error) {
       console.error(error);
     }
@@ -43,10 +65,11 @@ export class SnapshotService {
   public async handleFriendSnapshot(
     @RabbitPayload(
       new ParseArrayPipe({
-        items: UsersServiceFriendsSnapshotRequestDto,
+        items:
+          AppDto.TransportDto.Friends.UsersServiceFriendsSnapshotRequestDto,
       }),
     )
-    payload: UsersServiceFriendsSnapshotRequestDto[],
+    payload: AppDto.TransportDto.Friends.UsersServiceFriendsSnapshotRequestDto[],
   ) {
     try {
       console.log('Friends sync');

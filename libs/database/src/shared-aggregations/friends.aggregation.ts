@@ -1,9 +1,11 @@
-import { FriendshipStatus, IFriendsBase, IUser } from '@app/types';
+import { AppTypes } from '@app/types';
 import { PipelineStage } from 'mongoose';
 import { getFriendsipStatusForUserFromUsersAggregation } from './users.aggregation';
 
 type FieldsToOmit = 'password' | 'refreshToken' | 'fbToken';
-export const getFriendsUserListFromFriendsAggregation = <User extends IUser>(
+export const getFriendsUserListFromFriendsAggregation = <
+  User extends AppTypes.Shared.Users.IUsersBase,
+>(
   currentUserCId: string,
   searchUserCId: string,
   usersCollectionName: string = 'users',
@@ -11,22 +13,24 @@ export const getFriendsUserListFromFriendsAggregation = <User extends IUser>(
   {
     $match: {
       $or: [{ requesterCId: searchUserCId }, { recipientCId: searchUserCId }],
-      status: FriendshipStatus.FRIENDS,
+      status: AppTypes.Shared.Friends.FriendshipStatus.FRIENDS,
     },
   },
   {
     $lookup: {
       from: usersCollectionName,
-      localField: 'requesterCId' satisfies keyof IFriendsBase,
-      foreignField: 'cid' satisfies keyof IUser,
+      localField:
+        'requesterCId' satisfies keyof AppTypes.Shared.Friends.IFriendsBase,
+      foreignField: 'cid' satisfies keyof AppTypes.Shared.Users.IUsersBase,
       as: 'requesterDetails',
     },
   },
   {
     $lookup: {
       from: usersCollectionName,
-      localField: 'recipientCId' satisfies keyof IFriendsBase,
-      foreignField: 'cid' satisfies keyof IUser,
+      localField:
+        'recipientCId' satisfies keyof AppTypes.Shared.Friends.IFriendsBase,
+      foreignField: 'cid' satisfies keyof AppTypes.Shared.Users.IUsersBase,
       as: 'recipientDetails',
     },
   },
@@ -59,9 +63,12 @@ export const getFriendsUserListFromFriendsAggregation = <User extends IUser>(
       id: 1,
       updatedAt: 1,
       _id: 1,
-      friendshipStatus: FriendshipStatus.FRIENDS,
+      gender: 1,
+      friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus.FRIENDS,
     } satisfies Record<
-      keyof Omit<IUser, FieldsToOmit> | '_id' | 'friendshipStatus',
+      | keyof Omit<AppTypes.Shared.Users.IAnyUser, FieldsToOmit>
+      | '_id'
+      | 'friendshipStatus',
       1 | any
     >,
   },
@@ -76,7 +83,7 @@ export const getFriendsUserListFromFriendsAggregation = <User extends IUser>(
 ];
 
 export const getIncomingRequestsUserListFromFriendsAggregation = <
-  User extends IUser,
+  User extends AppTypes.Shared.Users.IUsersBase,
 >(
   userCId: string,
   usersCollectionName: string = 'users',
@@ -84,14 +91,15 @@ export const getIncomingRequestsUserListFromFriendsAggregation = <
   {
     $match: {
       recipientCId: userCId,
-      status: FriendshipStatus.REQUESTED,
+      status: AppTypes.Shared.Friends.FriendshipStatus.REQUESTED,
     },
   },
   {
     $lookup: {
       from: usersCollectionName,
-      localField: 'requesterCId' satisfies keyof IFriendsBase,
-      foreignField: 'cid' satisfies keyof IUser,
+      localField:
+        'requesterCId' satisfies keyof AppTypes.Shared.Friends.IFriendsBase,
+      foreignField: 'cid' satisfies keyof AppTypes.Shared.Users.IUsersBase,
       as: 'requesterDetails',
     },
   },
@@ -118,9 +126,12 @@ export const getIncomingRequestsUserListFromFriendsAggregation = <
       id: 1,
       updatedAt: 1,
       _id: 1,
-      friendshipStatus: FriendshipStatus.PENDING,
+      gender: 1,
+      friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus.PENDING,
     } satisfies Record<
-      keyof Omit<IUser, FieldsToOmit> | '_id' | 'friendshipStatus',
+      | keyof Omit<AppTypes.Shared.Users.IAnyUser, FieldsToOmit>
+      | '_id'
+      | 'friendshipStatus',
       1 | any
     >,
   },
@@ -134,7 +145,7 @@ export const getIncomingRequestsUserListFromFriendsAggregation = <
 ];
 
 export const getOutcomingRequestsUserListFromFriendsAggregation = <
-  User extends IUser,
+  User extends AppTypes.Shared.Users.IUsersBase,
 >(
   userCId: string,
   usersCollectionName: string = 'users',
@@ -142,14 +153,15 @@ export const getOutcomingRequestsUserListFromFriendsAggregation = <
   {
     $match: {
       requesterCId: userCId,
-      status: FriendshipStatus.REQUESTED,
+      status: AppTypes.Shared.Friends.FriendshipStatus.REQUESTED,
     },
   },
   {
     $lookup: {
       from: usersCollectionName,
-      localField: 'recipientCId' satisfies keyof IFriendsBase,
-      foreignField: 'cid' satisfies keyof IUser,
+      localField:
+        'recipientCId' satisfies keyof AppTypes.Shared.Friends.IFriendsBase,
+      foreignField: 'cid' satisfies keyof AppTypes.Shared.Users.IUsersBase,
       as: 'recipientDetails',
     },
   },
@@ -176,9 +188,12 @@ export const getOutcomingRequestsUserListFromFriendsAggregation = <
       id: 1,
       updatedAt: 1,
       _id: 1,
-      friendshipStatus: FriendshipStatus.REQUESTED,
+      gender: 1,
+      friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus.REQUESTED,
     } satisfies Record<
-      keyof Omit<IUser, FieldsToOmit> | '_id' | 'friendshipStatus',
+      | keyof Omit<AppTypes.Shared.Users.IAnyUser, FieldsToOmit>
+      | '_id'
+      | 'friendshipStatus',
       1 | any
     >,
   },
@@ -192,7 +207,7 @@ export const getOutcomingRequestsUserListFromFriendsAggregation = <
 ];
 
 export type IGetUserListFromFriendsAggregationResult<
-  User extends Partial<IUser>,
+  User extends Partial<AppTypes.Shared.Users.IUsersBase>,
 > = Omit<User, FieldsToOmit> & {
-  friendshipStatus: FriendshipStatus | null;
+  friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus | null;
 };

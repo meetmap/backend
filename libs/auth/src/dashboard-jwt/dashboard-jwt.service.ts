@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
-import * as jwt from 'jsonwebtoken';
+import { AppTypes } from '@app/types';
 import { ConfigService } from '@nestjs/config';
-import { IJwtDashboardPayload, IJwtUserPayload } from '@app/types/jwt';
+import * as jwt from 'jsonwebtoken';
 
 interface IJwtOptions {
   secret: string;
@@ -29,13 +29,17 @@ export class DashboardJwtService {
     return at;
   }
 
-  async getTokens(payload: Pick<IJwtDashboardPayload, 'sub' | 'companyName'>) {
+  async getTokens(
+    payload: Pick<AppTypes.JWT.Dashboard.IJwtPayload, 'sub' | 'companyName'>,
+  ) {
     const at = await this.signAt(payload);
     const rt = await this.signRt(payload);
     return { rt, at };
   }
 
-  public async verifyRt(rt: string): Promise<IJwtDashboardPayload> {
+  public async verifyRt(
+    rt: string,
+  ): Promise<AppTypes.JWT.Dashboard.IJwtPayload> {
     return new Promise((res, rej) => {
       jwt.verify(
         rt,
@@ -47,13 +51,15 @@ export class DashboardJwtService {
           if (err) return rej(err);
           typeof dec === 'string'
             ? rej('Invalid jwt')
-            : res(dec as IJwtDashboardPayload);
+            : res(dec as AppTypes.JWT.Dashboard.IJwtPayload);
         },
       );
     });
   }
 
-  public async verifyAt(at: string): Promise<IJwtDashboardPayload> {
+  public async verifyAt(
+    at: string,
+  ): Promise<AppTypes.JWT.Dashboard.IJwtPayload> {
     return new Promise((res, rej) => {
       jwt.verify(
         at,
@@ -65,14 +71,14 @@ export class DashboardJwtService {
           if (err) return rej(err);
           typeof dec === 'string'
             ? rej('Invalid jwt')
-            : res(dec as IJwtDashboardPayload);
+            : res(dec as AppTypes.JWT.Dashboard.IJwtPayload);
         },
       );
     });
   }
 
   private async signRt(
-    payload: Pick<IJwtDashboardPayload, 'sub' | 'companyName'>,
+    payload: Pick<AppTypes.JWT.Dashboard.IJwtPayload, 'sub' | 'companyName'>,
   ): Promise<string> {
     return new Promise((res, rej) => {
       jwt.sign(
@@ -93,7 +99,7 @@ export class DashboardJwtService {
   }
 
   private async signAt(
-    payload: Pick<IJwtDashboardPayload, 'sub' | 'companyName'>,
+    payload: Pick<AppTypes.JWT.Dashboard.IJwtPayload, 'sub' | 'companyName'>,
   ): Promise<string> {
     return new Promise((res, rej) => {
       jwt.sign(

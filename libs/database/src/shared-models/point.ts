@@ -1,7 +1,7 @@
-import { IPoint } from '@app/types';
+import { AppTypes } from '@app/types';
 import * as mongoose from 'mongoose';
 
-export const PointSchema = new mongoose.Schema<IPoint>(
+export const PointSchema = new mongoose.Schema<AppTypes.Shared.Location.IPoint>(
   {
     type: {
       type: String,
