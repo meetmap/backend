@@ -1,9 +1,6 @@
 import { UsersServiceDatabase } from '@app/database';
-import { AuthServiceUserSnapshotRequestDto } from '@app/dto/rabbit-mq-common';
-import {
-  IUsersServiceSnapshotFriends,
-  IUsersServiceSnapshotUser,
-} from '@app/types';
+import { AppDto } from '@app/dto';
+import { AppTypes } from '@app/types';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -11,7 +8,7 @@ export class SnapshotDal {
   constructor(private readonly db: UsersServiceDatabase) {}
 
   public async updateOrCreateUser(
-    payload: AuthServiceUserSnapshotRequestDto[],
+    payload: AppDto.TransportDto.Users.AuthServiceUserSnapshotRequestDto[],
   ) {
     await this.db.models.users.bulkWrite(
       payload.map((user) => ({
@@ -25,7 +22,8 @@ export class SnapshotDal {
               fbId: user.fbId,
               username: user.username,
               name: user.name,
-            },
+              gender: user.gender,
+            } satisfies Partial<AppTypes.UsersService.Users.IUser>,
           },
           upsert: true,
         },
@@ -39,7 +37,7 @@ export class SnapshotDal {
         recipientCId: true,
         requesterCId: true,
         status: true,
-      } satisfies Record<keyof IUsersServiceSnapshotFriends, true>)
+      } satisfies Record<keyof AppTypes.Transport.Snapshot.Friends.IUsersServiceSnapshot, true>)
       .cursor({ batchSize });
   }
 
@@ -48,9 +46,8 @@ export class SnapshotDal {
       .find({}, {
         cid: true,
         description: true,
-        name: true,
         profilePicture: true,
-      } satisfies Record<keyof IUsersServiceSnapshotUser, true>)
+      } satisfies Record<keyof AppTypes.Transport.Snapshot.Users.IUsersServiceSnapshot, true>)
       .cursor({ batchSize });
   }
 }

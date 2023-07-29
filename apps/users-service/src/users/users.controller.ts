@@ -22,14 +22,9 @@ import { UsersService } from './users.service';
 //   RabbitSubscribe,
 //   RequestOptions,
 // } from '@app/rmq-lib';
+import { AppDto } from '@app/dto';
 import { UploadedImage, UseFileInterceptor } from '@app/dto/decorators';
-import { UserRmqRequestDto } from '@app/dto/rabbit-mq-common';
-import {
-  UpdateUserProfilePictureRequestDto,
-  UserPartialResponseDto,
-  UserResponseDto,
-} from '@app/dto/users-service/users.dto';
-import { IJwtUserPayload } from '@app/types/jwt';
+import { AppTypes } from '@app/types';
 import {
   RabbitPayload,
   RabbitRequest,
@@ -55,7 +50,7 @@ export class UsersController {
     queue: RMQConstants.exchanges.USERS.queues.USER_SERVICE,
   })
   public async handleUser(
-    @RabbitPayload() payload: UserRmqRequestDto,
+    @RabbitPayload() payload: AppDto.TransportDto.Users.UserRmqRequestDto,
     @RabbitRequest() req: { fields: RequestOptions },
   ) {
     const routingKey = req.fields.routingKey;
@@ -93,27 +88,27 @@ export class UsersController {
   }
 
   @ApiOkResponse({
-    type: UserResponseDto,
+    type: AppDto.UsersServiceDto.UsersDto.UserResponseDto,
     description: 'Self user response',
   })
   @UseMicroserviceAuthGuard()
   @Get('me')
   public async getUserSelf(
-    @ExtractJwtPayload() jwt: IJwtUserPayload,
-  ): Promise<UserResponseDto> {
+    @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
     return this.usersService.getUserSelf(jwt.cid);
   }
 
   @ApiOkResponse({
-    type: [UserPartialResponseDto],
+    type: [AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto],
     description: 'Find users response',
   })
   @UseMicroserviceAuthGuard()
   @Get('/find')
   public async findUsers(
     @Query('q') query: string,
-    @ExtractJwtPayload() jwt: IJwtUserPayload,
-  ): Promise<UserPartialResponseDto[]> {
+    @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto[]> {
     if (!query) {
       return [];
     }
@@ -121,15 +116,15 @@ export class UsersController {
   }
 
   @ApiOkResponse({
-    type: UserResponseDto,
+    type: AppDto.UsersServiceDto.UsersDto.UserResponseDto,
     description: 'Find user response',
   })
   @UseMicroserviceAuthGuard()
   @Get('/get/:userCid')
   public async getUserById(
-    @ExtractJwtPayload() jwt: IJwtUserPayload,
+    @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
     @Param('userCid') userCid: string,
-  ): Promise<UserResponseDto> {
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
     if (!userCid) {
       throw new BadRequestException('Invalid userId');
     }
@@ -137,18 +132,19 @@ export class UsersController {
   }
 
   @ApiOkResponse({
-    type: UserResponseDto,
+    type: AppDto.UsersServiceDto.UsersDto.UserResponseDto,
   })
   @UseMicroserviceAuthGuard()
   @Post('/profile/picture')
   @ApiConsumes('multipart/form-data')
   @UseFileInterceptor('photo')
   public async updateUserProfilePicture(
-    @ExtractJwtPayload() jwt: IJwtUserPayload,
+    @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
     @UploadedImage()
     file: Express.Multer.File,
-    @Body() payload: UpdateUserProfilePictureRequestDto,
-  ): Promise<UserResponseDto> {
+    @Body()
+    payload: AppDto.UsersServiceDto.UsersDto.UpdateUserProfilePictureRequestDto,
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
     return await this.usersService.updateUserProfilePicture(jwt.cid, file);
     // return this.usersService.getUserByCid(userCid);
   }

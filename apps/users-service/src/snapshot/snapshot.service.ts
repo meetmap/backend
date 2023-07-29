@@ -1,15 +1,7 @@
 import { RMQConstants } from '@app/constants';
-import {
-  AuthServiceUserSnapshotRequestDto,
-  UsersServiceFriendsSnapshotRequestDto,
-  UsersServiceUserSnapshotRequestDto,
-} from '@app/dto/rabbit-mq-common';
+import { AppDto } from '@app/dto';
 import { RabbitmqService } from '@app/rabbitmq';
-import {
-  IFriendsBase,
-  IMainAppUser,
-  IUsersServiceSnapshotUser,
-} from '@app/types';
+import { AppTypes } from '@app/types';
 import { RabbitPayload, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, ParseArrayPipe } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
@@ -32,10 +24,10 @@ export class SnapshotService {
   public async handleUserSnapshot(
     @RabbitPayload(
       new ParseArrayPipe({
-        items: AuthServiceUserSnapshotRequestDto,
+        items: AppDto.TransportDto.Users.AuthServiceUserSnapshotRequestDto,
       }),
     )
-    payload: AuthServiceUserSnapshotRequestDto[],
+    payload: AppDto.TransportDto.Users.AuthServiceUserSnapshotRequestDto[],
   ) {
     console.log('Users sync');
     try {
@@ -50,7 +42,7 @@ export class SnapshotService {
     const batchSize = 50;
     console.log('Friends snapshot task started');
     const friendsCursor = this.dal.getAllFriendsCursor(batchSize);
-    const friendsBatch: IFriendsBase[] = [];
+    const friendsBatch: AppTypes.Shared.Friends.IFriendsBase[] = [];
     let multiplier = 0;
     for await (const friendsDoc of friendsCursor) {
       friendsBatch.push(friendsDoc.toObject());
@@ -82,7 +74,7 @@ export class SnapshotService {
     const batchSize = 50;
     console.log('Users snapshot task started');
     const usersCursor = this.dal.getAllUsersCursor(batchSize);
-    const usersBatch: IMainAppUser[] = [];
+    const usersBatch: AppTypes.UsersService.Users.IUser[] = [];
     let multiplier = 0;
     for await (const userDoc of usersCursor) {
       usersBatch.push(userDoc.toObject());
@@ -109,7 +101,9 @@ export class SnapshotService {
     console.log('Users snapshot task ended');
   }
 
-  public async publishUsersBatch(userDocs: IMainAppUser[]) {
+  public async publishUsersBatch(
+    userDocs: AppTypes.UsersService.Users.IUser[],
+  ) {
     const snapshotBatch = this.getUsersSnapshotBatch(userDocs);
     await this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.name,
@@ -120,7 +114,9 @@ export class SnapshotService {
     );
   }
 
-  public async publishFriendsBatch(friendsDocs: IFriendsBase[]) {
+  public async publishFriendsBatch(
+    friendsDocs: AppTypes.Shared.Friends.IFriendsBase[],
+  ) {
     const snapshotBatch = this.getFriendsSnapshotBatch(friendsDocs);
     await this.rmq.amqp.publish(
       RMQConstants.exchanges.FRIENDS_SNAPSHOT.name,
@@ -132,19 +128,18 @@ export class SnapshotService {
   }
 
   private getUsersSnapshotBatch(
-    usersDocs: IUsersServiceSnapshotUser[],
-  ): UsersServiceUserSnapshotRequestDto[] {
+    usersDocs: AppTypes.Transport.Snapshot.Users.IUsersServiceSnapshot[],
+  ): AppDto.TransportDto.Users.UsersServiceUserSnapshotRequestDto[] {
     return usersDocs.map((userDoc) => ({
       cid: userDoc.cid,
       description: userDoc.description,
-      name: userDoc.name,
       profilePicture: userDoc.profilePicture,
     }));
   }
 
   private getFriendsSnapshotBatch(
-    friendsDocs: IFriendsBase[],
-  ): UsersServiceFriendsSnapshotRequestDto[] {
+    friendsDocs: AppTypes.Shared.Friends.IFriendsBase[],
+  ): AppDto.TransportDto.Friends.UsersServiceFriendsSnapshotRequestDto[] {
     return friendsDocs.map((friendsDoc) => ({
       requesterCId: friendsDoc.requesterCId,
       recipientCId: friendsDoc.recipientCId,

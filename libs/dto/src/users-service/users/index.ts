@@ -106,8 +106,6 @@ export class UserResponseDto implements AppTypes.UsersService.Users.ISafeUser {
 export class UserPartialResponseDto
   implements AppTypes.UsersService.Users.ISafePartialUser
 {
-  @NestedField([UserWithoutFriendsResponseDto])
-  friends: UserWithoutFriendsResponseDto[];
   @StringField({
     enum: AppTypes.Shared.Users.Gender,
   })
