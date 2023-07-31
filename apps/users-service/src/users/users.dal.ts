@@ -7,9 +7,6 @@ import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
 import { S3UploaderService } from '@app/s3-uploader';
 import { AppTypes } from '@app/types';
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { randomUUID } from 'crypto';
-import * as mongoose from 'mongoose';
-import * as path from 'path';
 
 @Injectable()
 export class UsersDal implements OnModuleInit {
@@ -40,48 +37,6 @@ export class UsersDal implements OnModuleInit {
       gender: payload.gender,
     } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.UsersService.Users.IUser>);
     return user.toObject();
-  }
-
-  public async getFriendsCids(userId: string) {
-    const response = await this.db.models.friends.aggregate<{ cid: string }>([
-      {
-        $match: {
-          status: 'friends',
-          requester: new mongoose.Types.ObjectId(userId),
-        },
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'recipient',
-          foreignField: '_id',
-          as: 'friends',
-        },
-      },
-      {
-        $unwind: {
-          path: '$friends',
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $project: {
-          friends: 1,
-        },
-      },
-      {
-        $replaceRoot: {
-          newRoot: '$friends',
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          cid: 1,
-        },
-      },
-    ]);
-    return response.map(({ cid }) => cid); // response.map(({ friends }) => friends);
   }
 
   public async getUserFriends(cid: string) {
@@ -199,18 +154,5 @@ export class UsersDal implements OnModuleInit {
     return await this.db.models.users.findOne({
       phone: phone,
     });
-  }
-
-  public async uploadUserProfilePicture(
-    cid: string,
-    file: Express.Multer.File,
-  ) {
-    const { url } = await this.s3Service.upload(
-      'users-assets/'
-        .concat(cid + '_profile-picture_' + randomUUID())
-        .concat(path.extname(file.originalname)),
-      file.buffer,
-    );
-    return url;
   }
 }

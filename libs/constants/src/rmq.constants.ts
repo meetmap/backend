@@ -1,6 +1,20 @@
 export class RMQConstants {
   static get exchanges() {
     return {
+      ASSETS: {
+        name: 'assets_exchange',
+        type: 'direct',
+        queues: {
+          USER_SERVICE_ASSET_UPLOADED: 'users_service_asset_uploaded_queue',
+          LOCATION_SERVICE_ASSET_UPLOADED:
+            'location_service_asset_uploaded_queue',
+          EVENTS_SERVICE_ASSET_UPLOADED: 'events_service_asset_uploaded_queue',
+        },
+        routingKeys: {
+          PROFILE_PICTURE_UPDATED: 'profile_picture.updated',
+          EVENT_PICTURE_UPDATED: 'event_pitcture.updated',
+        },
+      },
       FRIENDS_SNAPSHOT: {
         name: 'users_service_friends_snapshot',
         type: 'direct',
@@ -33,6 +47,7 @@ export class RMQConstants {
           LOCATION_SERVICE:
             'location_service__auth_service_users_snapshot_queue',
           EVENTS_SERVICE: 'events_service__auth_service_users_snapshot_queue',
+          ASSETS_SERVICE: 'assets_service__auth_service_users_snapshot_queue',
         },
         routingKeys: {
           SYNC: 'snapshot.sync',
@@ -45,6 +60,7 @@ export class RMQConstants {
           USER_SERVICE: 'users_service__user_events_queue',
           LOCATION_SERVICE: 'location_service__user_events_queue',
           EVENTS_SERVICE: 'events_service__user_events_queue',
+          ASSETS_SERVICE: 'assets_service__user_events_queue',
         },
         routingKeys: {
           USER_CREATED: 'user.created',

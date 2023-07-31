@@ -25,3 +25,6 @@ export enum RabbitMQExchanges {
   LOCATION_EXCHANGE = 'location-exchange',
   // AUTH_SERVICE_EXCHANGE = 'auth-service-exchange',
 }
+
+export const ASSETS_BUCKET_URL =
+  'https://meetmap-assets.s3.eu-west-1.amazonaws.com';

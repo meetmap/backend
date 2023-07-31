@@ -8,6 +8,7 @@ import {
   UsersServiceDatabase,
 } from './databases';
 import { AbstractBaseDatabase } from './databases/abstract.db';
+import { AssetsServiceDatabase } from './databases/assets-service';
 import './mongoose-defaults';
 
 export interface IDatabaseModuleConfig {
@@ -51,4 +52,6 @@ const microserviceDatabaseMap: Record<
     UsersServiceDatabase,
   [AppTypes.Other.Microservice.MicroServiceName.AUTH_SERVICE]:
     AuthServiceDatabase,
+  [AppTypes.Other.Microservice.MicroServiceName.ASSETS_SERVICE]:
+    AssetsServiceDatabase,
 };

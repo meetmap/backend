@@ -2,6 +2,7 @@ import { RMQConstants } from '@app/constants';
 import { IGetUserListWithFriendshipStatusAggregationResult } from '@app/database/shared-aggregations';
 import { AppDto } from '@app/dto';
 import { RabbitmqService } from '@app/rabbitmq';
+import { AssetsUploaders } from '@app/s3-uploader';
 import { AppTypes } from '@app/types';
 import {
   ForbiddenException,
@@ -85,34 +86,28 @@ export class UsersService {
     return UsersService.mapUserDbToResponseUser(user, friends);
   }
 
-  public async updateUserProfilePicture(
-    cid: string,
-    photo: Express.Multer.File,
-  ) {
+  public async updateUserProfilePicture(cid: string, assetKey: string) {
     const user = await this.dal.findUserByCId(cid);
     if (!user) {
       throw new ForbiddenException('User not found');
     }
-    // const friendsCids = await this.dal.getFriendsCids(user.id);
-
-    const url = await this.dal.uploadUserProfilePicture(cid, photo);
     // user.profilePicture = url
     const updatedUser: AppTypes.UsersService.Users.IUser = {
       ...user,
-      profilePicture: url,
+      profilePicture: assetKey,
     };
-    const friends = await this.dal.getUserFriends(cid);
+    // const friends = await this.dal.getUserFriends(cid);
 
-    const result = await this.rmqService.amqp.publish(
+    await this.rmqService.amqp.publish(
       RMQConstants.exchanges.USERS.name,
       RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
       UsersService.mapDbUserToRmqUser(updatedUser),
     );
 
-    return UsersService.mapUserDbToResponseUser(
-      { ...updatedUser, friendshipStatus: null },
-      friends,
-    );
+    // return UsersService.mapUserDbToResponseUser(
+    //   { ...updatedUser, friendshipStatus: null },
+    //   friends,
+    // );
   }
 
   static mapDbUserToRmqUser(
@@ -148,7 +143,12 @@ export class UsersService {
       description: user.description,
       fbId: user.fbId,
       name: user.name,
-      profilePicture: user.profilePicture,
+      profilePicture: user.profilePicture
+        ? AssetsUploaders.UserAssetsUploader.getAvatarUrl(
+            user.profilePicture,
+            AppTypes.AssetsSerivce.Other.SizeName.M,
+          )
+        : undefined,
       friendshipStatus: user.friendshipStatus,
       gender: user.gender,
     };
@@ -167,7 +167,12 @@ export class UsersService {
       description: user.description,
       fbId: user.fbId,
       name: user.name,
-      profilePicture: user.profilePicture,
+      profilePicture: user.profilePicture
+        ? AssetsUploaders.UserAssetsUploader.getAvatarUrl(
+            user.profilePicture,
+            AppTypes.AssetsSerivce.Other.SizeName.S,
+          )
+        : undefined,
       friendshipStatus: user.friendshipStatus,
       gender: user.gender,
     };

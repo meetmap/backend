@@ -1,4 +1,5 @@
 import { AppDto } from '@app/dto';
+import { AssetsUploaders } from '@app/s3-uploader';
 import { AppTypes } from '@app/types';
 import { Injectable } from '@nestjs/common';
 import { UsersDal } from './users.dal';
@@ -43,18 +44,23 @@ export class UsersService {
     await this.dal.rejectFriend(userCid, friendCid);
   }
 
-  static mapUserDbToResponseUser(
-    payload: AppTypes.EventsService.Users.IUser,
+  static mapEventsUserToUserResponseDto(
+    user: AppTypes.EventsService.Users.IUser,
   ): AppDto.EventsServiceDto.UsersDto.EventsServiceUserResponseDto {
     return {
-      birthDate: payload.birthDate,
-      cid: payload.cid,
-      id: payload.id,
-      username: payload.username,
-      description: payload.description,
-      name: payload.name,
-      profilePicture: payload.profilePicture,
-      gender: payload.gender,
+      birthDate: user.birthDate,
+      cid: user.cid,
+      gender: user.gender,
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      description: user.description,
+      profilePicture: user.profilePicture
+        ? AssetsUploaders.UserAssetsUploader.getAvatarUrl(
+            user.profilePicture,
+            AppTypes.AssetsSerivce.Other.SizeName.S,
+          )
+        : undefined,
     };
   }
 }

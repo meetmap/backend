@@ -9,6 +9,7 @@ import {
 import * as path from 'path';
 import { ZodError } from 'zod';
 import { EventerFetcherService } from '../eventer-fetcher/eventer-fetcher.service';
+import { UsersService } from '../users/users.service';
 import { EventsDal } from './events.dal';
 
 @Injectable()
@@ -55,7 +56,8 @@ export class EventsService {
   }
 
   public async getEventLikes(eventId: string) {
-    return await this.dal.getUsersLikedAnEvent(eventId);
+    const users = await this.dal.getUsersLikedAnEvent(eventId);
+    return users.map(UsersService.mapEventsUserToUserResponseDto);
   }
   public async cancelUserAction(
     userCId: string,
