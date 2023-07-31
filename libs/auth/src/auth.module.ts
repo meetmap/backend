@@ -39,4 +39,5 @@ const jwtServicesMap: Record<
   ],
   [AppTypes.Other.Microservice.MicroServiceName.LOCATION_SERVICE]: [JwtService],
   [AppTypes.Other.Microservice.MicroServiceName.USERS_SERVICE]: [JwtService],
+  [AppTypes.Other.Microservice.MicroServiceName.ASSETS_SERVICE]: [JwtService],
 };

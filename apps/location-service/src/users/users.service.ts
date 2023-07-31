@@ -1,6 +1,4 @@
-import { IGetUserListWithFriendshipStatusAggregationResult } from '@app/database/shared-aggregations';
 import { AppDto } from '@app/dto';
-import { AppTypes } from '@app/types';
 import { Injectable } from '@nestjs/common';
 import { UsersDal } from './users.dal';
 
@@ -36,17 +34,5 @@ export class UsersService {
 
   public async handleRejectFriend(userCid: string, friendCid: string) {
     await this.dal.rejectFriend(userCid, friendCid);
-  }
-
-  static mapUserToUserResponseDto(
-    user: IGetUserListWithFriendshipStatusAggregationResult<AppTypes.LocationService.Users.IUser>,
-  ): AppDto.LocationServiceDto.Users.UserLocationResponseDto {
-    return {
-      cid: user.cid,
-      id: user.id,
-      username: user.username,
-      name: user.name,
-      profilePicture: user.profilePicture,
-    };
   }
 }

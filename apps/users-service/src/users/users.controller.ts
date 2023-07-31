@@ -6,14 +6,12 @@ import {
 import { RMQConstants } from '@app/constants';
 import {
   BadRequestException,
-  Body,
   Controller,
   Get,
   Param,
-  Post,
   Query,
 } from '@nestjs/common';
-import { ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 // import {
 //   Nack,
@@ -23,7 +21,6 @@ import { UsersService } from './users.service';
 //   RequestOptions,
 // } from '@app/rmq-lib';
 import { AppDto } from '@app/dto';
-import { UploadedImage, UseFileInterceptor } from '@app/dto/decorators';
 import { AppTypes } from '@app/types';
 import {
   RabbitPayload,
@@ -87,6 +84,23 @@ export class UsersController {
     }
   }
 
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.ASSETS.name,
+    routingKey: [
+      RMQConstants.exchanges.ASSETS.routingKeys.PROFILE_PICTURE_UPDATED,
+    ],
+    queue: RMQConstants.exchanges.ASSETS.queues.USER_SERVICE_ASSET_UPLOADED,
+  })
+  public async handleProfilePictureUpdated(
+    @RabbitPayload()
+    payload: AppDto.TransportDto.Assets.ProfilePictureUpdatedRmqRequestDto,
+  ) {
+    await this.usersService.updateUserProfilePicture(
+      payload.cid,
+      payload.assetKey,
+    );
+  }
+
   @ApiOkResponse({
     type: AppDto.UsersServiceDto.UsersDto.UserResponseDto,
     description: 'Self user response',
@@ -131,21 +145,21 @@ export class UsersController {
     return this.usersService.getUserByCid(jwt.cid, userCid);
   }
 
-  @ApiOkResponse({
-    type: AppDto.UsersServiceDto.UsersDto.UserResponseDto,
-  })
-  @UseMicroserviceAuthGuard()
-  @Post('/profile/picture')
-  @ApiConsumes('multipart/form-data')
-  @UseFileInterceptor('photo')
-  public async updateUserProfilePicture(
-    @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
-    @UploadedImage()
-    file: Express.Multer.File,
-    @Body()
-    payload: AppDto.UsersServiceDto.UsersDto.UpdateUserProfilePictureRequestDto,
-  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
-    return await this.usersService.updateUserProfilePicture(jwt.cid, file);
-    // return this.usersService.getUserByCid(userCid);
-  }
+  // @ApiOkResponse({
+  //   type: AppDto.UsersServiceDto.UsersDto.UserResponseDto,
+  // })
+  // @UseMicroserviceAuthGuard()
+  // @Post('/profile/picture')
+  // @ApiConsumes('multipart/form-data')
+  // @UseFileInterceptor('photo')
+  // public async updateUserProfilePicture(
+  //   @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
+  //   @UploadedImage()
+  //   file: Express.Multer.File,
+  //   @Body()
+  //   payload: AppDto.UsersServiceDto.UsersDto.UpdateUserProfilePictureRequestDto,
+  // ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
+  //   return await this.usersService.updateUserProfilePicture(jwt.cid, file);
+  //   // return this.usersService.getUserByCid(userCid);
+  // }
 }

@@ -2,6 +2,8 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+export interface IUpload {}
+
 @Injectable()
 export class S3UploaderService {
   private readonly awsRegion = this.configService.getOrThrow('AWS_REGION');
