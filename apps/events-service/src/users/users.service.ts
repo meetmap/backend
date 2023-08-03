@@ -2,6 +2,7 @@ import { AppDto } from '@app/dto';
 import { AssetsUploaders } from '@app/s3-uploader';
 import { AppTypes } from '@app/types';
 import { Injectable } from '@nestjs/common';
+import { EventsService } from '../events/events.service';
 import { UsersDal } from './users.dal';
 
 @Injectable()
@@ -11,7 +12,8 @@ export class UsersService {
   public async getUserLikedEvents(
     userCId: string,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto[]> {
-    return await this.dal.getEventsByUserAction(userCId, 'liked');
+    const events = await this.dal.getEventsByUserAction(userCId, 'liked');
+    return events.map(EventsService.mapDbEventToEventResponse);
   }
 
   public async handleCreateUser(

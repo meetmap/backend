@@ -28,6 +28,25 @@ export class SnapshotDal {
     );
   }
 
+  public async updateOrCreateEvent(
+    payload: AppDto.TransportDto.Events.EventsServiceEventSnapshotRequestDto[],
+  ) {
+    await this.db.models.events.bulkWrite(
+      payload.map((event) => ({
+        updateOne: {
+          filter: { cid: event.cid },
+          update: {
+            $set: {
+              cid: event.cid,
+              creator: event.creator,
+            } satisfies Partial<AppTypes.AssetsSerivce.Events.IEvent>,
+          },
+          upsert: true,
+        },
+      })),
+    );
+  }
+
   // public async updateUserAgainstUserService(
   //   payload: AppDto.TransportDto.Users.UsersServiceUserSnapshotRequestDto[],
   // ) {

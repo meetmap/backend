@@ -1,6 +1,7 @@
 import {
   CORS_ORIGINS,
   getMicroservicePath,
+  IS_DEVELOPMENT,
   SERVER_PREFIX,
 } from '@app/constants';
 import { AppTypes } from '@app/types';
@@ -12,7 +13,9 @@ import { AuthServiceModule } from './auth-service.module';
 async function bootstrap() {
   const microserviceName: AppTypes.Other.Microservice.MicroServiceName =
     AppTypes.Other.Microservice.MicroServiceName.AUTH_SERVICE;
-  const app = await NestFactory.create(AuthServiceModule);
+  const app = await NestFactory.create(AuthServiceModule, {
+    bufferLogs: !IS_DEVELOPMENT,
+  });
   const PORT = process.env.PORT ?? 3003;
 
   const config = new DocumentBuilder()

@@ -9,10 +9,12 @@ export class RMQConstants {
           LOCATION_SERVICE_ASSET_UPLOADED:
             'location_service_asset_uploaded_queue',
           EVENTS_SERVICE_ASSET_UPLOADED: 'events_service_asset_uploaded_queue',
+          ASSETS_SERVICE_ASSET_QUEUE: 'events_service_asset_queue',
         },
         routingKeys: {
           PROFILE_PICTURE_UPDATED: 'profile_picture.updated',
           EVENT_PICTURE_UPDATED: 'event_pitcture.updated',
+          ASSET_UPLOAD_FAILED: 'asset_upload.failed',
         },
       },
       FRIENDS_SNAPSHOT: {
@@ -21,6 +23,27 @@ export class RMQConstants {
         queues: {
           LOCATION_SERVICE: 'location_service__friends_snapshot_queue',
           EVENTS_SERVICE: 'events_service__friends_snapshot_queue',
+        },
+        routingKeys: {
+          SYNC: 'snapshot.sync',
+        },
+      },
+      EVENTS: {
+        name: 'events_service_events',
+        type: 'direct',
+        queues: {
+          ASSETS_SERVICE: 'events_service__assets_service_events_queue',
+        },
+        routingKeys: {
+          EVENT_CREATED: 'event.created',
+        },
+      },
+      EVENTS_SERVICE_EVENTS_SNAPSHOT: {
+        name: 'events_service_events_snapshot',
+        type: 'direct',
+        queues: {
+          ASSETS_SERVICE:
+            'events_service__assets_service_events_snapshot_queue',
         },
         routingKeys: {
           SYNC: 'snapshot.sync',

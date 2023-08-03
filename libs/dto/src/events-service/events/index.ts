@@ -8,8 +8,6 @@ import {
 } from '@app/dto/decorators';
 import { AppTypes } from '@app/types';
 import { ApiProperty } from '@nestjs/swagger';
-import { PopulatedDoc, Types } from 'mongoose';
-import { z } from 'zod';
 
 export class EventUserStatsResponseDto
   implements
@@ -57,11 +55,13 @@ export class PointResponseDto implements AppTypes.Shared.Location.IPoint {
   coordinates: [number, number];
 }
 
-export class LocationResponseDto implements AppTypes.Shared.Location.ILocation {
+export class LocationResponseDto
+  implements Omit<AppTypes.Shared.Location.ILocation, 'cityId'>
+{
   @StringField()
   country: string;
-  @IdField({ optional: true })
-  cityId?: PopulatedDoc<AppTypes.Shared.City.ICity, Types.ObjectId | undefined>;
+  @StringField({ optional: true })
+  city?: string;
   @NestedField(PointResponseDto)
   coordinates: PointResponseDto;
 }
@@ -98,7 +98,7 @@ export class MinimalEventByLocationResponseDto
   implements
     Pick<
       AppTypes.EventsService.Event.IMinimalEventByLocation,
-      'id' | 'picture' | 'coordinates'
+      'id' | 'thumbnail' | 'coordinates'
     >
 {
   @IdField()
@@ -111,7 +111,7 @@ export class MinimalEventByLocationResponseDto
   })
   coordinates: [number, number];
   @StringField({ optional: true })
-  picture?: string | undefined;
+  thumbnail?: string | undefined;
 }
 
 export class EventResponseDto
@@ -121,7 +121,6 @@ export class EventResponseDto
       | 'id'
       | 'slug'
       | 'title'
-      | 'picture'
       | 'startTime'
       | 'endTime'
       | 'ageLimit'
@@ -130,16 +129,19 @@ export class EventResponseDto
       | 'eventType'
       | 'description'
       | 'accessibility'
+      | 'cid'
     >
 {
   @IdField()
   id: string;
+  @IdField()
+  cid: string;
   @StringField()
   slug: string;
   @StringField()
   title: string;
   @StringField({ optional: true })
-  picture?: string | undefined;
+  thumbnail?: string | undefined;
 
   @DateField()
   startTime: Date;
@@ -186,6 +188,8 @@ export class SingleEventResponseDto
 {
   @IdField()
   id: string;
+  @IdField()
+  cid: string;
   @StringField()
   slug: string;
   @StringField({
@@ -195,7 +199,9 @@ export class SingleEventResponseDto
   @StringField()
   title: string;
   @StringField({ optional: true })
-  picture?: string | undefined;
+  thumbnail?: string | undefined;
+  @StringField({ isArray: true })
+  assets: string[];
   @StringField({ optional: true })
   description?: string | undefined;
   @DateField()
@@ -231,70 +237,110 @@ export class SingleEventResponseDto
   updatedAt: Date;
 }
 
-export class CreateEventRequestDto {
-  @StringField({
-    required: true,
-    description: 'Stringified json',
-    example: JSON.stringify(
-      {
-        ageLimit: 1,
-        description: 'description',
-        endTime: new Date('2003-04-01T21:00:00.000Z'),
-        startTime: new Date('2003-04-01T21:00:00.000Z'),
-        accessibility:
-          AppTypes.EventsService.Event.EventAccessibilityType.PUBLIC,
-        eventType: AppTypes.EventsService.Event.EventType.USER,
-        location: {
-          lat: 1,
-          lng: 1,
-        },
-        slug: 'slug',
-        tickets: [
-          {
-            amount: 1,
-            description: 'description',
-            name: 'name',
-            price: 0,
-          },
-        ],
-        title: 'title',
-      } as z.infer<typeof CreateEventSchema>,
-      null,
-      2,
-    ),
-  })
-  rawEvent: string;
-
-  @ApiProperty({
-    type: 'string',
-    format: 'binary',
-    required: true,
-    description: 'fileType: image/*; maxSize: 3.5mb',
-  })
-  photo: Express.Multer.File;
+class CreateUserEventLocationRequestDto {
+  @NumberField()
+  lat: number;
+  @NumberField()
+  lng: number;
 }
 
-export const TicketSchema = z.object({
-  name: z.string(),
-  price: z.number().max(100000),
-  amount: z.number().min(-1).max(1000000).optional().default(-1),
-  description: z.string().optional().nullable().default(null),
-}); //@todo make startTime and endTime validation
+class CreateUserEventTicketRequestDto {
+  @StringField()
+  name: string;
+  @NumberField({ max: 100000 })
+  price: number;
+  @NumberField({ max: 1000000, min: -1 })
+  amount: number;
+  @StringField({ optional: true })
+  description?: string;
+}
 
-export const CreateEventSchema = z.object({
-  title: z.string(),
-  description: z.string().optional().nullable().default(null),
-  slug: z.string(),
-  eventType: z.nativeEnum(AppTypes.EventsService.Event.EventType),
-  accessibility: z.nativeEnum(
-    AppTypes.EventsService.Event.EventAccessibilityType,
-  ),
-  startTime: z.coerce.date(),
-  endTime: z.coerce.date(),
-  ageLimit: z.number().min(1).max(120),
-  location: z.object({
-    lat: z.number(),
-    lng: z.number(),
-  }),
-  tickets: z.array(TicketSchema),
-});
+export class CreateUserEventRequestDto {
+  @StringField()
+  title: string;
+  @StringField({ optional: true })
+  description?: string;
+  @StringField({ enum: AppTypes.EventsService.Event.EventAccessibilityType })
+  accessibility: AppTypes.EventsService.Event.EventAccessibilityType;
+  @DateField()
+  startTime: Date;
+  @DateField()
+  endTime: Date;
+  @NumberField({
+    min: 1,
+    max: 120,
+  })
+  ageLimit: number;
+  @NestedField(CreateUserEventLocationRequestDto)
+  location: CreateUserEventLocationRequestDto;
+  @NestedField([CreateUserEventTicketRequestDto], { maxLength: 10 })
+  tickets: CreateUserEventTicketRequestDto[];
+}
+
+// export class CreateEventRequestDto {
+//   @StringField({
+//     required: true,
+//     description: 'Stringified json',
+//     example: JSON.stringify(
+//       {
+//         ageLimit: 1,
+//         description: 'description',
+//         endTime: new Date('2003-04-01T21:00:00.000Z'),
+//         startTime: new Date('2003-04-01T21:00:00.000Z'),
+//         accessibility:
+//           AppTypes.EventsService.Event.EventAccessibilityType.PUBLIC,
+//         eventType: AppTypes.EventsService.Event.EventType.USER,
+//         location: {
+//           lat: 1,
+//           lng: 1,
+//         },
+//         slug: 'slug',
+//         tickets: [
+//           {
+//             amount: 1,
+//             description: 'description',
+//             name: 'name',
+//             price: 0,
+//           },
+//         ],
+//         title: 'title',
+//       } as z.infer<typeof CreateEventSchema>,
+//       null,
+//       2,
+//     ),
+//   })
+//   rawEvent: string;
+
+//   @ApiProperty({
+//     type: 'string',
+//     format: 'binary',
+//     required: true,
+//     description: 'fileType: image/*; maxSize: 3.5mb',
+//   })
+//   photo: Express.Multer.File;
+// }
+
+// export const TicketSchema = z.object({
+//   name: z.string(),
+//   price: z.number().max(100000),
+//   amount: z.number().min(-1).max(1000000).optional().default(-1),
+//   description: z.string().optional().nullable().default(null),
+// }); //@todo make startTime and endTime validation
+
+// export const CreateEventSchema = z.object({
+//   title: z.string(),
+//   description: z.string().optional().nullable().default(null),
+//   slug: z.string(),
+//   eventType: z.nativeEnum(AppTypes.EventsService.Event.EventType),
+//   accessibility: z.nativeEnum(
+//     AppTypes.EventsService.Event.EventAccessibilityType,
+//   ),
+//   startTime: z.coerce.date(),
+//   endTime: z.coerce.date(),
+//   ageLimit: z.number().min(1).max(120),
+//   location: z.object({
+//     lat: z.number(),
+//     lng: z.number(),
+//   }),
+//   tickets: z.array(TicketSchema),
+// });

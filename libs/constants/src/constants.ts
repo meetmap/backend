@@ -10,6 +10,8 @@ export const SERVER_PREFIX = 'https://api.meetmap.xyz';
 
 export const CORS_ORIGINS = /\\*\.meetmap.xyz|localhost/;
 
+export const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
+
 export const getMicroservicePath = (
   microservice: AppTypes.Other.Microservice.MicroServiceName,
 ) => {
