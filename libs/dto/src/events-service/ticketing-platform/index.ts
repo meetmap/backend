@@ -18,7 +18,7 @@ export class EventForOrganizersResponseDto
       | 'id'
       | 'slug'
       | 'title'
-      | 'picture'
+      | 'assets'
       | 'startTime'
       | 'endTime'
       | 'ageLimit'
@@ -31,6 +31,10 @@ export class EventForOrganizersResponseDto
   id: string;
   @StringField()
   slug: string;
+  @StringField({ optional: true })
+  thumbnail?: string;
+  @StringField({ isArray: true })
+  assets: string[];
   @StringField()
   title: string;
   @StringField({ optional: true })
@@ -222,13 +226,7 @@ export class UploadEventRequestDto
   implements
     Pick<
       AppTypes.EventsService.Event.IEvent,
-      | 'link'
-      | 'title'
-      | 'picture'
-      | 'description'
-      | 'startTime'
-      | 'endTime'
-      | 'ageLimit'
+      'link' | 'title' | 'description' | 'startTime' | 'endTime' | 'ageLimit'
       // | 'tickets'
     >
 {

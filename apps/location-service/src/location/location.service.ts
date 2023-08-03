@@ -1,4 +1,5 @@
 import { AppDto } from '@app/dto';
+import { AssetsUploaders } from '@app/s3-uploader';
 import { AppTypes } from '@app/types';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { LocationDal } from './location.dal';
@@ -50,7 +51,12 @@ export class LocationService {
       location: userLocation.location,
       username: user.username,
       name: user.name,
-      profilePicture: user.profilePicture,
+      profilePicture: user.profilePicture
+        ? AssetsUploaders.UserAssetsUploader.getAvatarUrl(
+            user.profilePicture,
+            AppTypes.AssetsSerivce.Other.SizeName.XS,
+          )
+        : undefined,
       locationUpdatedAt: userLocation.updatedAt,
     };
   }

@@ -1,6 +1,7 @@
 import { AppTypes } from '@app/types';
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { randomUUID } from 'crypto';
 import * as mongoose from 'mongoose';
 import { EventerFetcherDal } from './eventer-fetcher.dal';
 
@@ -56,7 +57,7 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
     }
 
     if (dbEvent) {
-      return await this.dal.updateEvent(dbEvent.id, payload);
+      return await this.dal.updateEvent(dbEvent.id, dbEvent.cid, payload);
     }
     return await this.dal.storeEvent(payload);
   }
@@ -89,7 +90,9 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
       accessibility: AppTypes.EventsService.Event.EventAccessibilityType.PUBLIC,
       title: event.event.name,
       ageLimit: event.event.guestInfoFields?.age.ageLimit ?? 1,
-      picture: event.event.ticketPlatform.images?.imageSquare,
+      assets: event.event.ticketPlatform.images?.imageSquare
+        ? [event.event.ticketPlatform.images?.imageSquare]
+        : [],
       slug: event.event.linkName,
       link: this.generateAffiliateLink(event.event.linkName),
       description: event.jsonLdData.description,
@@ -103,6 +106,7 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
           coordinates: [location.longitude, location.latitude],
         },
       },
+      cid: randomUUID(),
       eventType: AppTypes.EventsService.Event.EventType.PARTNER,
       tickets: (tickets?.ticketTypes ?? []).map((ticket) => ({
         amount: ticket.remaining,

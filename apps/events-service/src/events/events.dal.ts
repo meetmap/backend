@@ -5,8 +5,8 @@ import { S3UploaderService } from '@app/s3-uploader';
 import { AppTypes } from '@app/types';
 
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import * as mongoose from 'mongoose';
-import { z } from 'zod';
 @Injectable()
 export class EventsDal {
   constructor(
@@ -14,14 +14,31 @@ export class EventsDal {
     private readonly s3Service: S3UploaderService,
   ) {}
 
-  public async getEventById(
-    eventId: string,
-  ): Promise<AppTypes.EventsService.Event.IEvent | null> {
-    const event = await this.db.models.event.findById(eventId);
+  public async getEventById(eventId: string): Promise<
+    | (AppTypes.EventsService.Event.IEvent & {
+        location: AppTypes.Shared.Location.ILocationWithCity;
+      })
+    | null
+  > {
+    const event = await this.db.models.event.findById(eventId).populate({
+      path: 'location.cityId',
+      select: '-location',
+    });
     if (!event) {
       return null;
     }
-    return event.toObject();
+    const objectEvent = event.toObject();
+    return {
+      ...objectEvent,
+      location: {
+        city: objectEvent.location.cityId as unknown as Omit<
+          AppTypes.Shared.City.ICity,
+          'location'
+        >,
+        coordinates: objectEvent.location.coordinates,
+        country: objectEvent.location.country,
+      },
+    };
   }
 
   public async getUsersLikedAnEvent(eventId: string) {
@@ -245,13 +262,20 @@ export class EventsDal {
         },
         {
           $project: {
-            picture: 1,
+            thumbnail: { $arrayElemAt: ['$assets', 0] },
+            cid: 1,
             coordinates: '$location.coordinates.coordinates',
             id: {
               $toString: '$_id',
             },
             _id: 0,
-          },
+            isThirdParty: {
+              $toBool: '$creator',
+            },
+          } satisfies Record<
+            keyof AppTypes.EventsService.Event.IMinimalEventByLocation | '_id',
+            any
+          >,
         },
         // ...EventsDal.getEventsWithUserStatsAggregation(userCId),
       ],
@@ -289,15 +313,14 @@ export class EventsDal {
    * @description without picture
    */
   public async createUserEvent(
-    payload: z.infer<
-      typeof AppDto.EventsServiceDto.EventsDto.CreateEventSchema
-    >,
     creatorCid: string,
+    payload: AppDto.EventsServiceDto.EventsDto.CreateUserEventRequestDto,
   ) {
     const city = await this.getCityByEventCoordinates({
       lat: payload.location.lat,
       lng: payload.location.lng,
     });
+    const cid = randomUUID();
     const createdEvent = await this.db.models.event.create({
       ageLimit: payload.ageLimit,
       creator: {
@@ -305,21 +328,23 @@ export class EventsDal {
         type: AppTypes.EventsService.Event.CreatorType.USER,
       } satisfies AppTypes.EventsService.Event.IEvent['creator'],
       description: payload.description ?? undefined,
+      assets: [],
       //@todo check if enums are working
       accessibility: payload.accessibility,
-      eventType: payload.eventType, // EventType[payload.eventType] ?? EventType.USER,
+      eventType: AppTypes.EventsService.Event.EventType.USER, // EventType[payload.eventType] ?? EventType.USER,
       title: payload.title,
       startTime: payload.startTime,
       endTime: payload.endTime,
       location: {
-        cityId: city?.id,
+        cityId: city ? new mongoose.Types.ObjectId(city.id) : undefined,
         coordinates: {
           type: 'Point',
           coordinates: [payload.location.lng, payload.location.lat],
         },
         country: 'Israel',
-      } as AppTypes.Shared.Location.ILocation,
-      slug: payload.slug,
+      } satisfies AppTypes.Shared.Location.ILocation,
+      cid: cid,
+      slug: cid,
       tickets: payload.tickets.map((ticket) => ({
         amount: ticket.amount,
         name: ticket.name,
@@ -328,20 +353,24 @@ export class EventsDal {
           currency: 'ILS',
         },
         description: ticket.description,
-      })) as AppTypes.EventsService.Event.ITicket[],
+      })) satisfies AppTypes.EventsService.Event.ITicket[],
     } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>);
-    return createdEvent;
+    return createdEvent.toObject();
   }
 
-  public async updatePictureForEvent(
-    eventId: string,
-    picture: string,
+  public async updatePicturesForEvent(
+    eventCid: string,
+    keys: string[],
   ): Promise<AppTypes.EventsService.Event.IEvent> {
-    const event = await this.db.models.event.findByIdAndUpdate(
-      eventId,
+    const event = await this.db.models.event.findOneAndUpdate(
       {
-        $set: {
-          picture: picture,
+        cid: eventCid,
+      },
+      {
+        $push: {
+          assets: {
+            $each: keys,
+          },
         },
       },
       {
@@ -400,6 +429,7 @@ export class EventsDal {
               },
             ],
           },
+          thumbnail: { $arrayElemAt: ['$assets', 0] },
         } satisfies Partial<
           Record<keyof AppTypes.EventsService.Event.IEventWithUserStats, any>
         >,
