@@ -1,10 +1,13 @@
-import { PopulatedDoc } from 'mongoose';
+import * as mongoose from 'mongoose';
 import { ICity } from '../city';
 
 export interface ILocation {
   country: string;
-  cityId?: PopulatedDoc<ICity>;
+  cityId?: mongoose.Types.ObjectId;
   coordinates: IPoint;
+}
+export interface ILocationWithCity extends Omit<ILocation, 'cityId'> {
+  city?: Omit<ICity, 'location'>;
 }
 
 export interface IPoint {

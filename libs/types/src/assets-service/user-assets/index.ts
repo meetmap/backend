@@ -1,12 +1,5 @@
-import { AssetType, SizeName } from '../other';
+import { IAssetsBase } from '../assets-base';
 
-export interface IUserAssets {
-  id: string;
+export interface IUserAssets extends IAssetsBase {
   userCid: string;
-  sizes: SizeName[];
-  type: AssetType;
-  assetKey: string;
-  urls: string[];
-  createdAt: Date;
-  updatedAt: Date;
 }

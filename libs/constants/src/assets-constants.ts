@@ -41,19 +41,19 @@ export const SQUARE_SIZES = {
  */
 export const SIZES_4_3 = {
   XS: {
-    sizeName: AppTypes.AssetsSerivce.Other.SizeName.XS,
+    sizeName: AppTypes.AssetsSerivce.Other.SizeName.XS_4_3,
     size: [120, 90],
   },
   S: {
-    sizeName: AppTypes.AssetsSerivce.Other.SizeName.S,
+    sizeName: AppTypes.AssetsSerivce.Other.SizeName.S_4_3,
     size: [480, 360],
   },
   M: {
-    sizeName: AppTypes.AssetsSerivce.Other.SizeName.M,
+    sizeName: AppTypes.AssetsSerivce.Other.SizeName.M_4_3,
     size: [800, 600],
   },
   L: {
-    sizeName: AppTypes.AssetsSerivce.Other.SizeName.L,
+    sizeName: AppTypes.AssetsSerivce.Other.SizeName.L_4_3,
     size: [1600, 1200],
   },
 } satisfies Record<string, IImageSize>;

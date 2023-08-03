@@ -9,6 +9,11 @@ export const UserAssetsSchema =
         enum: AppTypes.AssetsSerivce.Other.AssetType,
         required: true,
       },
+      uploadId: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'UploadsStatus',
+        required: true,
+      },
       assetKey: {
         type: mongoose.SchemaTypes.String,
         required: true,

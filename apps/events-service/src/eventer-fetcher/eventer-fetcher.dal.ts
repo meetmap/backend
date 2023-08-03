@@ -1,24 +1,36 @@
 import { eventerAxios } from '@app/axios';
 import { EventsServiceDatabase } from '@app/database';
 
-import { RedisService } from '@app/redis';
 import { AppTypes } from '@app/types';
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AxiosError } from 'axios';
 
 @Injectable()
 export class EventerFetcherDal {
-  constructor(
-    @Inject(RedisService.name)
-    private readonly database: EventsServiceDatabase,
-  ) {}
+  constructor(private readonly database: EventsServiceDatabase) {}
   public async updateEvent(
     eventId: string,
+    eventCid: string,
     payload: AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>,
   ): Promise<AppTypes.EventsService.Event.IEvent | null> {
     return this.database.models.event.findByIdAndUpdate(eventId, {
-      ...payload,
+      $set: {
+        cid: eventCid,
+        accessibility: payload.accessibility,
+        ageLimit: payload.ageLimit,
+        creator: payload.creator,
+        description: payload.description,
+        endTime: payload.endTime,
+        startTime: payload.startTime,
+        eventType: AppTypes.EventsService.Event.EventType.PARTNER,
+        link: payload.link,
+        location: payload.location,
+        assets: payload.assets,
+        slug: payload.slug,
+        tickets: payload.tickets,
+        title: payload.title,
+      },
       updatedAt: undefined,
       createdAt: undefined,
       id: undefined,
@@ -28,7 +40,7 @@ export class EventerFetcherDal {
     payload: AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>,
   ): Promise<AppTypes.EventsService.Event.IEvent> {
     return await this.database.models.event.create(
-      payload as AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>,
+      payload satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>,
     );
   }
 

@@ -11,7 +11,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { IPictureSettings } from './types';
-import { getResizedImages } from './utils/sharp-guard';
+import { getResizedImages } from './utils/getResizedImages';
 
 @Injectable()
 export class EventAssetsUploader {
@@ -31,9 +31,9 @@ export class EventAssetsUploader {
     prefix: 'events',
     ext: 'jpg',
     sizes: [
+      AssetsContstants.SQUARE_SIZES.XS,
       AssetsContstants.SQUARE_SIZES.S,
       AssetsContstants.SIZES_4_3.S,
-      AssetsContstants.SQUARE_SIZES.S,
       AssetsContstants.OTHER_SIZES.EXACT,
     ],
     contentType: 'image/jpeg',
@@ -81,10 +81,10 @@ export class EventAssetsUploader {
     );
   }
 
-  public async uploadEventPicture(eventId: string, photoBuffer: Buffer) {
+  public async uploadEventPicture(eventCid: string, photoBuffer: Buffer) {
     const sizes = EventAssetsUploader.eventPictureSettings.sizes;
     const outputImages = await getResizedImages(photoBuffer, sizes);
-    const imageId = `${eventId}-${randomUUID()}`;
+    const imageId = `${eventCid}-${randomUUID()}`;
     const uploadsPromises = outputImages.map(
       async ({ size, sizeName, buffer }) => {
         const assetKey = `${EventAssetsUploader.eventPictureSettings.prefix}/${imageId}/${sizeName}.${EventAssetsUploader.eventPictureSettings.ext}`;
@@ -113,18 +113,18 @@ export class EventAssetsUploader {
     return `https://meetmap-assets.s3.eu-west-1.amazonaws.com/${assetKey}/${size}.${EventAssetsUploader.eventPictureSettings.ext}`;
   }
 
-  static getEventPictureUrls(cid: string) {
+  static getEventPictureUrls(assetKey: string) {
     return EventAssetsUploader.eventPictureSettings.sizes.reduce<
       Record<EventPictureSize, string>
     >(
       (acc, curr) => ({
         ...acc,
-        [curr.sizeName]: `${ASSETS_BUCKET_URL}/${EventAssetsUploader.eventPictureSettings.prefix}/${cid}/${curr.sizeName}.${EventAssetsUploader.eventPictureSettings.ext}`,
+        [curr.sizeName]: `${ASSETS_BUCKET_URL}/${assetKey}/${curr.sizeName}.${EventAssetsUploader.eventPictureSettings.ext}`,
       }),
       {
         xs: '',
         s: '',
-        m: '',
+        s_4_3: '',
         exact: '',
       },
     );
@@ -133,5 +133,5 @@ export class EventAssetsUploader {
 
 export type EventPictureSize = Extract<
   AppTypes.AssetsSerivce.Other.SizeName,
-  'xs' | 's' | 'm' | 'exact'
+  'xs' | 's' | 's_4_3' | 'exact'
 >;

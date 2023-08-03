@@ -1,13 +1,9 @@
+import { RMQConstants } from '@app/constants';
 import { AppDto } from '@app/dto';
+import { RabbitmqService } from '@app/rabbitmq';
+import { AssetsUploaders } from '@app/s3-uploader';
 import { AppTypes } from '@app/types';
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
-import * as path from 'path';
-import { ZodError } from 'zod';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventerFetcherService } from '../eventer-fetcher/eventer-fetcher.service';
 import { UsersService } from '../users/users.service';
 import { EventsDal } from './events.dal';
@@ -17,7 +13,12 @@ export class EventsService {
   constructor(
     private readonly dal: EventsDal,
     private readonly eventerFetcherService: EventerFetcherService,
+    private readonly rmqService: RabbitmqService,
   ) {}
+
+  public async updateEventsPicture(eventCid: string, keys: string[]) {
+    await this.dal.updatePicturesForEvent(eventCid, keys);
+  }
 
   public async getEventsByKeywords(userCId: string, keywords: string) {
     const events = await this.dal.getEventsByKeywords(userCId, keywords);
@@ -36,6 +37,7 @@ export class EventsService {
     const userStats = await this.dal.getEventUserStats(eventId, cid);
     return EventsService.mapDbEventToSingleEventResponse(
       event,
+      event.location.city,
       eventStats,
       userStats,
     );
@@ -86,7 +88,7 @@ export class EventsService {
       latitude,
       radius,
     );
-    return events;
+    return events.map(EventsService.mapDbEventToMinimalEventByLocationResponse);
   }
 
   public async getEventsBatch(
@@ -97,43 +99,37 @@ export class EventsService {
     return events.map(EventsService.mapDbEventToEventResponse);
   }
 
-  public async userCreateEvent(
-    body: string,
+  public async createUserEvent(
     userCid: string,
-    image: Express.Multer.File,
+    payload: AppDto.EventsServiceDto.EventsDto.CreateUserEventRequestDto,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto> {
-    try {
-      const parsedJson = JSON.parse(body);
-      const eventData =
-        AppDto.EventsServiceDto.EventsDto.CreateEventSchema.parse(parsedJson);
+    const event = await this.dal.createUserEvent(userCid, payload);
+    await this.rmqService.amqp.publish(
+      RMQConstants.exchanges.EVENTS.name,
+      RMQConstants.exchanges.EVENTS.routingKeys.EVENT_CREATED,
+      EventsService.mapDbEventToEventRmqRequest(event),
+    );
+    return EventsService.mapDbEventToEventResponse({
+      ...event,
+      userStats: {
+        isUserLike: false,
+        userStatus: undefined,
+      },
+    });
+  }
 
-      const event = await this.dal.createUserEvent(eventData, userCid);
-      const imageUrl = await this.dal.uploadToPublicEventsAssestsBucket(
-        event.id.concat('-main-image').concat(path.extname(image.originalname)),
-        image.buffer,
-      );
-      const eventWithPicture = await this.dal.updatePictureForEvent(
-        event.id,
-        imageUrl,
-      );
-      return EventsService.mapDbEventToEventResponse({
-        ...eventWithPicture,
-        userStats: {
-          isUserLike: false,
-          userStatus: undefined,
-        },
-      });
-    } catch (error) {
-      if (error instanceof SyntaxError) {
-        throw new BadRequestException(error.message);
-      }
-      if (error instanceof ZodError) {
-        throw new BadRequestException(error.message);
-      } else {
-        console.log(error);
-        throw new InternalServerErrorException('Something went wrong');
-      }
-    }
+  static mapDbEventToEventRmqRequest(
+    event: AppTypes.EventsService.Event.IEvent,
+  ): AppDto.TransportDto.Events.EventsServiceEventRequestDto {
+    return {
+      cid: event.cid,
+      creator: event.creator
+        ? {
+            creatorCid: event.creator.creatorCid,
+            type: event.creator.type,
+          }
+        : undefined,
+    };
   }
 
   static mapDbEventToEventResponse(
@@ -144,15 +140,19 @@ export class EventsService {
       ageLimit: event.ageLimit,
       endTime: event.endTime,
       eventType: event.eventType,
-      location: event.location,
+      location: {
+        coordinates: event.location.coordinates,
+        country: event.location.country,
+      },
       slug: event.slug,
       startTime: event.startTime,
       title: event.title,
       userStats: event.userStats,
       creator: event.creator,
       description: event.description,
-      picture: event.picture,
+      // assets: event.assets,
       accessibility: event.accessibility,
+      cid: event.cid,
     };
   }
 
@@ -162,28 +162,56 @@ export class EventsService {
     return {
       coordinates: event.coordinates,
       id: event.id,
-      picture: event.picture,
+      thumbnail:
+        event.thumbnail &&
+        (event.isThirdParty
+          ? AssetsUploaders.EventAssetsUploader.getEventPictureUrl(
+              event.thumbnail,
+              AppTypes.AssetsSerivce.Other.SizeName.S_4_3,
+            )
+          : event.thumbnail),
     };
   }
 
   static mapDbEventToSingleEventResponse(
     event: AppTypes.EventsService.Event.IEvent,
+    city: Omit<AppTypes.Shared.City.ICity, 'location'> | undefined,
     eventStats: AppTypes.EventsService.Event.IEventStats,
     userStats: AppTypes.EventsService.Event.IEventWithUserStats['userStats'],
   ): AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto {
     return {
       id: event.id,
+      cid: event.cid,
       ageLimit: event.ageLimit,
       endTime: event.endTime,
       eventType: event.eventType,
-      location: event.location,
+      location: {
+        coordinates: event.location.coordinates,
+        country: event.location.country,
+        city: city?.name,
+      },
       slug: event.slug,
       startTime: event.startTime,
       title: event.title,
       userStats: userStats,
       creator: event.creator,
       description: event.description,
-      picture: event.picture,
+      thumbnail:
+        event.assets[0] &&
+        (event.creator
+          ? AssetsUploaders.EventAssetsUploader.getEventPictureUrl(
+              event.assets[0],
+              AppTypes.AssetsSerivce.Other.SizeName.S_4_3,
+            )
+          : event.assets[0]),
+      assets: event.creator
+        ? event.assets.map((asset) =>
+            AssetsUploaders.EventAssetsUploader.getEventPictureUrl(
+              asset,
+              AppTypes.AssetsSerivce.Other.SizeName.S_4_3,
+            ),
+          )
+        : event.assets,
       accessibility: event.accessibility,
       createdAt: event.createdAt,
       stats: eventStats,

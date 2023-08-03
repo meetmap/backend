@@ -7,6 +7,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AssetsServiceController } from './assets-service.controller';
 import { AssetsUploaderModule } from './assets-uploader/assets-uploader.module';
+import { EventsModule } from './events/events.module';
 import { SnapshotModule } from './snapshot/snapshot.module';
 import { UserModule } from './users/users.module';
 
@@ -28,6 +29,7 @@ import { UserModule } from './users/users.module';
     S3UploaderModule,
     SnapshotModule,
     UserModule,
+    EventsModule,
     AssetsUploaderModule,
   ],
 

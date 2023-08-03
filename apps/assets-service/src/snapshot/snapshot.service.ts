@@ -32,6 +32,31 @@ export class SnapshotService {
     }
   }
 
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.EVENTS_SERVICE_EVENTS_SNAPSHOT.name,
+    routingKey: [
+      RMQConstants.exchanges.EVENTS_SERVICE_EVENTS_SNAPSHOT.routingKeys.SYNC,
+    ],
+    queue:
+      RMQConstants.exchanges.EVENTS_SERVICE_EVENTS_SNAPSHOT.queues
+        .ASSETS_SERVICE,
+  })
+  public async handleEventsSnapshot(
+    @RabbitPayload(
+      new ParseArrayPipe({
+        items: AppDto.TransportDto.Events.EventsServiceEventSnapshotRequestDto,
+      }),
+    )
+    payload: AppDto.TransportDto.Events.EventsServiceEventSnapshotRequestDto[],
+  ) {
+    console.log('Events sync');
+    try {
+      await this.dal.updateOrCreateEvent(payload);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   // @RabbitSubscribe({
   //   exchange: RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.name,
   //   routingKey: [

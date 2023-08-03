@@ -66,4 +66,15 @@ export class SnapshotDal {
       })),
     );
   }
+
+  public getAllEventsCursor(batchSize: number) {
+    return this.db.models.event
+      .find({}, {
+        creator: true,
+        cid: true,
+      } satisfies Record<keyof AppTypes.Transport.Snapshot.Events.IEventsServiceSnapshotEvent, true>)
+      .cursor({
+        batchSize,
+      });
+  }
 }

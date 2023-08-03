@@ -3,10 +3,11 @@ import { IEventsUsers } from '../events-users';
 
 export interface IEvent {
   id: string;
+  cid: string;
   slug: string;
   link?: string;
   title: string;
-  picture?: string;
+  assets: string[];
   description?: string;
   /**
    *  timestamp
@@ -77,10 +78,12 @@ export interface IEventStats {
   wantGo: number;
 }
 export interface IEventWithUserStats extends IEvent {
+  thumbnail?: string;
   userStats: Pick<IEventsUsers, 'isUserLike' | 'userStatus'>;
 }
 
-export interface IMinimalEventByLocation
-  extends Pick<IEvent, 'id' | 'picture'> {
+export interface IMinimalEventByLocation extends Pick<IEvent, 'id' | 'cid'> {
+  thumbnail?: string;
+  isThirdParty: boolean;
   coordinates: Shared.Location.IPoint['coordinates'];
 }

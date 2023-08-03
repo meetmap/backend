@@ -14,8 +14,14 @@ export const EventSchema =
         type: mongoose.SchemaTypes.String,
         // required: true,
       },
-      picture: {
+      cid: {
         type: mongoose.SchemaTypes.String,
+        required: true,
+        unique: true,
+      },
+      assets: {
+        type: [mongoose.SchemaTypes.String],
+        default: [],
       },
       ageLimit: {
         type: mongoose.SchemaTypes.Number,

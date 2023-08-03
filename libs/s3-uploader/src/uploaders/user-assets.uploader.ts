@@ -11,7 +11,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { IPictureSettings } from './types';
-import { getResizedImages } from './utils/sharp-guard';
+import { getResizedImages } from './utils/getResizedImages';
 
 @Injectable()
 export class UserAssetsUploader {
