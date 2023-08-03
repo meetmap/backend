@@ -1,29 +1,69 @@
 import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
+import { RMQConstants } from '@app/constants';
 import { AppDto } from '@app/dto';
 import { AppTypes } from '@app/types';
+import {
+  RabbitPayload,
+  RabbitRequest,
+  RabbitSubscribe,
+  RequestOptions,
+} from '@golevelup/nestjs-rabbitmq';
 import {
   Body,
   Controller,
   Delete,
-  FileTypeValidator,
   Get,
-  MaxFileSizeValidator,
   Param,
   ParseArrayPipe,
-  ParseFilePipe,
   Patch,
   Post,
   Query,
-  UploadedFile,
-  UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
+
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.ASSETS.name,
+    routingKey: [
+      RMQConstants.exchanges.ASSETS.routingKeys.EVENT_PICTURE_UPDATED,
+    ],
+    queue: RMQConstants.exchanges.ASSETS.queues.EVENTS_SERVICE_ASSET_UPLOADED,
+  })
+  public async handleEventAssetsUpdated(
+    @RabbitPayload()
+    payload: AppDto.TransportDto.Assets.EventPicturesUpdatedRmqRequestDto,
+    @RabbitRequest() req: { fields: RequestOptions },
+  ) {
+    const routingKey = req.fields.routingKey;
+
+    console.log({
+      handler: this.handleEventAssetsUpdated.name,
+      routingKey: routingKey,
+      msg: {
+        eventCid: payload.eventCid,
+      },
+    });
+    try {
+      if (
+        routingKey ===
+        RMQConstants.exchanges.ASSETS.routingKeys.EVENT_PICTURE_UPDATED
+      ) {
+        await this.eventsService.updateEventsPicture(
+          payload.eventCid,
+          payload.assetKeys,
+        );
+        return;
+      } else {
+        throw new Error('Invalid routing key');
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   @ApiOkResponse({
     type: [AppDto.EventsServiceDto.EventsDto.EventResponseDto],
@@ -80,32 +120,14 @@ export class EventsController {
   @ApiOkResponse({
     type: AppDto.EventsServiceDto.EventsDto.EventResponseDto,
   })
-  @ApiConsumes('multipart/form-data')
   @UseMicroserviceAuthGuard()
   @Post('/create')
-  @UseInterceptors(FileInterceptor('photo'))
   public async createUserEvent(
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({
-            maxSize: 3.5 * 1024 * 1024, //3.5mb
-          }),
-          new FileTypeValidator({
-            fileType: 'image/*',
-          }),
-        ],
-      }),
-    )
-    file: Express.Multer.File,
     @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
-    @Body() body: AppDto.EventsServiceDto.EventsDto.CreateEventRequestDto,
+    @Body()
+    payload: AppDto.EventsServiceDto.EventsDto.CreateUserEventRequestDto,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto> {
-    return await this.eventsService.userCreateEvent(
-      body.rawEvent,
-      jwtPayload.cid,
-      file,
-    );
+    return await this.eventsService.createUserEvent(jwtPayload.cid, payload);
   }
   //like event
   @ApiOkResponse({

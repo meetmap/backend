@@ -10,6 +10,8 @@ export const SERVER_PREFIX = 'https://api.meetmap.xyz';
 
 export const CORS_ORIGINS = /\\*\.meetmap.xyz|localhost/;
 
+export const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
+
 export const getMicroservicePath = (
   microservice: AppTypes.Other.Microservice.MicroServiceName,
 ) => {
@@ -25,3 +27,6 @@ export enum RabbitMQExchanges {
   LOCATION_EXCHANGE = 'location-exchange',
   // AUTH_SERVICE_EXCHANGE = 'auth-service-exchange',
 }
+
+export const ASSETS_BUCKET_URL =
+  'https://meetmap-assets.s3.eu-west-1.amazonaws.com';

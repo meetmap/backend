@@ -137,6 +137,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/auth-providers/tsconfig.lib.json"
       }
+    },
+    "assets-service": {
+      "type": "application",
+      "root": "apps/assets-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/assets-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/assets-service/tsconfig.app.json"
+      }
     }
   },
   "compilerOptions": {

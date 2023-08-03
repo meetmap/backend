@@ -8,7 +8,7 @@ import {
   ParseFilePipe,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiConsumes,
   ApiProperty,
@@ -17,6 +17,9 @@ import {
 } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsDateString,
   IsEmail,
@@ -25,6 +28,7 @@ import {
   IsOptional,
   IsPhoneNumber,
   IsString,
+  Length,
   Matches,
   Max,
   Min,
@@ -32,6 +36,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Request } from 'express';
+import { ParseFilesPipe } from '../pipes';
 
 export type FieldDecorator<T = {}> = (
   args?: T & { optional?: boolean },
@@ -109,9 +114,16 @@ export const StringField: FieldDecorator<{
   required?: boolean;
   nullable?: boolean;
   enum?: ApiPropertyOptions['enum'];
-}> = ({ optional, ...options } = { optional: false }) =>
+  minLength?: number;
+  maxLength?: number;
+  isArray?: boolean;
+}> = ({ optional = false, minLength = 0, maxLength = 500, ...options } = {}) =>
   applyDecorators(
-    IsString(),
+    Length(minLength, maxLength),
+    ...(options.isArray ? [IsArray()] : []),
+    IsString({
+      each: options.isArray,
+    }),
     OpenApiField({
       optional,
       type: String,
@@ -148,11 +160,27 @@ export const NestedField = (
     optional,
     description,
     example,
-  }: { description?: string; optional?: boolean; example?: string | any } = {
+    minLength = 0,
+    maxLength,
+  }: {
+    description?: string;
+    optional?: boolean;
+    example?: string | any;
+    minLength?: number;
+    maxLength?: number;
+  } = {
     optional: false,
   },
 ) => {
   return applyDecorators(
+    ...(Array.isArray(type)
+      ? [
+          ArrayMinSize(minLength),
+          ...(typeof maxLength === 'undefined'
+            ? []
+            : [ArrayMaxSize(maxLength)]),
+        ]
+      : []),
     ValidateNested({ each: Array.isArray(type) }),
     Type(() => (Array.isArray(type) ? type[0] : type)),
     OpenApiField({
@@ -160,6 +188,7 @@ export const NestedField = (
       type: type,
       example,
       description,
+      // isArray: Array.isArray(type),
     }),
   );
 };
@@ -201,17 +230,36 @@ export const IdField: FieldDecorator = ({ optional } = { optional: false }) =>
  */
 export const UploadedImage = createParamDecorator<
   | {
-      maxSize: number;
+      maxSize?: number;
       minSize?: number;
     }
   | undefined
->(
-  async (
-    { maxSize, minSize } = { maxSize: 3.5, minSize: 0 },
-    ctx: ExecutionContext,
-  ) => {
-    const request = ctx.switchToHttp().getRequest<Request>();
-    const imageUploadPipe = new ParseFilePipe({
+>(async ({ maxSize = 10, minSize = 0.01 } = {}, ctx: ExecutionContext) => {
+  const request = ctx.switchToHttp().getRequest<Request>();
+  const imageUploadPipe = new ParseFilePipe({
+    validators: [
+      new MaxFileSizeValidator({
+        maxSize: maxSize * 1024 * 1024, //3.5mb
+      }),
+      new FileTypeValidator({
+        fileType: 'image/*',
+      }),
+    ],
+  });
+
+  return await imageUploadPipe.transform(request.file);
+});
+
+export const UploadedImages = createParamDecorator<
+  | {
+      maxSize?: number;
+      minSize?: number;
+    }
+  | undefined
+>(async ({ maxSize = 10, minSize = 0.01 } = {}, ctx: ExecutionContext) => {
+  const request = ctx.switchToHttp().getRequest<Request>();
+  const imagesUploadPipe = new ParseFilesPipe(
+    new ParseFilePipe({
       validators: [
         new MaxFileSizeValidator({
           maxSize: maxSize * 1024 * 1024, //3.5mb
@@ -220,26 +268,38 @@ export const UploadedImage = createParamDecorator<
           fileType: 'image/*',
         }),
       ],
-    });
+    }),
+  );
 
-    return await imageUploadPipe.transform(request.file);
-  },
-);
+  return await imagesUploadPipe.transform(
+    Array.isArray(request.files) ? request.files : [],
+  );
+});
 
-export const UseFileInterceptor = (fieldName: string) =>
+export const UseFileInterceptor = (fieldName: string, maxAmount: number = 1) =>
   applyDecorators(
-    UseInterceptors(FileInterceptor(fieldName)),
+    UseInterceptors(
+      maxAmount > 1
+        ? FilesInterceptor(fieldName, maxAmount)
+        : FileInterceptor(fieldName),
+    ),
     ApiConsumes('multipart/form-data'),
   );
 
-export const ImageField = (
-  { maxSize }: { maxSize: number } | undefined = { maxSize: 3.5 },
-) =>
+export const ImageField = ({
+  maxSize = 10,
+  maxItems = 10,
+  isArray = false,
+}:
+  | { maxSize?: number; isArray?: boolean; maxItems?: number }
+  | undefined = {}) =>
   applyDecorators(
     ApiProperty({
       type: 'string',
       format: 'binary',
       required: true,
-      description: `fileType: image/*; maxSize: ${maxSize}mb`,
+      description: `fileType: image/*\n\nmaxSize: ${maxSize}mb\n\nmax files: ${maxItems}`,
+      isArray,
+      maxLength: maxItems,
     }),
   );
