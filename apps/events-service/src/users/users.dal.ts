@@ -1,4 +1,5 @@
 import { EventsServiceDatabase } from '@app/database';
+import { getPaginatedResultAggregation } from '@app/database/shared-aggregations';
 import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
 import { AppTypes } from '@app/types';
 
@@ -20,28 +21,35 @@ export class UsersDal implements OnModuleInit {
     );
   }
 
-  public async getEventsByUserAction(userCId: string, actionType: 'liked') {
-    return await this.db.models.eventsUsers.aggregate<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>(
-      [
-        {
-          $match: {
-            userCId: userCId,
-            isUserLike: actionType === 'liked',
-          },
+  public async getEventsByUserAction(
+    userCId: string,
+    actionType: 'liked',
+    page: number = 1,
+  ) {
+    const pageSize = 15;
+    const [result] = await this.db.models.eventsUsers.aggregate<
+      AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>
+    >([
+      {
+        $match: {
+          userCId: userCId,
+          isUserLike: actionType === 'liked',
         },
-        {
-          $lookup: {
-            from: 'events',
-            localField: 'eventCid',
-            foreignField: 'cid',
-            as: 'event',
-          },
+      },
+      {
+        $lookup: {
+          from: 'events',
+          localField: 'eventCid',
+          foreignField: 'cid',
+          as: 'event',
         },
-        { $unwind: '$event' },
-        { $replaceRoot: { newRoot: '$event' } },
-        ...EventsDal.getEventsWithUserStatsTagsAggregation(userCId),
-      ],
-    );
+      },
+      { $unwind: '$event' },
+      { $replaceRoot: { newRoot: '$event' } },
+      ...EventsDal.getEventsWithUserStatsTagsAggregation(userCId),
+      ...getPaginatedResultAggregation(page, pageSize),
+    ]);
+    return result;
   }
 
   public async createUser(payload: AppTypes.Transport.Users.IUser) {

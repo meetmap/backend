@@ -55,22 +55,46 @@ export class FriendsService {
     return UsersService.mapUserDbToResponsePartialUser(updatedFriendUser);
   }
 
-  public async getIncomingFriendshipRequests(cid: string) {
+  public async getIncomingFriendshipRequests(
+    cid: string,
+    page: number,
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto> {
     const user = await this.dal.getUserByCId(cid, cid);
     if (!user) {
       throw new ForbiddenException("User doesn't exist");
     }
-    const incoming = await this.dal.getIncomingFriendshipRequests(user.cid);
-    return incoming.map(UsersService.mapUserDbToResponsePartialUser);
+    const incoming = await this.dal.getIncomingFriendshipRequests(
+      user.cid,
+      page,
+    );
+    return {
+      paginatedResults: incoming.paginatedResults.map(
+        UsersService.mapUserDbToResponsePartialUser,
+      ),
+      totalCount: incoming.totalCount,
+      nextPage: incoming.nextPage ?? undefined,
+    };
   }
 
-  public async getOutcomingFriendshipRequests(cid: string) {
+  public async getOutcomingFriendshipRequests(
+    cid: string,
+    page: number,
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto> {
     const user = await this.dal.getUserByCId(cid, cid);
     if (!user) {
       throw new ForbiddenException("User doesn't exist");
     }
-    const outcoming = await this.dal.getOutcomingFriendshipRequests(user.cid);
-    return outcoming.map(UsersService.mapUserDbToResponsePartialUser);
+    const outcoming = await this.dal.getOutcomingFriendshipRequests(
+      user.cid,
+      page,
+    );
+    return {
+      paginatedResults: outcoming.paginatedResults.map(
+        UsersService.mapUserDbToResponsePartialUser,
+      ),
+      totalCount: outcoming.totalCount,
+      nextPage: outcoming.nextPage ?? undefined,
+    };
   }
 
   public async acceptFriendshipRequest(
@@ -163,9 +187,8 @@ export class FriendsService {
   public async getUserFriends(
     cuurentUserCId: string,
     searchUserCId: string,
-    limit: number,
     page: number,
-  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto[]> {
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto> {
     const user = await this.dal.getUserByCId(cuurentUserCId, searchUserCId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -173,10 +196,15 @@ export class FriendsService {
     const friends = await this.dal.getUserFriends(
       cuurentUserCId,
       searchUserCId,
-      limit,
       page,
     );
 
-    return friends.map(UsersService.mapUserDbToResponsePartialUser);
+    return {
+      paginatedResults: friends.paginatedResults.map(
+        UsersService.mapUserDbToResponsePartialUser,
+      ),
+      totalCount: friends.totalCount,
+      nextPage: friends.nextPage ?? undefined,
+    };
   }
 }

@@ -67,46 +67,57 @@ export class EventsController {
   }
 
   @ApiOkResponse({
-    type: [AppDto.EventsServiceDto.EventsDto.EventResponseDto],
+    type: AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto,
   })
   @Get('/?')
   @UseMicroserviceAuthGuard()
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
   public async getEventsByKeywords(
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
     @Query('q') keywords: string,
-  ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto[]> {
-    return this.eventsService.getEventsByKeywords(jwt.cid, keywords);
+    @Query('page') page: number,
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
+    return this.eventsService.getEventsByKeywords(jwt.cid, keywords, page);
   }
 
   @ApiOkResponse({
-    type: [AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataResponseDto],
+    type: AppDto.EventsServiceDto.EventsDto
+      .EventTagWithMetadataPaginatedResponseDto,
     description: 'Returns all tags sorted by popularity',
   })
   @ApiQuery({ name: 'q', required: false })
+  @ApiQuery({ name: 'page', required: false })
   @Get('/tags/?')
   @UseMicroserviceAuthGuard()
   public async searchTags(
     @Query('q') query: string,
-  ): Promise<
-    AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataResponseDto[]
-  > {
+    @Query('page') page: number,
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataPaginatedResponseDto> {
     if (!query) {
-      return await this.eventsService.getAllTags();
+      return await this.eventsService.getAllTags(page);
     }
-    return await this.eventsService.searchTags(query);
+    return await this.eventsService.searchTags(query, page);
   }
 
   @ApiOkResponse({
-    type: [AppDto.EventsServiceDto.EventsDto.EventResponseDto],
+    type: AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto,
   })
   @UseMicroserviceAuthGuard()
   @Get('/batch')
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
   public async getEventsBatch(
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
+    @Query('page') page: number,
     @Query('ids', new ParseArrayPipe({ items: String, separator: ',' }))
     eventsIds: string[],
-  ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto[]> {
-    return this.eventsService.getEventsBatch(jwt.cid, eventsIds);
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
+    return this.eventsService.getEventsBatch(jwt.cid, eventsIds, page);
   }
 
   @ApiOkResponse({
@@ -219,14 +230,18 @@ export class EventsController {
 
   @Get('/likes/:eventCid')
   @ApiOkResponse({
-    type: [AppDto.EventsServiceDto.UsersDto.EventsServiceUserResponseDto],
+    type: AppDto.EventsServiceDto.UsersDto.UserPaginatedResponseDto,
   })
   @UseMicroserviceAuthGuard()
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
   public async getEventLikes(
     @Param('eventCid') eventCid: string,
-    @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
-  ): Promise<AppDto.EventsServiceDto.UsersDto.EventsServiceUserResponseDto[]> {
-    const usersLiked = await this.eventsService.getEventLikes(eventCid);
+    @Query('page') page: number,
+  ): Promise<AppDto.EventsServiceDto.UsersDto.UserPaginatedResponseDto> {
+    const usersLiked = await this.eventsService.getEventLikes(eventCid, page);
     return usersLiked;
   }
 }
