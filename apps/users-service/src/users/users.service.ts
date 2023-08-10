@@ -20,26 +20,34 @@ export class UsersService {
 
   public async createUser(
     payload: AppDto.TransportDto.Users.UserCreatedRmqRequestDto,
-  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
+  ): Promise<AppDto.UsersServiceDto.UsersDto.SingleUserResponseDto> {
     const user = await this.dal.createUser(payload);
-    return UsersService.mapUserDbToResponseUser(
+    return UsersService.mapUserDbToResponseSingleUser(
       { ...user, friendshipStatus: null },
-      [],
+      {
+        paginatedResults: [],
+        totalCount: 0,
+        nextPage: undefined,
+      },
     );
   }
 
   public async updateUser(
     payload: AppDto.TransportDto.Users.UserUpdatedRmqRequestDto,
-  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto | null> {
+  ): Promise<AppDto.UsersServiceDto.UsersDto.SingleUserResponseDto | null> {
     const user = await this.dal.updateUser(payload.cid, payload);
     if (!user) {
       return null;
     }
     const friends = await this.dal.getUserFriends(payload.cid);
 
-    return UsersService.mapUserDbToResponseUser(
+    return UsersService.mapUserDbToResponseSingleUser(
       { ...user, friendshipStatus: null },
-      friends,
+      {
+        paginatedResults: friends.paginatedResults,
+        totalCount: friends.totalCount,
+        nextPage: friends.nextPage ?? undefined,
+      },
     );
   }
 
@@ -50,40 +58,54 @@ export class UsersService {
 
   public async getUserSelf(
     cid: string,
-  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
+  ): Promise<AppDto.UsersServiceDto.UsersDto.SingleUserResponseDto> {
     const user = await this.dal.findUserByCId(cid);
     if (!user) {
       throw new NotFoundException('User not found');
     }
     const friends = await this.dal.getUserFriends(cid);
 
-    return UsersService.mapUserDbToResponseUser(
+    return UsersService.mapUserDbToResponseSingleUser(
       { ...user, friendshipStatus: null },
-      friends,
+      {
+        paginatedResults: friends.paginatedResults,
+        totalCount: friends.totalCount,
+        nextPage: friends.nextPage ?? undefined,
+      },
     );
   }
 
   public async findUsers(
     userCId: string,
     query: string,
-  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto[]> {
-    const users = await this.dal.findUsersByQueryUsername(userCId, query);
-    return users.map((user) =>
-      UsersService.mapUserDbToResponsePartialUser(user),
-    );
+    page: number,
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto> {
+    const { paginatedResults, nextPage, totalCount } =
+      await this.dal.findUsersByQueryUsername(userCId, query, page);
+    return {
+      paginatedResults: paginatedResults.map((user) =>
+        UsersService.mapUserDbToResponsePartialUser(user),
+      ),
+      totalCount: totalCount,
+      nextPage: nextPage ?? undefined,
+    };
   }
 
   public async getUserByCid(
     currentCid: string,
     cid: string,
-  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
-    const user = await this.dal.findUserByCidWithFirends(currentCid, cid);
+  ): Promise<AppDto.UsersServiceDto.UsersDto.SingleUserResponseDto> {
+    const user = await this.dal.findUserByCidWithFriends(currentCid, cid);
     if (!user) {
       throw new NotFoundException('User not found');
     }
     const friends = await this.dal.getUserFriends(cid);
 
-    return UsersService.mapUserDbToResponseUser(user, friends);
+    return UsersService.mapUserDbToResponseSingleUser(user, {
+      paginatedResults: friends.paginatedResults,
+      totalCount: friends.totalCount,
+      nextPage: friends.nextPage ?? undefined,
+    });
   }
 
   public async updateUserProfilePicture(cid: string, assetKey: string) {
@@ -113,7 +135,7 @@ export class UsersService {
   static mapDbUserToRmqUser(
     user: AppTypes.UsersService.Users.IUser,
   ): AppDto.TransportDto.Users.UserUpdatedRmqRequestDto {
-    return {
+    return AppDto.TransportDto.Users.UserUpdatedRmqRequestDto.create({
       birthDate: user.birthDate,
       cid: user.cid,
       email: user.email,
@@ -124,17 +146,23 @@ export class UsersService {
       name: user.name,
       profilePicture: user.profilePicture,
       gender: user.gender,
-    };
+    });
   }
 
-  static mapUserDbToResponseUser(
+  static mapUserDbToResponseSingleUser(
     user: IGetUserListWithFriendshipStatusAggregationResult<AppTypes.UsersService.Users.IUser>,
-    friends: AppTypes.UsersService.Users.IUserWithoutFriends[],
-  ): AppDto.UsersServiceDto.UsersDto.UserResponseDto {
-    return {
+    friends: AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.UsersService.Users.IUserWithoutFriends>,
+  ): AppDto.UsersServiceDto.UsersDto.SingleUserResponseDto {
+    return AppDto.UsersServiceDto.UsersDto.SingleUserResponseDto.create({
       id: user.id,
       birthDate: user.birthDate,
-      friends: friends,
+      friends: {
+        paginatedResults: friends.paginatedResults.map(
+          AppDto.UsersServiceDto.UsersDto.UserWithoutFriendsResponseDto.create,
+        ),
+        totalCount: friends.totalCount,
+        nextPage: friends.nextPage,
+      },
       email: user.email,
       phone: user.phone,
       username: user.username,
@@ -150,13 +178,13 @@ export class UsersService {
         : undefined,
       friendshipStatus: user.friendshipStatus,
       gender: user.gender,
-    };
+    });
   }
 
   static mapUserDbToResponsePartialUser(
     user: IGetUserListWithFriendshipStatusAggregationResult<AppTypes.UsersService.Users.IUser>,
   ): AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto {
-    return {
+    return AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto.create({
       id: user.id,
       birthDate: user.birthDate,
       email: user.email,
@@ -174,6 +202,6 @@ export class UsersService {
         : undefined,
       friendshipStatus: user.friendshipStatus,
       gender: user.gender,
-    };
+    });
   }
 }

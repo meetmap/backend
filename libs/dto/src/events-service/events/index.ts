@@ -199,9 +199,22 @@ export class EventResponseDto
   tags: EventTagResponseDto[];
 }
 
+export class EventPaginatedResponseDto
+  extends BaseDto
+  implements
+    AppTypes.Other.PaginatedResponse.IPaginatedResponse<EventResponseDto>
+{
+  @NestedField([EventResponseDto])
+  paginatedResults: EventResponseDto[];
+  @NumberField()
+  totalCount: number;
+  @NumberField({ optional: true })
+  nextPage?: number | undefined;
+}
+
 export class EventTagWithMetadataResponseDto
   extends BaseDto
-  implements AppTypes.EventsService.EventTags.ISafeTag
+  implements AppTypes.EventsService.EventTags.ISafeTagWithMetadata
 {
   @StringField()
   label: string;
@@ -209,6 +222,20 @@ export class EventTagWithMetadataResponseDto
   cid: string;
   @NumberField()
   count: number;
+}
+
+export class EventTagWithMetadataPaginatedResponseDto
+  extends BaseDto
+  implements
+    AppTypes.Other.PaginatedResponse
+      .IPaginatedResponse<EventTagWithMetadataResponseDto>
+{
+  @NestedField([EventTagWithMetadataResponseDto])
+  paginatedResults: EventTagWithMetadataResponseDto[];
+  @NumberField()
+  totalCount: number;
+  @NumberField({ optional: true })
+  nextPage?: number | undefined;
 }
 
 export class EventStatsResponseDto

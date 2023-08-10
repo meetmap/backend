@@ -1,25 +1,5 @@
-import {
-  ExtractJwtPayload,
-  JwtService,
-  UseMicroserviceAuthGuard,
-} from '@app/auth/jwt';
+import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import { RMQConstants } from '@app/constants';
-import {
-  BadRequestException,
-  Controller,
-  Get,
-  Param,
-  Query,
-} from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { UsersService } from './users.service';
-// import {
-//   Nack,
-//   RabbitPayload,
-//   RabbitRequest,
-//   RabbitSubscribe,
-//   RequestOptions,
-// } from '@app/rmq-lib';
 import { AppDto } from '@app/dto';
 import { AppTypes } from '@app/types';
 import {
@@ -28,14 +8,20 @@ import {
   RabbitSubscribe,
   RequestOptions,
 } from '@golevelup/nestjs-rabbitmq';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Param,
+  Query,
+} from '@nestjs/common';
+import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { UsersService } from './users.service';
 
 @ApiTags('Users')
 @Controller('/users')
 export class UsersController {
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.USERS.name,
@@ -110,35 +96,44 @@ export class UsersController {
   }
 
   @ApiOkResponse({
-    type: AppDto.UsersServiceDto.UsersDto.UserResponseDto,
+    type: AppDto.UsersServiceDto.UsersDto.SingleUserResponseDto,
     description: 'Self user response',
   })
   @UseMicroserviceAuthGuard()
   @Get('me')
   public async getUserSelf(
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
-  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
+  ): Promise<AppDto.UsersServiceDto.UsersDto.SingleUserResponseDto> {
     return this.usersService.getUserSelf(jwt.cid);
   }
 
   @ApiOkResponse({
-    type: [AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto],
+    type: AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto,
     description: 'Find users response',
   })
   @UseMicroserviceAuthGuard()
   @Get('/find')
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
   public async findUsers(
     @Query('q') query: string,
+    @Query('page') page: number,
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
-  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto[]> {
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto> {
     if (!query) {
-      return [];
+      return {
+        paginatedResults: [],
+        totalCount: 0,
+        nextPage: undefined,
+      };
     }
-    return this.usersService.findUsers(jwt.cid, query);
+    return this.usersService.findUsers(jwt.cid, query, page);
   }
 
   @ApiOkResponse({
-    type: AppDto.UsersServiceDto.UsersDto.UserResponseDto,
+    type: AppDto.UsersServiceDto.UsersDto.SingleUserResponseDto,
     description: 'Find user response',
   })
   @UseMicroserviceAuthGuard()
@@ -146,28 +141,10 @@ export class UsersController {
   public async getUserById(
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
     @Param('userCid') userCid: string,
-  ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
+  ): Promise<AppDto.UsersServiceDto.UsersDto.SingleUserResponseDto> {
     if (!userCid) {
       throw new BadRequestException('Invalid userId');
     }
     return this.usersService.getUserByCid(jwt.cid, userCid);
   }
-
-  // @ApiOkResponse({
-  //   type: AppDto.UsersServiceDto.UsersDto.UserResponseDto,
-  // })
-  // @UseMicroserviceAuthGuard()
-  // @Post('/profile/picture')
-  // @ApiConsumes('multipart/form-data')
-  // @UseFileInterceptor('photo')
-  // public async updateUserProfilePicture(
-  //   @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
-  //   @UploadedImage()
-  //   file: Express.Multer.File,
-  //   @Body()
-  //   payload: AppDto.UsersServiceDto.UsersDto.UpdateUserProfilePictureRequestDto,
-  // ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
-  //   return await this.usersService.updateUserProfilePicture(jwt.cid, file);
-  //   // return this.usersService.getUserByCid(userCid);
-  // }
 }
