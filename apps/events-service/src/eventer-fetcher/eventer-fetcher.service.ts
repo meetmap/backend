@@ -1,3 +1,6 @@
+import { RMQConstants } from '@app/constants';
+import { AppDto } from '@app/dto';
+import { RabbitmqService } from '@app/rabbitmq';
 import { AppTypes } from '@app/types';
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
@@ -7,7 +10,10 @@ import { EventerFetcherDal } from './eventer-fetcher.dal';
 
 @Injectable()
 export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
-  constructor(private readonly dal: EventerFetcherDal) {}
+  constructor(
+    private readonly dal: EventerFetcherDal,
+    private readonly rmqService: RabbitmqService,
+  ) {}
   public async onModuleDestroy() {}
 
   public async onModuleInit() {
@@ -25,7 +31,8 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
         if (!event.linkName) {
           continue;
         }
-        await this.getValidEvent(event.linkName.toLowerCase());
+        await this.getAndPublishValidEvent(event.linkName.toLowerCase());
+
         // return;
         // debugger;
       }
@@ -33,7 +40,7 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
     console.log('Finished!');
   }
 
-  public async getValidEvent(
+  public async getAndPublishValidEvent(
     eventSlug: string,
   ): Promise<AppTypes.EventsService.Event.IEvent | null> {
     const slug = eventSlug.toLowerCase();
@@ -57,9 +64,40 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
     }
 
     if (dbEvent) {
-      return await this.dal.updateEvent(dbEvent.id, dbEvent.cid, payload);
+      const updatedEvent = await this.dal.updateEvent(
+        dbEvent.id,
+        dbEvent.cid,
+        payload,
+      );
+      if (!updatedEvent) {
+        return null;
+      }
+
+      ///if no tags has been assigned to an event, publish event to assign tags
+      if (!updatedEvent.tagsCids.length) {
+        await this.rmqService.amqp.publish(
+          RMQConstants.exchanges.EVENTS.name,
+          RMQConstants.exchanges.EVENTS.routingKeys.ASSIGN_TAGS,
+          AppDto.TransportDto.Events.EventsServiceEventRequestDto.create({
+            cid: updatedEvent.cid,
+            creator: undefined,
+          }),
+        );
+      }
+      return updatedEvent;
     }
-    return await this.dal.storeEvent(payload);
+
+    const newEvent = await this.dal.storeEvent(payload);
+    //if new event, publish event.created event
+    await this.rmqService.amqp.publish(
+      RMQConstants.exchanges.EVENTS.name,
+      RMQConstants.exchanges.EVENTS.routingKeys.EVENT_CREATED,
+      AppDto.TransportDto.Events.EventsServiceEventRequestDto.create({
+        cid: newEvent.cid,
+        creator: undefined,
+      }),
+    );
+    return newEvent;
   }
 
   public async extractCityFromEventerResponse(
@@ -108,6 +146,7 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
       },
       cid: randomUUID(),
       eventType: AppTypes.EventsService.Event.EventType.PARTNER,
+      tagsCids: [],
       tickets: (tickets?.ticketTypes ?? []).map((ticket) => ({
         amount: ticket.remaining,
         description: ticket.description,

@@ -39,48 +39,56 @@ export class UsersController {
 
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.USERS.name,
-    routingKey: [
-      RMQConstants.exchanges.USERS.routingKeys.USER_CREATED,
-      RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
-      RMQConstants.exchanges.USERS.routingKeys.USER_DELETED,
-    ],
-    queue: RMQConstants.exchanges.USERS.queues.USER_SERVICE,
+    routingKey: [RMQConstants.exchanges.USERS.routingKeys.USER_CREATED],
+    queue: 'users-service.users.created',
   })
-  public async handleUser(
-    @RabbitPayload() payload: AppDto.TransportDto.Users.UserRmqRequestDto,
+  public async handleUserCreated(
+    @RabbitPayload()
+    payload: AppDto.TransportDto.Users.UserCreatedRmqRequestDto,
     @RabbitRequest() req: { fields: RequestOptions },
   ) {
     const routingKey = req.fields.routingKey;
     console.log({
-      handler: this.handleUser.name,
+      handler: this.handleUserCreated.name,
       routingKey: routingKey,
       msg: {
         cid: payload.cid,
       },
     });
-    try {
-      if (
-        routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_CREATED
-      ) {
-        await this.usersService.createUser(payload);
-        return;
-      }
-      if (
-        routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED
-      ) {
-        await this.usersService.updateUser(payload);
-        return;
-      }
-      if (
-        routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_DELETED
-      ) {
-        await this.usersService.deleteUser(payload.cid);
-        return;
-      } else {
-        return new Error('Invalid routing key');
-      }
-    } catch (error) {
-      console.error(error);
+    await this.usersService.createUser(payload);
+    return;
+  }
+
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.USERS.name,
+    routingKey: [
+      RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
+      RMQConstants.exchanges.USERS.routingKeys.USER_DELETED,
+    ],
+    queue: 'users-service.users.updated',
+  })
+  public async handleUserUpdated(
+    @RabbitPayload()
+    payload: AppDto.TransportDto.Users.UserUpdatedRmqRequestDto,
+    @RabbitRequest() req: { fields: RequestOptions },
+  ) {
+    const routingKey = req.fields.routingKey;
+    console.log({
+      handler: this.handleUserCreated.name,
+      routingKey: routingKey,
+      msg: {
+        cid: payload.cid,
+      },
+    });
+    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED) {
+      await this.usersService.updateUser(payload);
+      return;
+    }
+    if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_DELETED) {
+      await this.usersService.deleteUser(payload.cid);
+      return;
+    } else {
+      throw new Error('Invalid routing key');
     }
   }
 
@@ -89,7 +97,7 @@ export class UsersController {
     routingKey: [
       RMQConstants.exchanges.ASSETS.routingKeys.PROFILE_PICTURE_UPDATED,
     ],
-    queue: RMQConstants.exchanges.ASSETS.queues.USER_SERVICE_ASSET_UPLOADED,
+    queue: 'users-service.assets.profile-picture-updated',
   })
   public async handleProfilePictureUpdated(
     @RabbitPayload()

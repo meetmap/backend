@@ -4,9 +4,8 @@ import * as mongoose from 'mongoose';
 export const EventsUsersSchema =
   new mongoose.Schema<AppTypes.EventsService.EventsUsers.IEventsUsers>(
     {
-      event: {
-        ref: 'Event',
-        type: mongoose.SchemaTypes.ObjectId,
+      eventCid: {
+        type: mongoose.SchemaTypes.String,
         required: true,
       },
       userCId: {
@@ -24,16 +23,21 @@ export const EventsUsersSchema =
       },
     },
     {
-      _id: false,
+      // _id: false,
       timestamps: true,
     },
   );
 //there shouldn't be duplicates in database
 EventsUsersSchema.index(
   {
-    event: 1,
+    eventCid: 1,
     userCId: 1,
-  },
+  } satisfies Partial<
+    Record<
+      keyof AppTypes.EventsService.EventsUsers.IEventsUsers,
+      mongoose.IndexDirection
+    >
+  >,
   {
     unique: true,
   },

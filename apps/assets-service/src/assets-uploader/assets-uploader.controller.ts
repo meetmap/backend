@@ -99,7 +99,7 @@ export class AssetsUploaderController {
       RMQConstants.exchanges.ASSETS.routingKeys.PROFILE_PICTURE_UPDATED,
       RMQConstants.exchanges.ASSETS.routingKeys.EVENT_PICTURE_UPDATED,
     ],
-    queue: RMQConstants.exchanges.ASSETS.queues.ASSETS_SERVICE_ASSET_QUEUE,
+    queue: 'assets-service.assets.upload-status',
   })
   public async assetUploadStatusHandler(
     @RabbitPayload()

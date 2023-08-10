@@ -1,7 +1,9 @@
+import { BaseDto } from '@app/dto/base';
 import { IdField, NestedField, StringField } from '@app/dto/decorators';
 import { AppTypes } from '@app/types';
 
 export class EventsServiceCreatorRequestDto
+  extends BaseDto
   implements AppTypes.EventsService.Event.ICreator
 {
   @StringField({
@@ -13,6 +15,7 @@ export class EventsServiceCreatorRequestDto
 }
 
 export class EventsServiceEventSnapshotRequestDto
+  extends BaseDto
   implements AppTypes.Transport.Snapshot.Events.IEventsServiceSnapshotEvent
 {
   @IdField()
@@ -24,6 +27,7 @@ export class EventsServiceEventSnapshotRequestDto
 }
 
 export class EventsServiceEventRequestDto
+  extends BaseDto
   implements AppTypes.Transport.Snapshot.Events.IEventsServiceSnapshotEvent
 {
   @IdField()

@@ -4,6 +4,7 @@ node_modules
 npm-debug.log
 Dockerfile*
 docker-compose*
+docker-containers
 README.md
 LICENSE
 .vscode

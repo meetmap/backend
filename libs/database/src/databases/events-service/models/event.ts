@@ -1,3 +1,4 @@
+import { arrayMaxLength } from '@app/database/shared-validators';
 import { AppTypes } from '@app/types';
 import * as mongoose from 'mongoose';
 import { CreatorSchema } from './creator-schema';
@@ -65,6 +66,12 @@ export const EventSchema =
       },
       creator: {
         type: CreatorSchema,
+      },
+      tagsCids: {
+        type: [mongoose.SchemaTypes.String],
+        default: [],
+        validate: [arrayMaxLength(15), 'Limit is 15 tags'],
+        index: -1,
       },
     },
     {

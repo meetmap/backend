@@ -42,9 +42,17 @@ export class AuthService {
     this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
       RMQConstants.exchanges.USERS.routingKeys.USER_CREATED,
-      AuthService.mapUserDbToRmqRequest(
-        user,
-      ) satisfies AppDto.TransportDto.Users.UserRmqRequestDto,
+      // AuthService.mapToUserCreatedRmqRequest(
+      AppDto.TransportDto.Users.UserCreatedRmqRequestDto.create({
+        birthDate: user.birthDate,
+        cid: user.cid,
+        email: user.email,
+        gender: user.gender,
+        name: user.name,
+        username: user.username,
+        fbId: user.fbId,
+        phone: user.phone,
+      }),
     );
     return safeUser;
   }
@@ -53,11 +61,11 @@ export class AuthService {
     user: Pick<AppTypes.AuthService.Users.IUser, 'id' | 'username' | 'cid'>,
   ) {
     const jwt = await this.jwtService.getTokens({
-      sub: user.id,
+      sub: user.cid,
       username: user.username,
       cid: user.cid,
     });
-    await this.updateUsersRefreshToken(user.id, jwt.rt);
+    await this.updateUsersRefreshToken(user.cid, jwt.rt);
     return jwt;
   }
 
@@ -80,7 +88,7 @@ export class AuthService {
 
   public async refreshAccessToken(refreshToken: string) {
     const jwtPayload = await this.jwtService.verifyRt(refreshToken);
-    const user = await this.dal.findUserById(jwtPayload.sub);
+    const user = await this.dal.findUserByCid(jwtPayload.cid);
     if (!user || user.refreshToken !== refreshToken) {
       throw new UnauthorizedException('Invalid token');
     }
@@ -88,8 +96,8 @@ export class AuthService {
     return at;
   }
 
-  public async updateUsersRefreshToken(userId: string, refreshToken: string) {
-    return await this.dal.updateUsersRefreshToken(userId, refreshToken);
+  public async updateUsersRefreshToken(userCid: string, refreshToken: string) {
+    return await this.dal.updateUsersRefreshToken(userCid, refreshToken);
   }
   public async loginWithUsernameAndPassword(
     username: string,
@@ -157,10 +165,10 @@ export class AuthService {
     return false;
   }
   public async updateUsersUsername(
-    userId: string,
+    userCid: string,
     payload: AppDto.AuthService.AuthDto.UpdateUsernameRequestDto,
   ) {
-    const updatedUser = await this.dal.updateUser(userId, {
+    const updatedUser = await this.dal.updateUser(userCid, {
       username: payload.username,
     });
     if (!updatedUser) {
@@ -170,27 +178,12 @@ export class AuthService {
     await this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
       RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
-      AuthService.mapUserDbToRmqRequest(
-        updatedUser,
-      ) satisfies AppDto.TransportDto.Users.UserRmqRequestDto,
+      AuthService.mapToUserUpdatedRmqRequest({
+        cid: userCid,
+        username: payload.username,
+      }) satisfies AppDto.TransportDto.Users.UserUpdatedRmqRequestDto,
     );
     return safeUser;
-  }
-
-  public async getUserById(userId: string) {
-    const user = await this.dal.getUserById(userId);
-    if (!user) {
-      return null;
-    }
-    return AuthService.mapUserDbToResponseUser(user);
-  }
-
-  public async getUserByIdBulk(userIds: string[]) {
-    const users = await this.dal.getUserByIdBulk(userIds);
-
-    return users.map((user) =>
-      user ? AuthService.mapUserDbToResponseUser(user) : null,
-    );
   }
 
   public async signUpWithFacebook(
@@ -241,9 +234,16 @@ export class AuthService {
     this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
       RMQConstants.exchanges.USERS.routingKeys.USER_CREATED,
-      AuthService.mapUserDbToRmqRequest(
-        user,
-      ) satisfies AppDto.TransportDto.Users.UserRmqRequestDto,
+      AppDto.TransportDto.Users.UserCreatedRmqRequestDto.create({
+        birthDate: user.birthDate,
+        cid: user.cid,
+        email: user.email,
+        gender: user.gender,
+        name: user.name,
+        username: user.username,
+        fbId: user.fbId,
+        phone: user.phone,
+      }),
     );
     return safeUser;
   }
@@ -274,25 +274,24 @@ export class AuthService {
     if (fbUserExists) {
       throw new ConflictException('User with this facebook already exists');
     }
-    const updatedUser = await this.dal.linkFbToUser(user.id, fbUser);
+    const updatedUser = await this.dal.linkFbToUser(user.cid, fbUser);
     if (!updatedUser) {
       throw new InternalServerErrorException("User hasn't been updated");
     }
     await this.rmq.amqp.publish(
       RMQConstants.exchanges.USERS.name,
       RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
-      AuthService.mapUserDbToRmqRequest(
+      AuthService.mapToUserUpdatedRmqRequest(
         updatedUser,
-      ) satisfies AppDto.TransportDto.Users.UserRmqRequestDto,
+      ) satisfies AppDto.TransportDto.Users.UserUpdatedRmqRequestDto,
     );
     return updatedUser;
   }
 
-  static mapUserDbToRmqRequest(
-    user: AppTypes.AuthService.Users.ISafeUser,
-  ): AppDto.TransportDto.Users.UserRmqRequestDto {
-    return {
-      id: user.id,
+  static mapToUserUpdatedRmqRequest(
+    user: Partial<AppTypes.AuthService.Users.ISafeUser> & { cid: string },
+  ): AppDto.TransportDto.Users.UserUpdatedRmqRequestDto {
+    return AppDto.TransportDto.Users.UserUpdatedRmqRequestDto.create({
       email: user.email,
       phone: user.phone,
       username: user.username,
@@ -302,13 +301,13 @@ export class AuthService {
       // authUserId: user.id,
       fbId: user.fbId,
       name: user.name,
-    };
+    });
   }
 
   static mapUserDbToResponseUser(
     user: AppTypes.AuthService.Users.ISafeUser,
-  ): AppTypes.AuthService.Users.ISafeUser {
-    return {
+  ): AppDto.AuthService.AuthDto.UserResponseDto {
+    return AppDto.AuthService.AuthDto.UserResponseDto.create({
       id: user.id,
       email: user.email,
       phone: user.phone,
@@ -318,6 +317,6 @@ export class AuthService {
       name: user.name,
       fbId: user.fbId,
       gender: user.gender,
-    };
+    });
   }
 }

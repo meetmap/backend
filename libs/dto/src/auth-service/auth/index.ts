@@ -1,3 +1,4 @@
+import { BaseDto } from '@app/dto/base';
 import {
   BooleanField,
   DateField,
@@ -10,7 +11,7 @@ import {
 } from '@app/dto/decorators';
 import { AppTypes } from '@app/types';
 
-export class TokensResponseDto {
+export class TokensResponseDto extends BaseDto {
   @StringField({
     description: 'Access token',
   })
@@ -21,7 +22,10 @@ export class TokensResponseDto {
   rt: string;
 }
 
-export class UserResponseDto implements AppTypes.AuthService.Users.ISafeUser {
+export class UserResponseDto
+  extends BaseDto
+  implements AppTypes.AuthService.Users.ISafeUser
+{
   @IdField()
   id: string;
   @EmailField()
@@ -52,7 +56,7 @@ export class UserResponseDto implements AppTypes.AuthService.Users.ISafeUser {
   gender: AppTypes.Shared.Users.Gender;
 }
 
-export class SignInResponseDto {
+export class SignInResponseDto extends BaseDto {
   @NestedField(TokensResponseDto, {
     description: 'Tokens',
   })
@@ -63,7 +67,7 @@ export class SignInResponseDto {
   user: UserResponseDto;
 }
 
-export class SignUpRequestDto {
+export class SignUpRequestDto extends BaseDto {
   @PasswordField()
   password: string;
 
@@ -93,7 +97,7 @@ export class SignUpRequestDto {
   gender: AppTypes.Shared.Users.Gender;
 }
 
-export class SignUpWithAuthProviderRequestDto {
+export class SignUpWithAuthProviderRequestDto extends BaseDto {
   @EmailField({
     optional: true,
   })
@@ -131,21 +135,21 @@ export class SignUpWithAuthProviderRequestDto {
   token: string;
 }
 
-export class SignInWithAuthProviderRequestDto {
+export class SignInWithAuthProviderRequestDto extends BaseDto {
   @StringField({
     description: 'Short-live auth provider token',
   })
   token: string;
 }
 
-export class LinkFacebookRequestDto {
+export class LinkFacebookRequestDto extends BaseDto {
   @StringField({
     description: 'Short-live auth provider token',
   })
   token: string;
 }
 
-export class SignInWithPasswordRequestDto {
+export class SignInWithPasswordRequestDto extends BaseDto {
   @StringField({
     description: 'Password',
   })
@@ -168,26 +172,26 @@ export class SignInWithPasswordRequestDto {
   username?: string;
 }
 
-export class RefreshAccessTokenRequestDto {
+export class RefreshAccessTokenRequestDto extends BaseDto {
   @StringField({
     description: 'Refresh token',
   })
   refreshToken: string;
 }
 
-export class RefreshAccessTokenResponseDto {
+export class RefreshAccessTokenResponseDto extends BaseDto {
   @StringField({
     description: 'Access token',
   })
   accessToken: string;
 }
 
-export class EntityIsFreeResponseDto {
+export class EntityIsFreeResponseDto extends BaseDto {
   @BooleanField()
   free: boolean;
 }
 
-export class UpdateUsernameRequestDto {
+export class UpdateUsernameRequestDto extends BaseDto {
   @StringField({
     description: 'username',
   })

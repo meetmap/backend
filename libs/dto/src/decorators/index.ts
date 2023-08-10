@@ -116,11 +116,28 @@ export const StringField: FieldDecorator<{
   enum?: ApiPropertyOptions['enum'];
   minLength?: number;
   maxLength?: number;
+  minArrayLength?: number;
+  maxArrayLength?: number;
   isArray?: boolean;
-}> = ({ optional = false, minLength = 0, maxLength = 500, ...options } = {}) =>
+}> = ({
+  optional = false,
+  minLength = 0,
+  maxLength = 500,
+  minArrayLength,
+  maxArrayLength,
+  ...options
+} = {}) =>
   applyDecorators(
-    Length(minLength, maxLength),
+    Length(minLength, maxLength, {
+      each: options.isArray,
+    }),
     ...(options.isArray ? [IsArray()] : []),
+    ...(options.isArray && typeof minArrayLength !== 'undefined'
+      ? [ArrayMinSize(minArrayLength)]
+      : []),
+    ...(options.isArray && typeof maxArrayLength !== 'undefined'
+      ? [ArrayMaxSize(maxArrayLength)]
+      : []),
     IsString({
       each: options.isArray,
     }),
@@ -129,7 +146,13 @@ export const StringField: FieldDecorator<{
       type: String,
       ...options,
     }),
-    ...(options.enum ? [IsEnum(options.enum)] : []),
+    ...(options.enum
+      ? [
+          IsEnum(options.enum, {
+            each: options.isArray,
+          }),
+        ]
+      : []),
   );
 
 export const NumberField: FieldDecorator<{

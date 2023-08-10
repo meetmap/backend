@@ -12,9 +12,7 @@ export class SnapshotService {
     routingKey: [
       RMQConstants.exchanges.AUTH_SERVICE_USERS_SNAPSHOT.routingKeys.SYNC,
     ],
-    queue:
-      RMQConstants.exchanges.AUTH_SERVICE_USERS_SNAPSHOT.queues
-        .LOCATION_SERVICE,
+    queue: 'location-service.snapshot.auth-service-users',
   })
   public async handleUserSnapshot(
     @RabbitPayload(
@@ -37,9 +35,7 @@ export class SnapshotService {
     routingKey: [
       RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.routingKeys.SYNC,
     ],
-    queue:
-      RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.queues
-        .LOCATION_SERVICE,
+    queue: 'location-service.snapshot.users-service-users',
   })
   public async handleUserFromUserServiceSnapshot(
     @RabbitPayload(
@@ -60,7 +56,7 @@ export class SnapshotService {
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.FRIENDS_SNAPSHOT.name,
     routingKey: [RMQConstants.exchanges.FRIENDS_SNAPSHOT.routingKeys.SYNC],
-    queue: RMQConstants.exchanges.FRIENDS_SNAPSHOT.queues.LOCATION_SERVICE,
+    queue: 'location-service.snapshot.friends',
   })
   public async handleFriendSnapshot(
     @RabbitPayload(

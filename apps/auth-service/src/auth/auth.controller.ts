@@ -1,4 +1,4 @@
-import { ExtractUser, JwtService, UseAuthGuard } from '@app/auth/jwt';
+import { ExtractUser, UseAuthGuard } from '@app/auth/jwt';
 import { AppDto } from '@app/dto';
 import { AppTypes } from '@app/types';
 import {
@@ -18,10 +18,32 @@ import { AuthService } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
+
+  // @RabbitSubscribe({
+  //   exchange: RMQConstants.exchanges.USERS.name,
+  //   routingKey: [RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED],
+  //   queue: 'auth_service.users.update-handler',
+  // })
+  // public async userUpdatedHandler(
+  //   @RabbitPayload() payload:AppDto.TransportDto.Users.UserUpdatedRmqRequestDto,
+  //   @RabbitRequest() req: { fields: RequestOptions },
+  // ) {
+  //   const routingKey = req.fields.routingKey;
+  //   console.log({
+  //     handler: this.userUpdatedHandler.name,
+  //     routingKey: routingKey,
+  //     msg: {
+  //       cid: payload.cid,
+  //     },
+  //   });
+  //   try {
+  //     await this.usersService.handleUpdateUser(payload);
+  //     return;
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // }
 
   @ApiOkResponse({
     type: AppDto.AuthService.AuthDto.SignInResponseDto,
@@ -99,7 +121,7 @@ export class AuthController {
     @Body() payload: AppDto.AuthService.AuthDto.UpdateUsernameRequestDto,
     @ExtractUser() user: AppTypes.AuthService.Users.IUser,
   ): Promise<AppDto.AuthService.AuthDto.UserResponseDto> {
-    return this.authService.updateUsersUsername(user.id, payload);
+    return this.authService.updateUsersUsername(user.cid, payload);
   }
 
   @ApiOkResponse({

@@ -36,9 +36,11 @@ export class UsersDal implements OnModuleInit {
 
   public async updateUser(
     cid: string,
-    payload: Pick<
-      AppTypes.LocationService.Users.IUser,
-      'profilePicture' | 'name' | 'username' | 'gender'
+    payload: Partial<
+      Pick<
+        AppTypes.LocationService.Users.IUser,
+        'profilePicture' | 'name' | 'username' | 'gender'
+      >
     >,
   ) {
     return await this.db.models.users.findOneAndUpdate(
@@ -52,7 +54,9 @@ export class UsersDal implements OnModuleInit {
           username: payload.username,
           cid: cid,
           gender: payload.gender,
-        } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.LocationService.Users.IUser>,
+        } satisfies Partial<
+          AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.LocationService.Users.IUser>
+        >,
       },
       { new: true, upsert: true },
     );

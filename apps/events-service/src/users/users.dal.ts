@@ -21,7 +21,7 @@ export class UsersDal implements OnModuleInit {
   }
 
   public async getEventsByUserAction(userCId: string, actionType: 'liked') {
-    return await this.db.models.eventsUsers.aggregate<AppTypes.EventsService.Event.IEventWithUserStats>(
+    return await this.db.models.eventsUsers.aggregate<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>(
       [
         {
           $match: {
@@ -32,14 +32,14 @@ export class UsersDal implements OnModuleInit {
         {
           $lookup: {
             from: 'events',
-            localField: 'event',
-            foreignField: '_id',
+            localField: 'eventCid',
+            foreignField: 'cid',
             as: 'event',
           },
         },
         { $unwind: '$event' },
         { $replaceRoot: { newRoot: '$event' } },
-        ...EventsDal.getEventsWithUserStatsAggregation(userCId),
+        ...EventsDal.getEventsWithUserStatsTagsAggregation(userCId),
       ],
     );
   }
@@ -57,7 +57,7 @@ export class UsersDal implements OnModuleInit {
   }
   public async updateUser(
     cid: string,
-    payload: AppTypes.Transport.Users.IUser,
+    payload: AppTypes.Transport.Users.IUpdatedUser,
   ) {
     return await this.db.models.users.findOneAndUpdate(
       {
@@ -72,7 +72,9 @@ export class UsersDal implements OnModuleInit {
           profilePicture: payload.profilePicture,
           username: payload.username,
           gender: payload.gender,
-        } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Users.IUser>,
+        } satisfies Partial<
+          AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Users.IUser>
+        >,
       },
       {
         new: true,

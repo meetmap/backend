@@ -13,8 +13,7 @@ export class SnapshotService {
     routingKey: [
       RMQConstants.exchanges.AUTH_SERVICE_USERS_SNAPSHOT.routingKeys.SYNC,
     ],
-    queue:
-      RMQConstants.exchanges.AUTH_SERVICE_USERS_SNAPSHOT.queues.ASSETS_SERVICE,
+    queue: 'assets-service.snapshot.auth-users-handler',
   })
   public async handleUserSnapshot(
     @RabbitPayload(
@@ -37,9 +36,7 @@ export class SnapshotService {
     routingKey: [
       RMQConstants.exchanges.EVENTS_SERVICE_EVENTS_SNAPSHOT.routingKeys.SYNC,
     ],
-    queue:
-      RMQConstants.exchanges.EVENTS_SERVICE_EVENTS_SNAPSHOT.queues
-        .ASSETS_SERVICE,
+    queue: 'assets-service.snapshot.events-handler',
   })
   public async handleEventsSnapshot(
     @RabbitPayload(
@@ -56,50 +53,4 @@ export class SnapshotService {
       console.error(error);
     }
   }
-
-  // @RabbitSubscribe({
-  //   exchange: RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.name,
-  //   routingKey: [
-  //     RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.routingKeys.SYNC,
-  //   ],
-  //   queue:
-  //     RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.queues.EVENTS_SERVICE,
-  // })
-  // public async handleUserFromUserServiceSnapshot(
-  //   @RabbitPayload(
-  //     new ParseArrayPipe({
-  //       items: AppDto.TransportDto.Users.UsersServiceUserSnapshotRequestDto,
-  //     }),
-  //   )
-  //   payload: AppDto.TransportDto.Users.UsersServiceUserSnapshotRequestDto[],
-  // ) {
-  //   console.log('Users agains users service sync');
-  //   try {
-  //     await this.dal.updateUserAgainstUserService(payload);
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // }
-
-  // @RabbitSubscribe({
-  //   exchange: RMQConstants.exchanges.FRIENDS_SNAPSHOT.name,
-  //   routingKey: [RMQConstants.exchanges.FRIENDS_SNAPSHOT.routingKeys.SYNC],
-  //   queue: RMQConstants.exchanges.FRIENDS_SNAPSHOT.queues.EVENTS_SERVICE,
-  // })
-  // public async handleFriendSnapshot(
-  //   @RabbitPayload(
-  //     new ParseArrayPipe({
-  //       items:
-  //         AppDto.TransportDto.Friends.UsersServiceFriendsSnapshotRequestDto,
-  //     }),
-  //   )
-  //   payload: AppDto.TransportDto.Friends.UsersServiceFriendsSnapshotRequestDto[],
-  // ) {
-  //   try {
-  //     console.log('Friends sync');
-  //     await this.dal.updateOrCreateFriendship(payload);
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // }
 }

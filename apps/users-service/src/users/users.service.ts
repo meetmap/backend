@@ -19,7 +19,7 @@ export class UsersService {
   ) {}
 
   public async createUser(
-    payload: AppDto.TransportDto.Users.UserRmqRequestDto,
+    payload: AppDto.TransportDto.Users.UserCreatedRmqRequestDto,
   ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto> {
     const user = await this.dal.createUser(payload);
     return UsersService.mapUserDbToResponseUser(
@@ -29,7 +29,7 @@ export class UsersService {
   }
 
   public async updateUser(
-    payload: AppDto.TransportDto.Users.UserRmqRequestDto,
+    payload: AppDto.TransportDto.Users.UserUpdatedRmqRequestDto,
   ): Promise<AppDto.UsersServiceDto.UsersDto.UserResponseDto | null> {
     const user = await this.dal.updateUser(payload.cid, payload);
     if (!user) {
@@ -112,12 +112,11 @@ export class UsersService {
 
   static mapDbUserToRmqUser(
     user: AppTypes.UsersService.Users.IUser,
-  ): AppDto.TransportDto.Users.UserRmqRequestDto {
+  ): AppDto.TransportDto.Users.UserUpdatedRmqRequestDto {
     return {
       birthDate: user.birthDate,
       cid: user.cid,
       email: user.email,
-      id: user.id,
       username: user.username,
       description: user.description,
       phone: user.phone,

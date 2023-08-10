@@ -19,8 +19,7 @@ export class SnapshotService {
     routingKey: [
       RMQConstants.exchanges.AUTH_SERVICE_USERS_SNAPSHOT.routingKeys.SYNC,
     ],
-    queue:
-      RMQConstants.exchanges.AUTH_SERVICE_USERS_SNAPSHOT.queues.EVENTS_SERVICE,
+    queue: 'events-service.snapshot.auth-service-users',
   })
   public async handleUserSnapshot(
     @RabbitPayload(
@@ -43,8 +42,7 @@ export class SnapshotService {
     routingKey: [
       RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.routingKeys.SYNC,
     ],
-    queue:
-      RMQConstants.exchanges.USERS_SERVICE_USERS_SNAPSHOT.queues.EVENTS_SERVICE,
+    queue: 'events-service.snapshot.users-service-users',
   })
   public async handleUserFromUserServiceSnapshot(
     @RabbitPayload(
@@ -65,7 +63,7 @@ export class SnapshotService {
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.FRIENDS_SNAPSHOT.name,
     routingKey: [RMQConstants.exchanges.FRIENDS_SNAPSHOT.routingKeys.SYNC],
-    queue: RMQConstants.exchanges.FRIENDS_SNAPSHOT.queues.EVENTS_SERVICE,
+    queue: 'events-service.snapshot.friends',
   })
   public async handleFriendSnapshot(
     @RabbitPayload(
@@ -133,14 +131,16 @@ export class SnapshotService {
   private getSnapshotBatch(
     eventsBatch: Array<AppTypes.Transport.Snapshot.Events.IEventsServiceSnapshotEvent>,
   ): AppDto.TransportDto.Events.EventsServiceEventSnapshotRequestDto[] {
-    return eventsBatch.map((event) => ({
-      cid: event.cid,
-      creator: event.creator
-        ? {
-            creatorCid: event.creator.creatorCid,
-            type: event.creator.type,
-          }
-        : undefined,
-    }));
+    return eventsBatch.map((event) =>
+      AppDto.TransportDto.Events.EventsServiceEventSnapshotRequestDto.create({
+        cid: event.cid,
+        creator: event.creator
+          ? {
+              creatorCid: event.creator.creatorCid,
+              type: event.creator.type,
+            }
+          : undefined,
+      }),
+    );
   }
 }

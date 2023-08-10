@@ -1,7 +1,6 @@
 import { RADIANS_PER_KILOMETER } from '@app/constants';
 import { EventsServiceDatabase } from '@app/database';
 import { AppDto } from '@app/dto';
-import { S3UploaderService } from '@app/s3-uploader';
 import { AppTypes } from '@app/types';
 
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -9,21 +8,31 @@ import { randomUUID } from 'crypto';
 import * as mongoose from 'mongoose';
 @Injectable()
 export class EventsDal {
-  constructor(
-    private readonly db: EventsServiceDatabase,
-    private readonly s3Service: S3UploaderService,
-  ) {}
+  constructor(private readonly db: EventsServiceDatabase) {}
 
-  public async getEventById(eventId: string): Promise<
+  public async getEventWithUserMetadataAndTags(
+    userCid: string,
+    eventCid: string,
+  ): Promise<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags | null> {
+    const [event] = await this.getEventsWithUserMetadataAndTags(userCid, [
+      eventCid,
+    ]);
+
+    return event ?? null;
+  }
+
+  public async getEventByCid(eventCid: string): Promise<
     | (AppTypes.EventsService.Event.IEvent & {
         location: AppTypes.Shared.Location.ILocationWithCity;
       })
     | null
   > {
-    const event = await this.db.models.event.findById(eventId).populate({
-      path: 'location.cityId',
-      select: '-location',
-    });
+    const event = await this.db.models.event
+      .findOne({ cid: eventCid })
+      .populate({
+        path: 'location.cityId',
+        select: '-location',
+      });
     if (!event) {
       return null;
     }
@@ -41,13 +50,13 @@ export class EventsDal {
     };
   }
 
-  public async getUsersLikedAnEvent(eventId: string) {
+  public async getUsersLikedAnEvent(eventCid: string) {
     return await this.db.models.eventsUsers.aggregate<AppTypes.EventsService.Users.IUser>(
       [
         {
           $match: {
             isUserLike: true,
-            event: new mongoose.Types.ObjectId(eventId),
+            eventCid: eventCid,
           },
         },
         {
@@ -66,13 +75,13 @@ export class EventsDal {
 
   public async userAction(
     userCId: string,
-    eventId: string,
+    eventCid: string,
     action: 'like' | 'want-go',
   ) {
     const response = await this.db.models.eventsUsers.findOneAndUpdate(
       {
         userCId,
-        event: eventId,
+        eventCid: eventCid,
       },
       {
         $set: {
@@ -93,13 +102,13 @@ export class EventsDal {
 
   public async cancelUserAction(
     userCId: string,
-    eventId: string,
+    eventCid: string,
     action: 'like' | 'want-go',
   ) {
     const response = await this.db.models.eventsUsers.findOneAndUpdate(
       {
         userCId,
-        event: eventId,
+        eventCid: eventCid,
       },
       {
         $set: {
@@ -117,30 +126,15 @@ export class EventsDal {
     return response.toObject();
   }
 
-  public async getEventUserStats(
-    eventId: string,
-    userCId: string,
-  ): Promise<AppTypes.EventsService.Event.IEventWithUserStats['userStats']> {
-    const stats = await this.db.models.eventsUsers.findOne({
-      event: new mongoose.Types.ObjectId(eventId),
-      userCId,
-    });
-
-    return {
-      isUserLike: !!stats?.isUserLike,
-      userStatus: stats?.userStatus,
-    };
-  }
-
   public async getEventStats(
-    eventId: string,
+    eventCid: string,
   ): Promise<AppTypes.EventsService.Event.IEventStats> {
     const [stats] =
       await this.db.models.eventsUsers.aggregate<AppTypes.EventsService.Event.IEventStats>(
         [
           {
             $match: {
-              event: new mongoose.Types.ObjectId(eventId),
+              eventCid: eventCid,
             },
           },
           {
@@ -198,43 +192,62 @@ export class EventsDal {
     }
     return stats satisfies AppTypes.EventsService.Event.IEventStats;
   }
+
+  public async getAllTagsWithMetadata() {
+    return await this.db.models.eventTags
+      .find<AppTypes.EventsService.EventTags.ISafeTagWithMetadata>(
+        {},
+        {
+          cid: 1,
+          label: 1,
+          count: 1,
+        },
+      )
+      .sort({ count: -1 });
+  }
+
+  public async getTagsByKeywordsWithMetadata(keywords: string) {
+    const matchingTags = await this.db.models.eventTags
+      .find<AppTypes.EventsService.EventTags.ISafeTagWithMetadata>({
+        $text: { $search: keywords },
+      })
+      .select({
+        _id: false,
+        cid: 1,
+        label: 1,
+        count: 1,
+      } satisfies Record<keyof AppTypes.EventsService.EventTags.ISafeTagWithMetadata | '_id', boolean | number>)
+      .sort({
+        score: { $meta: 'textScore' },
+        count: -1,
+      })
+      .limit(15)
+      .lean();
+    return matchingTags;
+  }
+
   public async getEventsByKeywords(
     userCId: string,
     keywords: string,
-  ): Promise<AppTypes.EventsService.Event.IEventWithUserStats[]> {
-    const regex = new RegExp(keywords, 'i');
-    return await this.db.models.event.aggregate([
-      {
-        $match: {
-          $text: { $search: keywords },
-        },
-      },
-      {
-        $sort: { score: { $meta: 'textScore' } },
-      },
-      {
-        $limit: 15,
-      },
-      ...EventsDal.getEventsWithUserStatsAggregation(userCId),
-    ]);
+  ): Promise<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags[]> {
+    const matchingEventsCids = await this.db.models.event
+      .find<Pick<AppTypes.EventsService.Event.IEvent, 'cid'>>({
+        $text: { $search: keywords },
+      })
+      .sort({ score: { $meta: 'textScore' } })
+      .limit(15)
+      .select({
+        cid: 1,
+      } satisfies Partial<Record<keyof AppTypes.EventsService.Event.IEvent, number>>);
+    const eventCids = matchingEventsCids.map((event) => event.cid);
+    return await this.getEventsWithUserMetadataAndTags(userCId, eventCids);
   }
 
   public async getEventsBatch(
     userCId: string,
-    eventIds: string[],
-  ): Promise<AppTypes.EventsService.Event.IEventWithUserStats[]> {
-    return await this.db.models.event.aggregate([
-      {
-        $match: {
-          _id: {
-            $in: eventIds.map(
-              (eventId) => new mongoose.Types.ObjectId(eventId),
-            ),
-          },
-        },
-      },
-      ...EventsDal.getEventsWithUserStatsAggregation(userCId),
-    ]);
+    eventCIds: string[],
+  ): Promise<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags[]> {
+    return await this.getEventsWithUserMetadataAndTags(userCId, eventCIds);
   }
   public async getEventsByLocation(
     userCId: string,
@@ -315,7 +328,22 @@ export class EventsDal {
   public async createUserEvent(
     creatorCid: string,
     payload: AppDto.EventsServiceDto.EventsDto.CreateUserEventRequestDto,
+    tagsCids: string[],
   ) {
+    const tags = await this.db.models.eventTags
+      .find<Pick<AppTypes.EventsService.EventTags.ITag, 'cid' | 'label'>>({
+        cid: {
+          $in: tagsCids,
+        },
+      })
+      //max 15 tags
+      .limit(15)
+      .select('cid' satisfies keyof AppTypes.EventsService.EventTags.ITag)
+      .select('label' satisfies keyof AppTypes.EventsService.EventTags.ITag);
+    const dbTags = tags.map((tag) => ({
+      cid: tag.cid,
+      label: tag.label,
+    }));
     const city = await this.getCityByEventCoordinates({
       lat: payload.location.lat,
       lng: payload.location.lng,
@@ -345,6 +373,7 @@ export class EventsDal {
       } satisfies AppTypes.Shared.Location.ILocation,
       cid: cid,
       slug: cid,
+      tagsCids: dbTags.map((tag) => tag.cid),
       tickets: payload.tickets.map((ticket) => ({
         amount: ticket.amount,
         name: ticket.name,
@@ -355,7 +384,10 @@ export class EventsDal {
         description: ticket.description,
       })) satisfies AppTypes.EventsService.Event.ITicket[],
     } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>);
-    return createdEvent.toObject();
+    return {
+      event: createdEvent.toObject(),
+      tags: dbTags,
+    };
   }
 
   public async updatePicturesForEvent(
@@ -383,15 +415,27 @@ export class EventsDal {
     return event.toObject();
   }
 
-  public async uploadToPublicEventsAssestsBucket(key: string, file: Buffer) {
-    const { url } = await this.s3Service.upload(
-      'events-assets/'.concat(key),
-      file,
+  public async getEventsWithUserMetadataAndTags(
+    userCid: string,
+    eventsCids: string[],
+  ) {
+    return await this.db.models.event.aggregate<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>(
+      [
+        {
+          $match: {
+            cid: { $in: eventsCids },
+          } satisfies Partial<
+            Record<keyof AppTypes.EventsService.Event.IEvent, any>
+          >,
+        },
+        ...EventsDal.getEventsWithUserStatsTagsAggregation(userCid),
+      ],
     );
-    return url;
   }
 
-  static getEventsWithUserStatsAggregation(userCId: string) {
+  static getEventsWithUserStatsTagsAggregation(
+    userCId: string,
+  ): mongoose.PipelineStage[] {
     return [
       {
         $lookup: {
@@ -416,6 +460,26 @@ export class EventsDal {
         },
       },
       {
+        $lookup: {
+          from: 'eventtags',
+          localField: 'tagsCids',
+          foreignField: 'cid',
+          as: 'tags',
+          pipeline: [
+            {
+              $project: {
+                label: true,
+                cid: true,
+                _id: false,
+              } satisfies Record<
+                keyof AppTypes.EventsService.EventTags.ISafeTag | '_id',
+                boolean
+              >,
+            },
+          ],
+        },
+      },
+      {
         $addFields: {
           id: {
             $toString: '$_id',
@@ -431,7 +495,10 @@ export class EventsDal {
           },
           thumbnail: { $arrayElemAt: ['$assets', 0] },
         } satisfies Partial<
-          Record<keyof AppTypes.EventsService.Event.IEventWithUserStats, any>
+          Record<
+            keyof AppTypes.EventsService.Event.IEventWithUserMetadataAndTags,
+            any
+          >
         >,
       },
     ];

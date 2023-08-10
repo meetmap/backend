@@ -84,6 +84,12 @@
       ],
       "@app/auth-providers/*": [
         "libs/auth-providers/src/*"
+      ],
+      "@app/ai-processing": [
+        "libs/ai-processing/src"
+      ],
+      "@app/ai-processing/*": [
+        "libs/ai-processing/src/*"
       ]
     }
   }
