@@ -1,0 +1,60 @@
+import { RMQConstants } from '@app/constants';
+import { AppDto } from '@app/dto';
+import {
+  RabbitPayload,
+  RabbitRequest,
+  RabbitSubscribe,
+  RequestOptions,
+} from '@golevelup/nestjs-rabbitmq';
+import { Injectable } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
+import { EventTagsDal } from './event-tags.dal';
+
+@Injectable()
+export class EventTagsService {
+  constructor(private readonly dal: EventTagsDal) {}
+
+  @Cron('33,0 * * * *')
+  public async syncTagsCountJob() {
+    console.log('Event tags sync job started');
+    const maxBatchSize = 50;
+    const tagsCursor = this.dal.getAllEventTagsCursor();
+    const tagsCidsBatch: string[] = [];
+    for await (const tag of tagsCursor) {
+      tagsCidsBatch.push(tag.cid);
+      if (tagsCidsBatch.length >= maxBatchSize) {
+        await this.syncTags([...tagsCidsBatch]);
+        tagsCidsBatch.length = 0;
+      }
+    }
+    await this.syncTags([...tagsCidsBatch]);
+    tagsCidsBatch.length = 0;
+    console.log('Event tags sync job finished');
+  }
+
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.EVENTS.name,
+    routingKey: [
+      RMQConstants.exchanges.EVENTS.routingKeys.EVENT_PROCESSING_SUCCEED,
+      RMQConstants.exchanges.EVENTS.routingKeys.EVENT_CREATED,
+    ],
+    queue: 'events-service.event-tags.sync',
+  })
+  public async syncTagsHandler(
+    @RabbitPayload()
+    payload: AppDto.TransportDto.Events.EventsServiceEventRequestDto,
+    @RabbitRequest() req: { fields: RequestOptions },
+  ) {
+    const event = await this.dal.getEventByCid(payload.cid);
+    if (!event) {
+      return;
+    }
+    await this.syncTags(event.tagsCids);
+  }
+  private async syncTags(tagsCids: string[]) {
+    const tags = await this.dal.getTagsWithCountBulk(tagsCids);
+    await this.dal.updateTagsCountBulk(
+      tags.map((tag) => ({ cid: tag.cid, count: tag.count })),
+    );
+  }
+}

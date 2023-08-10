@@ -18,7 +18,7 @@ export class UsersDal implements OnModuleInit {
     // );
   }
 
-  public async createUser(payload: AppTypes.Transport.Users.IUser) {
+  public async createUser(payload: AppTypes.Transport.Users.ICreatedUser) {
     return await this.db.models.users.create({
       cid: payload.cid,
       name: payload.name,
@@ -28,7 +28,7 @@ export class UsersDal implements OnModuleInit {
   }
   public async updateUser(
     cid: string,
-    payload: AppTypes.Transport.Users.IUser,
+    payload: AppTypes.Transport.Users.IUpdatedUser,
   ) {
     return await this.db.models.users.findOneAndUpdate(
       {
@@ -36,15 +36,15 @@ export class UsersDal implements OnModuleInit {
       },
       {
         $set: {
-          cid: payload.cid,
           username: payload.username,
           gender: payload.gender,
           name: payload.name,
-        } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.AssetsSerivce.Users.IUser>,
+        } satisfies Partial<
+          AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.AssetsSerivce.Users.IUser>
+        >,
       },
       {
         new: true,
-        upsert: true,
       },
     );
   }
@@ -61,33 +61,4 @@ export class UsersDal implements OnModuleInit {
 
     return cid;
   }
-
-  // public async requestFriend(userCid: string, friendCid: string) {
-  //   await this.db.session(async (session) => {
-  //     return await this.dataManipulation.friends.sendFriendshipRequest(
-  //       userCid,
-  //       friendCid,
-  //       session,
-  //     );
-  //   });
-  // }
-
-  // public async acceptFriend(userCid: string, friendCid: string) {
-  //   await this.db.session(async (session) => {
-  //     return await this.dataManipulation.friends.acceptFriendshipRequest(
-  //       userCid,
-  //       friendCid,
-  //       session,
-  //     );
-  //   });
-  // }
-  // public async rejectFriend(userCid: string, friendCid: string) {
-  //   await this.db.session(async (session) => {
-  //     return await this.dataManipulation.friends.rejectFriendshipRequest(
-  //       userCid,
-  //       friendCid,
-  //       session,
-  //     );
-  //   });
-  // }
 }

@@ -1,3 +1,4 @@
+import { BaseDto } from '@app/dto/base';
 import {
   IdField,
   ImageField,
@@ -6,12 +7,12 @@ import {
 } from '@app/dto/decorators';
 import { AppTypes } from '@app/types';
 
-export class UploadImageRequestDto {
+export class UploadImageRequestDto extends BaseDto {
   @ImageField()
   photo: Express.Multer.File;
 }
 
-export class UploadImageRequestBulkDto {
+export class UploadImageRequestBulkDto extends BaseDto {
   @ImageField({ isArray: true })
   'photo': [Express.Multer.File];
 }
@@ -22,6 +23,7 @@ export class AttachImagesToEventRequestDto extends UploadImageRequestBulkDto {
 }
 
 export class AssetResponseDto
+  extends BaseDto
   implements Partial<Record<AppTypes.AssetsSerivce.Other.SizeName, string>>
 {
   @StringField({ optional: true })
@@ -38,7 +40,7 @@ export class AssetResponseDto
   exact?: string;
 }
 
-export class UploadAssetResponseDto {
+export class UploadAssetResponseDto extends BaseDto {
   @IdField()
   uploadId: string;
   @StringField({
@@ -49,7 +51,7 @@ export class UploadAssetResponseDto {
   assets: AssetResponseDto[];
 }
 
-export class UploadProfilePictureResponseDto {
+export class UploadProfilePictureResponseDto extends BaseDto {
   @StringField()
   xs: string;
   @StringField()
@@ -58,7 +60,7 @@ export class UploadProfilePictureResponseDto {
   m: string;
 }
 
-export class UploadEventPictureResponseDto {
+export class UploadEventPictureResponseDto extends BaseDto {
   @StringField()
   xs: string;
   @StringField()

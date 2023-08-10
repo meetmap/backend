@@ -1,3 +1,4 @@
+import { BaseDto } from '@app/dto/base';
 import {
   BooleanField,
   DateField,
@@ -8,8 +9,20 @@ import {
 } from '@app/dto/decorators';
 import { AppTypes } from '@app/types';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
+
+export class EventTagResponseDto
+  extends BaseDto
+  implements AppTypes.EventsService.EventTags.ISafeTag
+{
+  @IdField()
+  cid: string;
+  @IsString()
+  label: string;
+}
 
 export class EventUserStatsResponseDto
+  extends BaseDto
   implements
     Pick<
       AppTypes.EventsService.EventsUsers.IEventsUsers,
@@ -25,7 +38,7 @@ export class EventUserStatsResponseDto
   userStatus?: AppTypes.EventsService.EventsUsers.EventsUsersStatusType;
 }
 
-export class GetEventsByLocationRequestDto {
+export class GetEventsByLocationRequestDto extends BaseDto {
   @NumberField()
   latitude: number;
   @NumberField()
@@ -41,7 +54,10 @@ export class GetEventsByLocationRequestDto {
   radius: number;
 }
 
-export class PointResponseDto implements AppTypes.Shared.Location.IPoint {
+export class PointResponseDto
+  extends BaseDto
+  implements AppTypes.Shared.Location.IPoint
+{
   @StringField({
     enum: ['Point'],
   })
@@ -56,6 +72,7 @@ export class PointResponseDto implements AppTypes.Shared.Location.IPoint {
 }
 
 export class LocationResponseDto
+  extends BaseDto
   implements Omit<AppTypes.Shared.Location.ILocation, 'cityId'>
 {
   @StringField()
@@ -66,14 +83,20 @@ export class LocationResponseDto
   coordinates: PointResponseDto;
 }
 
-export class PriceDto implements AppTypes.EventsService.Event.IPrice {
+export class PriceDto
+  extends BaseDto
+  implements AppTypes.EventsService.Event.IPrice
+{
   @StringField()
   currency: string;
   @NumberField()
   amount: number;
 }
 
-export class TicketDto implements AppTypes.EventsService.Event.ITicket {
+export class TicketDto
+  extends BaseDto
+  implements AppTypes.EventsService.Event.ITicket
+{
   @StringField()
   name: string;
   @StringField({ optional: true })
@@ -88,6 +111,7 @@ export class TicketDto implements AppTypes.EventsService.Event.ITicket {
 }
 
 export class CreatorResponseDto
+  extends BaseDto
   implements AppTypes.EventsService.Event.ICreator
 {
   type: AppTypes.EventsService.Event.CreatorType;
@@ -95,6 +119,7 @@ export class CreatorResponseDto
 }
 
 export class MinimalEventByLocationResponseDto
+  extends BaseDto
   implements
     Pick<
       AppTypes.EventsService.Event.IMinimalEventByLocation,
@@ -115,6 +140,7 @@ export class MinimalEventByLocationResponseDto
 }
 
 export class EventResponseDto
+  extends BaseDto
   implements
     Pick<
       AppTypes.EventsService.Event.IEvent,
@@ -168,9 +194,25 @@ export class EventResponseDto
     enum: AppTypes.EventsService.Event.EventAccessibilityType,
   })
   accessibility: AppTypes.EventsService.Event.EventAccessibilityType;
+
+  @NestedField([EventTagResponseDto])
+  tags: EventTagResponseDto[];
+}
+
+export class EventTagWithMetadataResponseDto
+  extends BaseDto
+  implements AppTypes.EventsService.EventTags.ISafeTag
+{
+  @StringField()
+  label: string;
+  @StringField()
+  cid: string;
+  @NumberField()
+  count: number;
 }
 
 export class EventStatsResponseDto
+  extends BaseDto
   implements AppTypes.EventsService.Event.IEventStats
 {
   @NumberField()
@@ -184,7 +226,8 @@ export class EventStatsResponseDto
 }
 
 export class SingleEventResponseDto
-  implements AppTypes.EventsService.Event.IEvent
+  extends BaseDto
+  implements Omit<AppTypes.EventsService.Event.IEvent, 'tagsCids'>
 {
   @IdField()
   id: string;
@@ -235,16 +278,19 @@ export class SingleEventResponseDto
   createdAt: Date;
   @DateField()
   updatedAt: Date;
+
+  @NestedField([EventTagResponseDto])
+  tags: EventTagResponseDto[];
 }
 
-class CreateUserEventLocationRequestDto {
+class CreateUserEventLocationRequestDto extends BaseDto {
   @NumberField()
   lat: number;
   @NumberField()
   lng: number;
 }
 
-class CreateUserEventTicketRequestDto {
+class CreateUserEventTicketRequestDto extends BaseDto {
   @StringField()
   name: string;
   @NumberField({ max: 100000 })
@@ -255,7 +301,7 @@ class CreateUserEventTicketRequestDto {
   description?: string;
 }
 
-export class CreateUserEventRequestDto {
+export class CreateUserEventRequestDto extends BaseDto {
   @StringField()
   title: string;
   @StringField({ optional: true })
@@ -275,72 +321,12 @@ export class CreateUserEventRequestDto {
   location: CreateUserEventLocationRequestDto;
   @NestedField([CreateUserEventTicketRequestDto], { maxLength: 10 })
   tickets: CreateUserEventTicketRequestDto[];
+
+  @StringField({
+    isArray: true,
+    maxArrayLength: 15,
+    description:
+      "Maximum 15 tags, if empty array, server will assing tags automatically, based on event's contents",
+  })
+  tagsCids: string[];
 }
-
-// export class CreateEventRequestDto {
-//   @StringField({
-//     required: true,
-//     description: 'Stringified json',
-//     example: JSON.stringify(
-//       {
-//         ageLimit: 1,
-//         description: 'description',
-//         endTime: new Date('2003-04-01T21:00:00.000Z'),
-//         startTime: new Date('2003-04-01T21:00:00.000Z'),
-//         accessibility:
-//           AppTypes.EventsService.Event.EventAccessibilityType.PUBLIC,
-//         eventType: AppTypes.EventsService.Event.EventType.USER,
-//         location: {
-//           lat: 1,
-//           lng: 1,
-//         },
-//         slug: 'slug',
-//         tickets: [
-//           {
-//             amount: 1,
-//             description: 'description',
-//             name: 'name',
-//             price: 0,
-//           },
-//         ],
-//         title: 'title',
-//       } as z.infer<typeof CreateEventSchema>,
-//       null,
-//       2,
-//     ),
-//   })
-//   rawEvent: string;
-
-//   @ApiProperty({
-//     type: 'string',
-//     format: 'binary',
-//     required: true,
-//     description: 'fileType: image/*; maxSize: 3.5mb',
-//   })
-//   photo: Express.Multer.File;
-// }
-
-// export const TicketSchema = z.object({
-//   name: z.string(),
-//   price: z.number().max(100000),
-//   amount: z.number().min(-1).max(1000000).optional().default(-1),
-//   description: z.string().optional().nullable().default(null),
-// }); //@todo make startTime and endTime validation
-
-// export const CreateEventSchema = z.object({
-//   title: z.string(),
-//   description: z.string().optional().nullable().default(null),
-//   slug: z.string(),
-//   eventType: z.nativeEnum(AppTypes.EventsService.Event.EventType),
-//   accessibility: z.nativeEnum(
-//     AppTypes.EventsService.Event.EventAccessibilityType,
-//   ),
-//   startTime: z.coerce.date(),
-//   endTime: z.coerce.date(),
-//   ageLimit: z.number().min(1).max(120),
-//   location: z.object({
-//     lat: z.number(),
-//     lng: z.number(),
-//   }),
-//   tickets: z.array(TicketSchema),
-// });

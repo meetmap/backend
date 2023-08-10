@@ -25,7 +25,9 @@ export class IsAuthenticatedGuard implements CanActivate {
         throw new ForbiddenException('Auth token required');
       }
       const payload = await this.jwtService.verifyAt(authToken);
-      const user = await this.database.models.users.findById(payload.sub);
+      const user = await this.database.models.users.findOne({
+        cid: payload.cid,
+      });
       if (!user) {
         throw new ForbiddenException('No such user');
       }

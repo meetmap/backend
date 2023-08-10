@@ -18,30 +18,24 @@ export class EventsController {
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.EVENTS.name,
     routingKey: [RMQConstants.exchanges.EVENTS.routingKeys.EVENT_CREATED],
-    queue: RMQConstants.exchanges.EVENTS.queues.ASSETS_SERVICE,
+    queue: 'assets-service.events.created',
   })
-  public async handleEvent(
+  public async handleCreateEvent(
     @RabbitPayload()
     payload: AppDto.TransportDto.Events.EventsServiceEventRequestDto,
     @RabbitRequest() req: { fields: RequestOptions },
   ) {
     const routingKey = req.fields.routingKey;
     console.log({
-      handler: this.handleEvent.name,
+      handler: this.handleCreateEvent.name,
       routingKey: routingKey,
       msg: {
         cid: payload.cid,
       },
     });
     try {
-      if (
-        routingKey === RMQConstants.exchanges.EVENTS.routingKeys.EVENT_CREATED
-      ) {
-        await this.usersService.handleCreateEvent(payload);
-        return;
-      } else {
-        throw new Error('Invalid routing key');
-      }
+      await this.usersService.handleCreateEvent(payload);
+      return;
     } catch (error) {
       console.error(error);
     }

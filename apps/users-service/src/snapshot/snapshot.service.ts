@@ -18,8 +18,7 @@ export class SnapshotService {
     routingKey: [
       RMQConstants.exchanges.AUTH_SERVICE_USERS_SNAPSHOT.routingKeys.SYNC,
     ],
-    queue:
-      RMQConstants.exchanges.AUTH_SERVICE_USERS_SNAPSHOT.queues.USER_SERVICE,
+    queue: 'users-service.snapshot.auth-service-users',
   })
   public async handleUserSnapshot(
     @RabbitPayload(
@@ -130,20 +129,24 @@ export class SnapshotService {
   private getUsersSnapshotBatch(
     usersDocs: AppTypes.Transport.Snapshot.Users.IUsersServiceSnapshot[],
   ): AppDto.TransportDto.Users.UsersServiceUserSnapshotRequestDto[] {
-    return usersDocs.map((userDoc) => ({
-      cid: userDoc.cid,
-      description: userDoc.description,
-      profilePicture: userDoc.profilePicture,
-    }));
+    return usersDocs.map((userDoc) =>
+      AppDto.TransportDto.Users.UsersServiceUserSnapshotRequestDto.create({
+        cid: userDoc.cid,
+        description: userDoc.description,
+        profilePicture: userDoc.profilePicture,
+      }),
+    );
   }
 
   private getFriendsSnapshotBatch(
     friendsDocs: AppTypes.Shared.Friends.IFriendsBase[],
   ): AppDto.TransportDto.Friends.UsersServiceFriendsSnapshotRequestDto[] {
-    return friendsDocs.map((friendsDoc) => ({
-      requesterCId: friendsDoc.requesterCId,
-      recipientCId: friendsDoc.recipientCId,
-      status: friendsDoc.status,
-    }));
+    return friendsDocs.map((friendsDoc) =>
+      AppDto.TransportDto.Friends.UsersServiceFriendsSnapshotRequestDto.create({
+        requesterCId: friendsDoc.requesterCId,
+        recipientCId: friendsDoc.recipientCId,
+        status: friendsDoc.status,
+      }),
+    );
   }
 }

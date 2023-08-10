@@ -1,7 +1,9 @@
+import { BaseDto } from '@app/dto/base';
 import { IdField, StringField } from '@app/dto/decorators';
 import { AppTypes } from '@app/types';
 
 export class UsersServiceFriendsSnapshotRequestDto
+  extends BaseDto
   implements AppTypes.Transport.Snapshot.Friends.IUsersServiceSnapshot
 {
   @IdField()
@@ -14,7 +16,7 @@ export class UsersServiceFriendsSnapshotRequestDto
   status: AppTypes.Shared.Friends.FriendshipStatus;
 }
 
-export class UpdateFriendshipRMQRequestDto {
+export class UpdateFriendshipRMQRequestDto extends BaseDto {
   @IdField()
   userCId: string;
 

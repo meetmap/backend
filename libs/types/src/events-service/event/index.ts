@@ -1,4 +1,5 @@
 import { Shared } from '@app/types/shared';
+import { ISafeTag } from '../event-tags';
 import { IEventsUsers } from '../events-users';
 
 export interface IEvent {
@@ -29,6 +30,8 @@ export interface IEvent {
   accessibility: EventAccessibilityType;
 
   tickets: ITicket[];
+
+  tagsCids: string[];
 
   createdAt: Date;
   updatedAt: Date;
@@ -77,9 +80,10 @@ export interface IEventStats {
   ticketsPurchased: number;
   wantGo: number;
 }
-export interface IEventWithUserStats extends IEvent {
+export interface IEventWithUserMetadataAndTags extends IEvent {
   thumbnail?: string;
   userStats: Pick<IEventsUsers, 'isUserLike' | 'userStatus'>;
+  tags: ISafeTag[];
 }
 
 export interface IMinimalEventByLocation extends Pick<IEvent, 'id' | 'cid'> {

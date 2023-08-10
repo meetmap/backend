@@ -9,6 +9,7 @@ import {
   TicketingPlatformSchema,
   UserSchema,
 } from './models';
+import { EventTagsSchema } from './models/eventTags';
 
 @Injectable()
 export class EventsServiceDatabase extends AbstractBaseDatabase {
@@ -17,6 +18,39 @@ export class EventsServiceDatabase extends AbstractBaseDatabase {
     for (const modelName in this.models) {
       await this.models[modelName].syncIndexes();
     }
+    // for await (const eventsUsers of this.models.eventsUsers
+    //   .aggregate([
+    //     {
+    //       $match: {
+    //         event: {
+    //           $exists: true,
+    //         },
+    //       },
+    //     },
+    //     {
+    //       $lookup: {
+    //         from: 'events',
+    //         localField: 'event',
+    //         foreignField: '_id',
+    //         as: 'ev',
+    //       },
+    //     },
+    //     {
+    //       $unwind: {
+    //         path: '$ev',
+    //       },
+    //     },
+    //   ])
+    //   .cursor()) {
+    //   await this.models.eventsUsers.updateMany(eventsUsers._id, {
+    //     $set: {
+    //       eventCid: eventsUsers.ev.cid,
+    //     },
+    //     $unset: {
+    //       event: '',
+    //     },
+    //   });
+    // }
   }
   public override get models() {
     return {
@@ -30,6 +64,7 @@ export class EventsServiceDatabase extends AbstractBaseDatabase {
       eventsUsers: this.connection.model('EventsUsers', EventsUsersSchema),
       users: this.connection.model('User', UserSchema),
       friends: this.connection.model('Friends', FriendsSchema),
+      eventTags: this.connection.model('EventTags', EventTagsSchema),
     };
   }
 }

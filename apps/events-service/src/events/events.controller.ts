@@ -19,7 +19,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiQuery } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 
 @Controller('events')
@@ -31,7 +31,8 @@ export class EventsController {
     routingKey: [
       RMQConstants.exchanges.ASSETS.routingKeys.EVENT_PICTURE_UPDATED,
     ],
-    queue: RMQConstants.exchanges.ASSETS.queues.EVENTS_SERVICE_ASSET_UPLOADED,
+    queue: 'events-service.events.assets.updated',
+    // queue: RMQConstants.exchanges.ASSETS.queues.EVENTS_SERVICE_ASSET_UPLOADED,
   })
   public async handleEventAssetsUpdated(
     @RabbitPayload()
@@ -78,6 +79,24 @@ export class EventsController {
   }
 
   @ApiOkResponse({
+    type: [AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataResponseDto],
+    description: 'Returns all tags sorted by popularity',
+  })
+  @ApiQuery({ name: 'q', required: false })
+  @Get('/tags/?')
+  @UseMicroserviceAuthGuard()
+  public async searchTags(
+    @Query('q') query: string,
+  ): Promise<
+    AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataResponseDto[]
+  > {
+    if (!query) {
+      return await this.eventsService.getAllTags();
+    }
+    return await this.eventsService.searchTags(query);
+  }
+
+  @ApiOkResponse({
     type: [AppDto.EventsServiceDto.EventsDto.EventResponseDto],
   })
   @UseMicroserviceAuthGuard()
@@ -93,13 +112,13 @@ export class EventsController {
   @ApiOkResponse({
     type: AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto,
   })
-  @Get('/:eventId')
+  @Get('/:eventCid')
   @UseMicroserviceAuthGuard()
   public async getEventById(
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
-    @Param('eventId') eventId: string,
+    @Param('eventCid') eventCid: string,
   ): Promise<AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto> {
-    return this.eventsService.getEventById(jwt.cid, eventId);
+    return this.eventsService.getEventByCid(jwt.cid, eventCid);
   }
 
   @ApiOkResponse({
@@ -133,15 +152,15 @@ export class EventsController {
   @ApiOkResponse({
     type: AppDto.EventsServiceDto.EventsDto.EventStatsResponseDto,
   })
-  @Patch('/like/:eventId')
+  @Patch('/like/:eventCid')
   @UseMicroserviceAuthGuard()
   public async likeEvent(
-    @Param('eventId') eventId: string,
+    @Param('eventCid') eventCid: string,
     @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventStatsResponseDto> {
     const stats = await this.eventsService.userAction(
       jwtPayload.cid,
-      eventId,
+      eventCid,
       'like',
     );
     return stats;
@@ -149,15 +168,15 @@ export class EventsController {
   @ApiOkResponse({
     type: AppDto.EventsServiceDto.EventsDto.EventStatsResponseDto,
   })
-  @Delete('/like/:eventId')
+  @Delete('/like/:eventCid')
   @UseMicroserviceAuthGuard()
   public async cancelLikeEvent(
-    @Param('eventId') eventId: string,
+    @Param('eventCid') eventCid: string,
     @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventStatsResponseDto> {
     const stats = await this.eventsService.cancelUserAction(
       jwtPayload.cid,
-      eventId,
+      eventCid,
       'like',
     );
     return stats;
@@ -167,15 +186,15 @@ export class EventsController {
   @ApiOkResponse({
     type: AppDto.EventsServiceDto.EventsDto.EventStatsResponseDto,
   })
-  @Patch('/want-go/:eventId')
+  @Patch('/want-go/:eventCid')
   @UseMicroserviceAuthGuard()
   public async willGoEvent(
-    @Param('eventId') eventId: string,
+    @Param('eventCid') eventCid: string,
     @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventStatsResponseDto> {
     const stats = await this.eventsService.userAction(
       jwtPayload.cid,
-      eventId,
+      eventCid,
       'want-go',
     );
     return stats;
@@ -184,30 +203,30 @@ export class EventsController {
   @ApiOkResponse({
     type: AppDto.EventsServiceDto.EventsDto.EventStatsResponseDto,
   })
-  @Delete('/want-go/:eventId')
+  @Delete('/want-go/:eventCid')
   @UseMicroserviceAuthGuard()
   public async cancelWillGoEvent(
-    @Param('eventId') eventId: string,
+    @Param('eventCid') eventCid: string,
     @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventStatsResponseDto> {
     const stats = await this.eventsService.cancelUserAction(
       jwtPayload.cid,
-      eventId,
+      eventCid,
       'want-go',
     );
     return stats;
   }
 
-  @Get('/likes/:eventId')
+  @Get('/likes/:eventCid')
   @ApiOkResponse({
     type: [AppDto.EventsServiceDto.UsersDto.EventsServiceUserResponseDto],
   })
   @UseMicroserviceAuthGuard()
   public async getEventLikes(
-    @Param('eventId') eventId: string,
+    @Param('eventCid') eventCid: string,
     @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
   ): Promise<AppDto.EventsServiceDto.UsersDto.EventsServiceUserResponseDto[]> {
-    const usersLiked = await this.eventsService.getEventLikes(eventId);
+    const usersLiked = await this.eventsService.getEventLikes(eventCid);
     return usersLiked;
   }
 }

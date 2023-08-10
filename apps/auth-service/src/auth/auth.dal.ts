@@ -5,7 +5,6 @@ import { AppTypes } from '@app/types';
 import { ConflictException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
-import * as mongoose from 'mongoose';
 
 @Injectable()
 export class AuthDal {
@@ -92,23 +91,28 @@ export class AuthDal {
       .limit(15);
   }
 
-  public async findUserById(
-    userId: string,
+  public async findUserByCid(
+    userCid: string,
   ): Promise<AppTypes.AuthService.Users.IUser | null> {
-    return await this.db.models.users.findById(userId);
+    return await this.db.models.users.findOne({ cid: userCid });
   }
 
-  public async updateUsersRefreshToken(userId: string, refreshToken: string) {
-    return await this.db.models.users.findByIdAndUpdate(userId, {
-      $set: {
-        refreshToken: refreshToken,
+  public async updateUsersRefreshToken(userCid: string, refreshToken: string) {
+    return await this.db.models.users.findOneAndUpdate(
+      {
+        cid: userCid,
       },
-    });
+      {
+        $set: {
+          refreshToken: refreshToken,
+        },
+      },
+    );
   }
 
-  public async linkFbToUser(userId: string, fbUser: IAuthProviderUser) {
-    return await this.db.models.users.findByIdAndUpdate(
-      userId,
+  public async linkFbToUser(userCid: string, fbUser: IAuthProviderUser) {
+    return await this.db.models.users.findOne(
+      { cid: userCid },
       {
         $set: {
           fbId: fbUser.id,
@@ -120,7 +124,7 @@ export class AuthDal {
   }
 
   public async updateUser(
-    id: string,
+    cid: string,
     payload: Partial<
       Pick<
         AppTypes.AuthService.Users.IUser,
@@ -143,8 +147,8 @@ export class AuthDal {
         `User with phone ${payload.phone} already exists`,
       );
     }
-    return this.db.models.users.findByIdAndUpdate<AppTypes.AuthService.Users.ISafeUser>(
-      id,
+    return this.db.models.users.findOneAndUpdate<AppTypes.AuthService.Users.ISafeUser>(
+      { cid },
       {
         $set: {
           password: payload.password
@@ -160,20 +164,6 @@ export class AuthDal {
         new: true,
       },
     );
-  }
-
-  public async getUserById(userId: string) {
-    return await this.db.models.users.findById(userId);
-  }
-
-  public async getUserByIdBulk(
-    userIds: string[],
-  ): Promise<(AppTypes.AuthService.Users.IUser | null)[]> {
-    return await this.db.models.users.find({
-      id: {
-        $in: userIds.map((id) => new mongoose.Types.ObjectId(id)),
-      },
-    });
   }
 
   public async findUserByUsername(username: string) {

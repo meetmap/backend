@@ -146,6 +146,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/assets-service/tsconfig.app.json"
       }
+    },
+    "ai-processing": {
+      "type": "library",
+      "root": "libs/ai-processing",
+      "entryFile": "index",
+      "sourceRoot": "libs/ai-processing/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/ai-processing/tsconfig.lib.json"
+      }
     }
   },
   "compilerOptions": {

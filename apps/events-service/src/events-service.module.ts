@@ -3,12 +3,15 @@ import { Module } from '@nestjs/common';
 import { DatabaseModule } from '@app/database';
 import { ConfigModule } from '@nestjs/config';
 
+import { AiProcessingModule } from '@app/ai-processing';
 import { AuthModule } from '@app/auth';
 import { RabbitmqModule } from '@app/rabbitmq';
 import { RedisModule } from '@app/redis';
 import { S3UploaderModule } from '@app/s3-uploader';
 import { AppTypes } from '@app/types';
+import { EventTagsModule } from './event-tags/event-tags.module';
 import { EventerFetcherModule } from './eventer-fetcher/eventer-fetcher.module';
+import { EventsProcessingModule } from './events-processing/events-processing.module';
 import { EventsFetcherController } from './events-service.controller';
 import { EventsModule } from './events/events.module';
 import { SnapshotModule } from './snapshot/snapshot.module';
@@ -37,7 +40,10 @@ import { UserModule } from './users/users.module';
     EventsModule,
     UserModule,
     TicketingPlatofrmsModule,
+    AiProcessingModule,
     SnapshotModule,
+    EventsProcessingModule,
+    EventTagsModule,
   ],
   controllers: [EventsFetcherController],
   providers: [],

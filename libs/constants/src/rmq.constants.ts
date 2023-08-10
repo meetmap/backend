@@ -4,105 +4,71 @@ export class RMQConstants {
       ASSETS: {
         name: 'assets_exchange',
         type: 'direct',
-        queues: {
-          USER_SERVICE_ASSET_UPLOADED: 'users_service_asset_uploaded_queue',
-          LOCATION_SERVICE_ASSET_UPLOADED:
-            'location_service_asset_uploaded_queue',
-          EVENTS_SERVICE_ASSET_UPLOADED: 'events_service_asset_uploaded_queue',
-          ASSETS_SERVICE_ASSET_QUEUE: 'events_service_asset_queue',
-        },
         routingKeys: {
-          PROFILE_PICTURE_UPDATED: 'profile_picture.updated',
-          EVENT_PICTURE_UPDATED: 'event_pitcture.updated',
-          ASSET_UPLOAD_FAILED: 'asset_upload.failed',
+          PROFILE_PICTURE_UPDATED: 'assets-service.profile_picture.updated',
+          EVENT_PICTURE_UPDATED: 'assets-service.event_pitcture.updated',
+          ASSET_UPLOAD_FAILED: 'assets-service.asset_upload.failed',
         },
       },
       FRIENDS_SNAPSHOT: {
         name: 'users_service_friends_snapshot',
         type: 'direct',
-        queues: {
-          LOCATION_SERVICE: 'location_service__friends_snapshot_queue',
-          EVENTS_SERVICE: 'events_service__friends_snapshot_queue',
-        },
         routingKeys: {
-          SYNC: 'snapshot.sync',
+          SYNC: 'users-service.snapshot.friends.sync',
         },
       },
       EVENTS: {
         name: 'events_service_events',
         type: 'direct',
-        queues: {
-          ASSETS_SERVICE: 'events_service__assets_service_events_queue',
-        },
+
         routingKeys: {
-          EVENT_CREATED: 'event.created',
+          EVENT_CREATED: 'events-service.event.created',
+          ASSIGN_TAGS: 'events-service.event.assign-tags',
+          EVENT_PROCESSING_PENDING: 'events-service.event.processing.pending',
+          EVENT_PROCESSING_SUCCEED: 'events-service.event.processing.succeed',
+          EVENT_PROCESSING_FAILED: 'events.service.event.processing.failed',
         },
       },
       EVENTS_SERVICE_EVENTS_SNAPSHOT: {
         name: 'events_service_events_snapshot',
         type: 'direct',
-        queues: {
-          ASSETS_SERVICE:
-            'events_service__assets_service_events_snapshot_queue',
-        },
+
         routingKeys: {
-          SYNC: 'snapshot.sync',
+          SYNC: 'events_service.snapshot.events.sync',
         },
       },
       USERS_SERVICE_USERS_SNAPSHOT: {
         name: 'users_service_users_snapshot',
         type: 'direct',
-        queues: {
-          USER_SERVICE: 'users_service__users_service_users_snapshot_queue',
-          LOCATION_SERVICE:
-            'location_service__users_service_users_snapshot_queue',
-          EVENTS_SERVICE: 'events_service__users_service_users_snapshot_queue',
-        },
+
         routingKeys: {
-          SYNC: 'snapshot.sync',
+          SYNC: 'users-service.snapshot.users.sync',
         },
       },
       AUTH_SERVICE_USERS_SNAPSHOT: {
         name: 'auth_service_users_snapshot',
         type: 'direct',
-        queues: {
-          USER_SERVICE: 'users_service__auth_service_users_snapshot_queue',
-          LOCATION_SERVICE:
-            'location_service__auth_service_users_snapshot_queue',
-          EVENTS_SERVICE: 'events_service__auth_service_users_snapshot_queue',
-          ASSETS_SERVICE: 'assets_service__auth_service_users_snapshot_queue',
-        },
         routingKeys: {
-          SYNC: 'snapshot.sync',
+          SYNC: 'auth-service.snapshot.users.sync',
         },
       },
       USERS: {
         name: 'user_events',
         type: 'direct',
-        queues: {
-          USER_SERVICE: 'users_service__user_events_queue',
-          LOCATION_SERVICE: 'location_service__user_events_queue',
-          EVENTS_SERVICE: 'events_service__user_events_queue',
-          ASSETS_SERVICE: 'assets_service__user_events_queue',
-        },
         routingKeys: {
           USER_CREATED: 'user.created',
           USER_UPDATED: 'user.updated',
           USER_DELETED: 'user.deleted',
-          USER: 'user.#',
+          USER_ALL: 'user.#',
         },
       },
       FRIENDS: {
         name: 'friend_events',
         type: 'direct',
-        queues: {
-          LOCATION_SERVICE: 'location_service__friend_events_queue',
-          EVENTS_SERVICE: 'events_service__friend_events_queue',
-        },
         routingKeys: {
-          FRIEND_REQUESTED: 'friend.requested',
-          FRIEND_ADDED: 'friend.added',
-          FRIEND_REJECTED: 'friend.rejected',
+          FRIEND_REQUESTED: 'users-service.friend.requested',
+          FRIEND_ADDED: 'users-service.friend.added',
+          FRIEND_REJECTED: 'users-service.friend.rejected',
         },
       },
     } satisfies Record<string, IRMQExchange>;
@@ -111,7 +77,6 @@ export class RMQConstants {
 
 export interface IRMQExchange {
   name: string;
-  queues: Record<string, string>;
   routingKeys: Record<string, string>;
   type: 'topic' | 'direct' | 'fanout';
 }

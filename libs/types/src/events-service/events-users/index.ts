@@ -1,6 +1,3 @@
-import { PopulatedDoc } from 'mongoose';
-import { IEvent } from '../event';
-
 export enum EventsUsersStatusType {
   WANT_GO = 'want-go',
   APPROVED = 'approved',
@@ -8,7 +5,7 @@ export enum EventsUsersStatusType {
 }
 
 export interface IEventsUsers {
-  event: PopulatedDoc<IEvent>;
+  eventCid: string;
   userCId: string;
   userStatus?: EventsUsersStatusType;
   isUserLike: boolean;

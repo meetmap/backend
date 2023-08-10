@@ -48,18 +48,20 @@ export class AssetsUploaderService {
         this.rmqService.amqp.publish(
           RMQConstants.exchanges.ASSETS.name,
           RMQConstants.exchanges.ASSETS.routingKeys.PROFILE_PICTURE_UPDATED,
-          AssetsUploaderService.mapToProfilePictureUpdatedTransportRequestDto(
+          AppDto.TransportDto.Assets.ProfilePictureUpdatedRmqRequestDto.create({
             cid,
-            key,
+            assetKey: key,
             uploadId,
-          ),
+          }),
         );
       })
       .catch(() => {
         this.rmqService.amqp.publish(
           RMQConstants.exchanges.ASSETS.name,
           RMQConstants.exchanges.ASSETS.routingKeys.ASSET_UPLOAD_FAILED,
-          AssetsUploaderService.mapToAssetUploadRequestDto(uploadId),
+          AppDto.TransportDto.Assets.AssetUploadRmqRequestDto.create({
+            uploadId,
+          }),
         );
       });
 
@@ -91,18 +93,20 @@ export class AssetsUploaderService {
         this.rmqService.amqp.publish(
           RMQConstants.exchanges.ASSETS.name,
           RMQConstants.exchanges.ASSETS.routingKeys.EVENT_PICTURE_UPDATED,
-          AssetsUploaderService.mapToEventPictureUpdatedTransportRequestDto(
+          AppDto.TransportDto.Assets.EventPicturesUpdatedRmqRequestDto.create({
             eventCid,
-            keys,
-            uploadId,
-          ),
+            assetKeys: keys,
+            uploadId: uploadId,
+          }),
         );
       })
       .catch(() => {
         this.rmqService.amqp.publish(
           RMQConstants.exchanges.ASSETS.name,
           RMQConstants.exchanges.ASSETS.routingKeys.ASSET_UPLOAD_FAILED,
-          AssetsUploaderService.mapToAssetUploadRequestDto(uploadId),
+          AppDto.TransportDto.Assets.AssetUploadRmqRequestDto.create({
+            uploadId,
+          }),
         );
       });
     return uploadId;
@@ -114,37 +118,5 @@ export class AssetsUploaderService {
     status: AppTypes.AssetsSerivce.UploadsStatus.UploadStatusType,
   ) {
     await this.dal.updateUploadStatus(payloadId, status);
-  }
-
-  static mapToProfilePictureUpdatedTransportRequestDto(
-    cid: string,
-    assetKey: string,
-    uploadId: string,
-  ): AppDto.TransportDto.Assets.ProfilePictureUpdatedRmqRequestDto {
-    return {
-      assetKey: assetKey,
-      cid,
-      uploadId: uploadId,
-    };
-  }
-
-  static mapToEventPictureUpdatedTransportRequestDto(
-    eventCid: string,
-    assetKeys: string[],
-    uploadId: string,
-  ): AppDto.TransportDto.Assets.EventPicturesUpdatedRmqRequestDto {
-    return {
-      assetKeys: assetKeys,
-      eventCid: eventCid,
-      uploadId: uploadId,
-    };
-  }
-
-  static mapToAssetUploadRequestDto(
-    uploadId: string,
-  ): AppDto.TransportDto.Assets.AssetUploadRmqRequestDto {
-    return {
-      uploadId: uploadId,
-    };
   }
 }
