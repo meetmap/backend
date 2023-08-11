@@ -362,6 +362,20 @@ export class FriendsDataManipulation<
     return response; // response.map(({ friends }) => friends);
   }
 
+  public async getAllUserFriends(
+    currentUserCId: string,
+    searchUserCId: string,
+  ) {
+    return await this.friends.aggregate<
+      IGetUserListWithFriendshipStatusAggregationResult<Users>
+    >([
+      ...getFriendsUserListFromFriendsAggregation(
+        currentUserCId,
+        searchUserCId,
+      ),
+    ]);
+  }
+
   public async getIncomingFriendshipRequests(userCId: string, page: number) {
     const pageSize = 15;
     const [result] = await this.friends.aggregate<
