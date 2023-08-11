@@ -1,6 +1,7 @@
 import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import { RMQConstants } from '@app/constants';
 import { AppDto } from '@app/dto';
+import { ParsePagePipe } from '@app/dto/pipes';
 import { AppTypes } from '@app/types';
 import {
   RabbitPayload,
@@ -143,7 +144,7 @@ export class UsersController {
   @UseMicroserviceAuthGuard()
   public async getUserLikedEvents(
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
-    @Query('page') page: number,
+    @Query('page', new ParsePagePipe()) page: number,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
     return this.usersService.getUserLikedEvents(jwt.cid, page);
   }

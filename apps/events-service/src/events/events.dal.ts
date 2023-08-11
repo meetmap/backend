@@ -263,6 +263,12 @@ export class EventsDal {
     userCId: string,
     keywords: string,
     page: number = 1,
+    tagsCids: string[],
+    minPrice: number,
+    maxPrice: number,
+    minStartDate?: Date,
+    //1 day before
+    maxEndDate: Date = new Date(Date.now() - 24 * 60 * 60 * 1000),
   ): Promise<
     AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>
   > {
@@ -277,7 +283,37 @@ export class EventsDal {
           $text: {
             $search: keywords,
           },
-        },
+          ...(tagsCids.length > 0 && {
+            tagsCids: {
+              $in: tagsCids,
+            },
+          }),
+          $or: [
+            { tickets: { $size: 0 } },
+            {
+              tickets: {
+                $elemMatch: {
+                  'price.amount': {
+                    $gte: minPrice,
+                    ...(Number.isFinite(maxPrice) && {
+                      $lte: maxPrice,
+                    }),
+                  },
+                },
+              },
+            },
+          ],
+          ...(!!minStartDate && {
+            startTime: {
+              $gte: minStartDate,
+            },
+          }),
+          ...(!!maxEndDate && {
+            endTime: {
+              $lte: maxEndDate,
+            },
+          }),
+        } satisfies mongoose.FilterQuery<AppTypes.EventsService.Event.IEvent>,
       },
       {
         $project: {

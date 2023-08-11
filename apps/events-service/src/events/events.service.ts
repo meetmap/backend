@@ -23,8 +23,23 @@ export class EventsService {
     userCId: string,
     keywords: string,
     page: number,
+    tagsCids: string[],
+    minPrice: number,
+    maxPrice: number,
+    minStartDate?: Date,
+    maxEndDate?: Date,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
-    const events = await this.dal.getEventsByKeywords(userCId, keywords, page);
+    const events = await this.dal.getEventsByKeywords(
+      userCId,
+      keywords,
+      page,
+      tagsCids,
+      minPrice,
+      maxPrice,
+      minStartDate,
+      maxEndDate,
+    );
+
     return AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto.create({
       paginatedResults: events.paginatedResults.map(
         EventsService.mapDbEventToEventResponse,
@@ -185,10 +200,10 @@ export class EventsService {
 
   public async getEventsBatch(
     userCId: string,
-    eventIds: string[],
+    eventCids: string[],
     page: number,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
-    const events = await this.dal.getEventsBatch(userCId, eventIds, page);
+    const events = await this.dal.getEventsBatch(userCId, eventCids, page);
     return AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto.create({
       paginatedResults: events.paginatedResults.map(
         EventsService.mapDbEventToEventResponse,

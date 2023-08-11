@@ -1,6 +1,7 @@
 import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import { RMQConstants } from '@app/constants';
 import { AppDto } from '@app/dto';
+import { ParsePagePipe } from '@app/dto/pipes';
 import { AppTypes } from '@app/types';
 import {
   RabbitPayload,
@@ -119,7 +120,7 @@ export class UsersController {
   })
   public async findUsers(
     @Query('q') query: string,
-    @Query('page') page: number,
+    @Query('page', new ParsePagePipe()) page: number,
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
   ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto> {
     if (!query) {

@@ -1,13 +1,16 @@
 import {
   BadRequestException,
+  Injectable,
   ParseFilePipe,
   PipeTransform,
 } from '@nestjs/common';
+
 export interface IConfig {
   minLength: number;
   maxLength: number;
 }
 
+@Injectable()
 export class ParseFilesPipe implements PipeTransform<Express.Multer.File[]> {
   constructor(
     private readonly pipe: ParseFilePipe,

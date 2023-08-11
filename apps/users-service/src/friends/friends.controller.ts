@@ -4,6 +4,7 @@ import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FriendsService } from './friends.service';
 
 import { AppDto } from '@app/dto';
+import { ParsePagePipe } from '@app/dto/pipes';
 import { AppTypes } from '@app/types';
 
 @ApiTags('Friends')
@@ -39,7 +40,7 @@ export class FreindsController {
   })
   public async getIncomingFriendshipRequests(
     @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
-    @Query('page') page: number,
+    @Query('page', new ParsePagePipe()) page: number,
   ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto> {
     return await this.friendsService.getIncomingFriendshipRequests(
       jwtPayload.cid,
@@ -59,7 +60,7 @@ export class FreindsController {
   })
   public async getOutcomingFriendshipRequests(
     @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
-    @Query('page') page: number,
+    @Query('page', new ParsePagePipe()) page: number,
   ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto> {
     return await this.friendsService.getOutcomingFriendshipRequests(
       jwtPayload.cid,
@@ -110,7 +111,7 @@ export class FreindsController {
   })
   public async getUserFirends(
     @Param('userCid') userCid: string,
-    @Query('page') page: number,
+    @Query('page', new ParsePagePipe()) page: number,
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
   ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto> {
     const friends = await this.friendsService.getUserFriends(

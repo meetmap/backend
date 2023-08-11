@@ -1,6 +1,7 @@
 import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import { RMQConstants } from '@app/constants';
 import { AppDto } from '@app/dto';
+import { ParseDatePipe, ParseNumberPipe, ParsePagePipe } from '@app/dto/pipes';
 import { AppTypes } from '@app/types';
 import {
   RabbitPayload,
@@ -11,6 +12,7 @@ import {
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
@@ -75,12 +77,77 @@ export class EventsController {
     name: 'page',
     required: false,
   })
+  @ApiQuery({
+    name: 'minPrice',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'maxPrice',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'tags',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+  })
   public async getEventsByKeywords(
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
     @Query('q') keywords: string,
-    @Query('page') page: number,
+    @Query(
+      'tags',
+      new DefaultValuePipe([]),
+      new ParseArrayPipe({ items: String, optional: true }),
+    )
+    tags: string[],
+    @Query('page', new ParsePagePipe()) page: number,
+    @Query(
+      'minPrice',
+      new ParseNumberPipe({
+        optional: true,
+        default: 0,
+      }),
+    )
+    minPrice: number,
+    @Query(
+      'maxPrice',
+      new ParseNumberPipe({
+        optional: true,
+        default: Infinity,
+      }),
+    )
+    maxPrice: number,
+    @Query(
+      'startDate',
+      new ParseDatePipe({
+        optional: true,
+      }),
+    )
+    minStartDate: Date | undefined,
+    @Query(
+      'endDate',
+      new ParseDatePipe({
+        optional: true,
+      }),
+    )
+    maxEndDate: Date | undefined,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
-    return this.eventsService.getEventsByKeywords(jwt.cid, keywords, page);
+    return this.eventsService.getEventsByKeywords(
+      jwt.cid,
+      keywords,
+      page,
+      tags,
+      minPrice,
+      maxPrice,
+      minStartDate,
+      maxEndDate,
+    );
   }
 
   @ApiOkResponse({
@@ -94,7 +161,7 @@ export class EventsController {
   @UseMicroserviceAuthGuard()
   public async searchTags(
     @Query('q') query: string,
-    @Query('page') page: number,
+    @Query('page', new ParsePagePipe()) page: number,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataPaginatedResponseDto> {
     if (!query) {
       return await this.eventsService.getAllTags(page);
@@ -113,11 +180,11 @@ export class EventsController {
   })
   public async getEventsBatch(
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
-    @Query('page') page: number,
-    @Query('ids', new ParseArrayPipe({ items: String, separator: ',' }))
-    eventsIds: string[],
+    @Query('page', new ParsePagePipe()) page: number,
+    @Query('cids', new ParseArrayPipe({ items: String }))
+    eventsCids: string[],
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
-    return this.eventsService.getEventsBatch(jwt.cid, eventsIds, page);
+    return this.eventsService.getEventsBatch(jwt.cid, eventsCids, page);
   }
 
   @ApiOkResponse({
@@ -239,7 +306,7 @@ export class EventsController {
   })
   public async getEventLikes(
     @Param('eventCid') eventCid: string,
-    @Query('page') page: number,
+    @Query('page', new ParsePagePipe()) page: number,
   ): Promise<AppDto.EventsServiceDto.UsersDto.UserPaginatedResponseDto> {
     const usersLiked = await this.eventsService.getEventLikes(eventCid, page);
     return usersLiked;
