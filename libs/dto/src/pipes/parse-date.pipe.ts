@@ -29,5 +29,5 @@ export class ParseDatePipe
 }
 
 export const dateIsValid = (date: Date) => {
-  return date instanceof Date && !isNaN(+date);
+  return date instanceof Date && !Number.isNaN(+date);
 };
