@@ -1,3 +1,4 @@
+import { LastTimeOnlineInterceptor } from '@app/auth/other';
 import {
   applyDecorators,
   CanActivate,
@@ -5,10 +6,10 @@ import {
   ForbiddenException,
   Injectable,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
-import { Observable } from 'rxjs';
 import { JwtService } from '../jwt.service';
 
 @Injectable()
@@ -33,8 +34,13 @@ export class IsAuthenticatedMicroserviceGuard implements CanActivate {
   }
 }
 
-export const UseMicroserviceAuthGuard = () =>
+export const UseMicroserviceAuthGuard = (
+  config: { disableLastTimeOnline: boolean } = { disableLastTimeOnline: false },
+) =>
   applyDecorators(
     ApiBearerAuth('microserviceAuth'),
     UseGuards(IsAuthenticatedMicroserviceGuard),
+    ...(config.disableLastTimeOnline
+      ? []
+      : [UseInterceptors(LastTimeOnlineInterceptor)]),
   );

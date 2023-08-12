@@ -1,4 +1,4 @@
-import { IdField, StringField } from '@app/dto/decorators';
+import { DateField, IdField, StringField } from '@app/dto/decorators';
 import { AppTypes } from '@app/types';
 
 export class UserLocationResponseDto
@@ -20,4 +20,7 @@ export class UserLocationResponseDto
     optional: true,
   })
   profilePicture?: string | undefined;
+
+  @DateField({ optional: true })
+  lastTimeOnline?: Date | undefined;
 }

@@ -8,6 +8,7 @@ export interface IUser
   fbId?: string;
   description?: string;
   profilePicture?: string;
+  lastTimeOnline?: Date;
 }
 
 export interface IUpdatedUser extends Partial<IUser> {

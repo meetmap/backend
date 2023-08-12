@@ -11,9 +11,16 @@ export class UsersService {
 
   public async getUserLikedEvents(
     userCId: string,
-  ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto[]> {
-    const events = await this.dal.getEventsByUserAction(userCId, 'liked');
-    return events.map(EventsService.mapDbEventToEventResponse);
+    page: number,
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
+    const events = await this.dal.getEventsByUserAction(userCId, 'liked', page);
+    return {
+      paginatedResults: events.paginatedResults.map(
+        EventsService.mapDbEventToEventResponse,
+      ),
+      totalCount: events.totalCount,
+      nextPage: events.nextPage ?? undefined,
+    };
   }
 
   public async handleCreateUser(
@@ -48,7 +55,7 @@ export class UsersService {
 
   static mapEventsUserToUserResponseDto(
     user: AppTypes.EventsService.Users.IUser,
-  ): AppDto.EventsServiceDto.UsersDto.EventsServiceUserResponseDto {
+  ): AppDto.EventsServiceDto.UsersDto.UserResponseDto {
     return {
       birthDate: user.birthDate,
       cid: user.cid,
@@ -63,6 +70,7 @@ export class UsersService {
             AppTypes.AssetsSerivce.Other.SizeName.S,
           )
         : undefined,
+      lastTimeOnline: user.lastTimeOnline,
     };
   }
 }

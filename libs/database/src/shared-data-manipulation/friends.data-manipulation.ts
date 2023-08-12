@@ -5,13 +5,15 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import mongoose, { PipelineStage } from 'mongoose';
+import mongoose from 'mongoose';
 import {
   getFriendsUserListFromFriendsAggregation,
   getIncomingRequestsUserListFromFriendsAggregation,
   getOutcomingRequestsUserListFromFriendsAggregation,
+  getPaginatedResultAggregation,
   IGetUserListFromFriendsAggregationResult,
   IGetUserListWithFriendshipStatusAggregationResult,
+  IPaginatedResult,
 } from '../shared-aggregations';
 
 export class FriendsDataManipulation<
@@ -345,10 +347,26 @@ export class FriendsDataManipulation<
   public async getUserFriends(
     currentUserCId: string,
     searchUserCId: string,
-    limit: number,
     page: number,
   ) {
-    const response = await this.friends.aggregate<
+    const pageSize = 15;
+    const [response] = await this.friends.aggregate<
+      IPaginatedResult<IGetUserListWithFriendshipStatusAggregationResult<Users>>
+    >([
+      ...getFriendsUserListFromFriendsAggregation(
+        currentUserCId,
+        searchUserCId,
+      ),
+      ...getPaginatedResultAggregation(page, pageSize),
+    ]);
+    return response; // response.map(({ friends }) => friends);
+  }
+
+  public async getAllUserFriends(
+    currentUserCId: string,
+    searchUserCId: string,
+  ) {
+    return await this.friends.aggregate<
       IGetUserListWithFriendshipStatusAggregationResult<Users>
     >([
       ...getFriendsUserListFromFriendsAggregation(
@@ -356,25 +374,27 @@ export class FriendsDataManipulation<
         searchUserCId,
       ),
     ]);
-    return response; // response.map(({ friends }) => friends);
   }
 
-  public async getIncomingFriendshipRequests(userCId: string) {
-    return this.friends.aggregate<
-      IGetUserListFromFriendsAggregationResult<Users>
-    >([...getIncomingRequestsUserListFromFriendsAggregation(userCId)]);
+  public async getIncomingFriendshipRequests(userCId: string, page: number) {
+    const pageSize = 15;
+    const [result] = await this.friends.aggregate<
+      IPaginatedResult<IGetUserListFromFriendsAggregationResult<Users>>
+    >([
+      ...getIncomingRequestsUserListFromFriendsAggregation(userCId),
+      ...getPaginatedResultAggregation(page, pageSize),
+    ]);
+    return result;
   }
 
-  public async getOutcomingFriendshipRequests(userCId: string) {
-    return this.friends.aggregate<
-      IGetUserListFromFriendsAggregationResult<Users>
-    >([...getOutcomingRequestsUserListFromFriendsAggregation(userCId)]);
-  }
-
-  public async getUsersWithFriendshipStatus(
-    userCId: string,
-    matchPipeline: PipelineStage[],
-  ) {
-    this.friends.aggregate([...matchPipeline]);
+  public async getOutcomingFriendshipRequests(userCId: string, page: number) {
+    const pageSize = 15;
+    const [result] = await this.friends.aggregate<
+      IPaginatedResult<IGetUserListFromFriendsAggregationResult<Users>>
+    >([
+      ...getOutcomingRequestsUserListFromFriendsAggregation(userCId),
+      ...getPaginatedResultAggregation(page, pageSize),
+    ]);
+    return result;
   }
 }

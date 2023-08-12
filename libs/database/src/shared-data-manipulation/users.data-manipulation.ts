@@ -1,6 +1,10 @@
 import { AppTypes } from '@app/types';
 import * as mongoose from 'mongoose';
 import {
+  getPaginatedResultAggregation,
+  IPaginatedResult,
+} from '../shared-aggregations';
+import {
   getFriendsipStatusForUserFromUsersAggregation,
   IGetUserListWithFriendshipStatusAggregationResult,
 } from '../shared-aggregations/users.aggregation';
@@ -17,18 +21,22 @@ export class UsersDataManipulation<
     private readonly users: mongoose.Model<Users>,
   ) {}
 
-  public getUsersWithFriendshipStatus(
+  public async getUsersWithFriendshipStatus(
     userCId: string,
+    page: number,
     matchPipeline: mongoose.PipelineStage[],
     afterPipeline: mongoose.PipelineStage[] = [],
   ) {
-    return this.users.aggregate<
-      IGetUserListWithFriendshipStatusAggregationResult<Users>
+    const pageSize = 15;
+    const [result] = await this.users.aggregate<
+      IPaginatedResult<IGetUserListWithFriendshipStatusAggregationResult<Users>>
     >([
       ...matchPipeline,
       ...getFriendsipStatusForUserFromUsersAggregation(userCId),
       ...afterPipeline,
+      ...getPaginatedResultAggregation(page, pageSize),
     ]);
+    return result;
   }
 
   public async getUserWithFriendshipStatus(

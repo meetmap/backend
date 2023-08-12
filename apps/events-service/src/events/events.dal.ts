@@ -1,5 +1,6 @@
 import { RADIANS_PER_KILOMETER } from '@app/constants';
 import { EventsServiceDatabase } from '@app/database';
+import { getPaginatedResultAggregation } from '@app/database/shared-aggregations';
 import { AppDto } from '@app/dto';
 import { AppTypes } from '@app/types';
 
@@ -14,9 +15,9 @@ export class EventsDal {
     userCid: string,
     eventCid: string,
   ): Promise<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags | null> {
-    const [event] = await this.getEventsWithUserMetadataAndTags(userCid, [
-      eventCid,
-    ]);
+    const {
+      paginatedResults: [event],
+    } = await this.getEventsWithUserMetadataAndTags(userCid, [eventCid]);
 
     return event ?? null;
   }
@@ -50,27 +51,31 @@ export class EventsDal {
     };
   }
 
-  public async getUsersLikedAnEvent(eventCid: string) {
-    return await this.db.models.eventsUsers.aggregate<AppTypes.EventsService.Users.IUser>(
-      [
-        {
-          $match: {
-            isUserLike: true,
-            eventCid: eventCid,
-          },
+  public async getUsersLikedAnEvent(eventCid: string, page: number = 1) {
+    const pageSize = 15;
+    const [result] = await this.db.models.eventsUsers.aggregate<
+      AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.Users.IUser>
+    >([
+      {
+        $match: {
+          isUserLike: true,
+          eventCid: eventCid,
         },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'userCId',
-            foreignField: 'cid',
-            as: 'user',
-          },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userCId',
+          foreignField: 'cid',
+          as: 'user',
         },
-        { $unwind: '$user' },
-        { $replaceRoot: { newRoot: '$user' } },
-      ],
-    );
+      },
+      { $unwind: '$user' },
+      { $replaceRoot: { newRoot: '$user' } },
+      ...getPaginatedResultAggregation(page, pageSize),
+    ]);
+
+    return result;
   }
 
   public async userAction(
@@ -193,61 +198,184 @@ export class EventsDal {
     return stats satisfies AppTypes.EventsService.Event.IEventStats;
   }
 
-  public async getAllTagsWithMetadata() {
-    return await this.db.models.eventTags
-      .find<AppTypes.EventsService.EventTags.ISafeTagWithMetadata>(
-        {},
-        {
+  public async getAllTagsWithMetadata(page: number = 1) {
+    const pageSize = 15;
+    const [result] = await this.db.models.eventTags.aggregate<
+      AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.EventTags.ISafeTagWithMetadata>
+    >([
+      {
+        $project: {
           cid: 1,
           label: 1,
           count: 1,
         },
-      )
-      .sort({ count: -1 });
+      },
+      {
+        $sort: {
+          count: -1,
+        },
+      },
+      ...getPaginatedResultAggregation(page, pageSize),
+    ]);
+
+    return result;
   }
 
-  public async getTagsByKeywordsWithMetadata(keywords: string) {
-    const matchingTags = await this.db.models.eventTags
-      .find<AppTypes.EventsService.EventTags.ISafeTagWithMetadata>({
-        $text: { $search: keywords },
-      })
-      .select({
-        _id: false,
-        cid: 1,
-        label: 1,
-        count: 1,
-      } satisfies Record<keyof AppTypes.EventsService.EventTags.ISafeTagWithMetadata | '_id', boolean | number>)
-      .sort({
-        score: { $meta: 'textScore' },
-        count: -1,
-      })
-      .limit(15)
-      .lean();
+  public async getTagsByKeywordsWithMetadata(
+    keywords: string,
+    page: number = 1,
+  ) {
+    const pageSize = 15;
+
+    const [matchingTags] = await this.db.models.eventTags.aggregate<
+      AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.EventTags.ISafeTagWithMetadata>
+    >([
+      {
+        $match: {
+          $text: {
+            $search: keywords,
+          },
+        },
+      },
+      {
+        $project: {
+          _id: false,
+          cid: 1,
+          label: 1,
+          count: 1,
+        } satisfies Record<
+          keyof AppTypes.EventsService.EventTags.ISafeTagWithMetadata | '_id',
+          boolean | number
+        >,
+      },
+      {
+        $sort: {
+          score: { $meta: 'textScore' },
+          count: -1,
+        },
+      },
+      ...getPaginatedResultAggregation(page, pageSize),
+    ]);
     return matchingTags;
   }
 
   public async getEventsByKeywords(
     userCId: string,
     keywords: string,
-  ): Promise<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags[]> {
-    const matchingEventsCids = await this.db.models.event
-      .find<Pick<AppTypes.EventsService.Event.IEvent, 'cid'>>({
-        $text: { $search: keywords },
-      })
-      .sort({ score: { $meta: 'textScore' } })
-      .limit(15)
-      .select({
-        cid: 1,
-      } satisfies Partial<Record<keyof AppTypes.EventsService.Event.IEvent, number>>);
-    const eventCids = matchingEventsCids.map((event) => event.cid);
-    return await this.getEventsWithUserMetadataAndTags(userCId, eventCids);
+    page: number = 1,
+    tagsCids: string[],
+    minPrice: number,
+    maxPrice: number,
+    minDate: Date = new Date(Date.now() - 24 * 60 * 60 * 1000),
+    //1 day before
+    maxDate?: Date,
+    searchByCoordinates?: {
+      radius: number;
+      lat: number;
+      lng: number;
+    },
+  ): Promise<
+    AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>
+  > {
+    const pageSize = 15;
+    const [matchingEventsCids] = await this.db.models.event.aggregate<
+      AppTypes.Other.PaginatedResponse.IPaginatedResponse<
+        Pick<AppTypes.EventsService.Event.IEvent, 'cid'>
+      >
+    >([
+      {
+        $match: {
+          $text: {
+            $search: keywords,
+          },
+          ...(tagsCids.length > 0 && {
+            tagsCids: {
+              $in: tagsCids,
+            },
+          }),
+          $or: [
+            { tickets: { $size: 0 } },
+            {
+              tickets: {
+                $elemMatch: {
+                  'price.amount': {
+                    $gte: minPrice,
+                    ...(Number.isFinite(maxPrice) && {
+                      $lte: maxPrice,
+                    }),
+                  },
+                },
+              },
+            },
+          ],
+          ...(!!minDate && {
+            endTime: {
+              $gte: minDate,
+            },
+          }),
+          ...(!!maxDate && {
+            startTime: {
+              $lte: maxDate,
+            },
+          }),
+          ...(!!searchByCoordinates &&
+            Number.isFinite(searchByCoordinates.radius) && {
+              'location.coordinates': {
+                $geoWithin: {
+                  $centerSphere: [
+                    [searchByCoordinates.lng, searchByCoordinates.lat],
+                    this.getRadiusInRadians(searchByCoordinates.radius),
+                  ],
+                },
+              },
+            }),
+        } satisfies mongoose.FilterQuery<AppTypes.EventsService.Event.IEvent>,
+      },
+      {
+        $project: {
+          cid: 1,
+          _id: -1,
+        } satisfies Partial<
+          Record<keyof AppTypes.EventsService.Event.IEvent | '_id', number>
+        >,
+      },
+      {
+        $sort: {
+          score: {
+            $meta: 'textScore',
+          },
+        },
+      },
+      ...getPaginatedResultAggregation(page, pageSize),
+    ]);
+
+    const eventCids = matchingEventsCids.paginatedResults.map(
+      (event) => event.cid,
+    );
+    const eventsWithMetadata = await this.getEventsWithUserMetadataAndTags(
+      userCId,
+      eventCids,
+    );
+
+    return {
+      paginatedResults: eventsWithMetadata.paginatedResults,
+      totalCount: matchingEventsCids.totalCount,
+      nextPage: matchingEventsCids.nextPage ?? undefined,
+    };
   }
 
   public async getEventsBatch(
     userCId: string,
     eventCIds: string[],
-  ): Promise<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags[]> {
-    return await this.getEventsWithUserMetadataAndTags(userCId, eventCIds);
+    page: number = 1,
+  ): Promise<
+    AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>
+  > {
+    return await this.getEventsWithUserMetadataAndTags(
+      userCId,
+      eventCIds,
+      page,
+    );
   }
   public async getEventsByLocation(
     userCId: string,
@@ -418,19 +546,23 @@ export class EventsDal {
   public async getEventsWithUserMetadataAndTags(
     userCid: string,
     eventsCids: string[],
+    page: number = 1,
   ) {
-    return await this.db.models.event.aggregate<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>(
-      [
-        {
-          $match: {
-            cid: { $in: eventsCids },
-          } satisfies Partial<
-            Record<keyof AppTypes.EventsService.Event.IEvent, any>
-          >,
-        },
-        ...EventsDal.getEventsWithUserStatsTagsAggregation(userCid),
-      ],
-    );
+    const pageSize = 15;
+    const [result] = await this.db.models.event.aggregate<
+      AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>
+    >([
+      {
+        $match: {
+          cid: { $in: eventsCids },
+        } satisfies Partial<
+          Record<keyof AppTypes.EventsService.Event.IEvent, any>
+        >,
+      },
+      ...EventsDal.getEventsWithUserStatsTagsAggregation(userCid),
+      ...getPaginatedResultAggregation(page, pageSize),
+    ]);
+    return result;
   }
 
   static getEventsWithUserStatsTagsAggregation(
@@ -440,8 +572,8 @@ export class EventsDal {
       {
         $lookup: {
           from: 'eventsusers',
-          localField: '_id',
-          foreignField: 'event',
+          localField: 'cid',
+          foreignField: 'eventCid',
           as: 'userStats',
           pipeline: [
             {

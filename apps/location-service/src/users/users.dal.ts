@@ -39,7 +39,7 @@ export class UsersDal implements OnModuleInit {
     payload: Partial<
       Pick<
         AppTypes.LocationService.Users.IUser,
-        'profilePicture' | 'name' | 'username' | 'gender'
+        'profilePicture' | 'name' | 'username' | 'gender' | 'lastTimeOnline'
       >
     >,
   ) {
@@ -54,11 +54,12 @@ export class UsersDal implements OnModuleInit {
           username: payload.username,
           cid: cid,
           gender: payload.gender,
+          lastTimeOnline: payload.lastTimeOnline,
         } satisfies Partial<
           AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.LocationService.Users.IUser>
         >,
       },
-      { new: true, upsert: true },
+      { new: true },
     );
   }
 

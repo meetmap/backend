@@ -66,26 +66,32 @@ export class FriendsDal implements OnModuleInit {
   public async getUserFriends(
     currentUserCId: string,
     searchUserCId: string,
-    limit: number,
-    page: number,
+    page: number = 1,
   ) {
     return await this.dataManipulation.friends.getUserFriends(
       currentUserCId,
       searchUserCId,
-      limit,
       page,
     );
   }
 
-  public async getIncomingFriendshipRequests(userCId: string) {
+  public async getIncomingFriendshipRequests(
+    userCId: string,
+    page: number = 1,
+  ) {
     return await this.dataManipulation.friends.getIncomingFriendshipRequests(
       userCId,
+      page,
     );
   }
 
-  public async getOutcomingFriendshipRequests(userCId: string) {
+  public async getOutcomingFriendshipRequests(
+    userCId: string,
+    page: number = 1,
+  ) {
     return await this.dataManipulation.friends.getOutcomingFriendshipRequests(
       userCId,
+      page,
     );
   }
 }

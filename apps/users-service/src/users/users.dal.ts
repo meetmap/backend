@@ -4,7 +4,6 @@ import {
   sortUsersAggregationPipeline,
 } from '@app/database/shared-aggregations';
 import { CommonDataManipulation } from '@app/database/shared-data-manipulation';
-import { S3UploaderService } from '@app/s3-uploader';
 import { AppTypes } from '@app/types';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 
@@ -14,10 +13,7 @@ export class UsersDal implements OnModuleInit {
     AppTypes.UsersService.Friends.IFriends,
     AppTypes.UsersService.Users.IUser
   >;
-  constructor(
-    private readonly db: UsersServiceDatabase,
-    private readonly s3Service: S3UploaderService,
-  ) {}
+  constructor(private readonly db: UsersServiceDatabase) {}
   onModuleInit() {
     this.dataManipulation = new CommonDataManipulation(
       this.db.models.friends,
@@ -39,8 +35,8 @@ export class UsersDal implements OnModuleInit {
     return user.toObject();
   }
 
-  public async getUserFriends(cid: string) {
-    return await this.dataManipulation.friends.getUserFriends(cid, cid, 0, 0);
+  public async getUserFriends(cid: string, page: number = 1) {
+    return await this.dataManipulation.friends.getUserFriends(cid, cid, page);
   }
 
   public async updateUser(
@@ -55,6 +51,7 @@ export class UsersDal implements OnModuleInit {
         | 'fbId'
         | 'description'
         | 'profilePicture'
+        | 'lastTimeOnline'
       >
     >,
   ) {
@@ -71,6 +68,7 @@ export class UsersDal implements OnModuleInit {
           fbId: payload.fbId,
           description: payload.description,
           profilePicture: payload.profilePicture,
+          lastTimeOnline: payload.lastTimeOnline,
         },
       },
       {
@@ -87,36 +85,33 @@ export class UsersDal implements OnModuleInit {
     return cid;
   }
 
-  public async findUserByEmail(email: string) {
-    return await this.db.models.users.findOne({
-      email: email,
-    });
-  }
-
-  public async findUsersByQueryUsername(userCId: string, query: string) {
-    return await this.dataManipulation.users
-      .getUsersWithFriendshipStatus(
-        userCId,
-        [
-          {
-            $match: {
-              $or: [
-                {
-                  username: new RegExp(query, 'i'),
-                },
-                {
-                  description: new RegExp(query, 'i'),
-                },
-                {
-                  name: new RegExp(query, 'i'),
-                },
-              ],
-            },
+  public async findUsersByQueryUsername(
+    userCId: string,
+    query: string,
+    page: number = 1,
+  ) {
+    return await this.dataManipulation.users.getUsersWithFriendshipStatus(
+      userCId,
+      page,
+      [
+        {
+          $match: {
+            $or: [
+              {
+                username: new RegExp(query, 'i'),
+              },
+              {
+                description: new RegExp(query, 'i'),
+              },
+              {
+                name: new RegExp(query, 'i'),
+              },
+            ],
           },
-        ],
-        sortUsersAggregationPipeline,
-      )
-      .limit(15);
+        },
+      ],
+      sortUsersAggregationPipeline,
+    );
   }
 
   public async findUserByCId(cid: string) {
@@ -124,35 +119,22 @@ export class UsersDal implements OnModuleInit {
     return user?.toObject();
   }
 
-  public async findUserByCidWithFirends(
+  public async findUserByCidWithFriends(
     currentUserCId: string,
     cid: string,
   ): Promise<IGetUserListWithFriendshipStatusAggregationResult<AppTypes.UsersService.Users.IUser> | null> {
-    const [user] =
-      await this.dataManipulation.users.getUsersWithFriendshipStatus(
-        currentUserCId,
-        [
-          {
-            $match: {
-              cid: cid,
-            } satisfies Partial<
-              Record<keyof AppTypes.UsersService.Users.IUser, any>
-            >,
-          },
-        ],
-      );
+    const user = await this.dataManipulation.users.getUserWithFriendshipStatus(
+      currentUserCId,
+      [
+        {
+          $match: {
+            cid: cid,
+          } satisfies Partial<
+            Record<keyof AppTypes.UsersService.Users.IUser, any>
+          >,
+        },
+      ],
+    );
     return user ?? null;
-  }
-
-  public async findUserByUsername(username: string) {
-    return await this.db.models.users.findOne({
-      username: username,
-    });
-  }
-
-  public async findUserByPhone(phone: string) {
-    return await this.db.models.users.findOne({
-      phone: phone,
-    });
   }
 }

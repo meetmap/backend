@@ -14,6 +14,7 @@ export interface IUsersBase {
   gender: Gender;
   createdAt: Date;
   updatedAt: Date;
+  lastTimeOnline?: Date;
 }
 
 export interface IAnyUser
