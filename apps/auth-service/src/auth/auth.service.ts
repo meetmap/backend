@@ -23,6 +23,15 @@ export class AuthService {
     private readonly fbAuthProvider: FacebookAuthProvider,
   ) {}
 
+  public async handleUpdateUser(
+    payload: AppDto.TransportDto.Users.UserUpdatedRmqRequestDto,
+  ) {
+    await this.dal.updateUser(payload.cid, {
+      name: payload.name,
+      lastTimeOnline: payload.lastTimeOnline,
+    });
+  }
+
   public async createUser(
     payload: AppDto.AuthService.AuthDto.SignUpRequestDto,
   ) {
@@ -317,6 +326,7 @@ export class AuthService {
       name: user.name,
       fbId: user.fbId,
       gender: user.gender,
+      lastTimeOnline: user.lastTimeOnline,
     });
   }
 }

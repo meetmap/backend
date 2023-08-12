@@ -33,6 +33,9 @@ export const UserSchema =
         enum: AppTypes.Shared.Users.Gender,
         required: true,
       },
+      lastTimeOnline: {
+        type: mongoose.SchemaTypes.Date,
+      },
     },
     {
       id: true,

@@ -128,7 +128,7 @@ export class AuthDal {
     payload: Partial<
       Pick<
         AppTypes.AuthService.Users.IUser,
-        'email' | 'phone' | 'password' | 'username' | 'name'
+        'email' | 'phone' | 'password' | 'username' | 'name' | 'lastTimeOnline'
       >
     >,
   ) {
@@ -158,6 +158,7 @@ export class AuthDal {
           phone: payload.phone,
           username: payload.username,
           name: payload.name,
+          lastTimeOnline: payload.lastTimeOnline,
         },
       },
       {

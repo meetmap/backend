@@ -42,6 +42,9 @@ export class UserUpdatedRmqRequestDto
   @StringField({ optional: true, enum: AppTypes.Shared.Users.Gender })
   gender?: AppTypes.Shared.Users.Gender | undefined;
 
+  @DateField({ optional: true })
+  lastTimeOnline?: Date | undefined;
+
   // @EmailField()
   // email: string;
 

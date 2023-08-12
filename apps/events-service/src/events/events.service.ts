@@ -28,6 +28,11 @@ export class EventsService {
     maxPrice: number,
     minStartDate?: Date,
     maxEndDate?: Date,
+    searchByCoordinates?: {
+      radius: number;
+      lat: number;
+      lng: number;
+    },
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
     const events = await this.dal.getEventsByKeywords(
       userCId,
@@ -38,6 +43,7 @@ export class EventsService {
       maxPrice,
       minStartDate,
       maxEndDate,
+      searchByCoordinates,
     );
 
     return AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto.create({
@@ -136,7 +142,8 @@ export class EventsService {
       AppDto.EventsServiceDto.EventsDto.MinimalEventByLocationResponseDto.create(
         {
           coordinates: event.coordinates,
-          id: event.id,
+          cid: event.cid,
+
           thumbnail:
             event.thumbnail &&
             (event.isThirdParty

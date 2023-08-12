@@ -61,11 +61,39 @@ export class AssetsUploaderDal {
     uploadId: string,
     status: AppTypes.AssetsSerivce.UploadsStatus.UploadStatusType,
   ) {
-    await this.db.models.uploadsStatus.findByIdAndUpdate(uploadId, {
-      $set: {
-        status,
+    const upload = await this.db.models.uploadsStatus.findByIdAndUpdate(
+      uploadId,
+      {
+        $set: {
+          status,
+        },
       },
-    });
+      {
+        new: true,
+      },
+    );
+    if (!upload) return;
+    if (
+      upload.status ===
+      AppTypes.AssetsSerivce.UploadsStatus.UploadStatusType.FAILED
+    ) {
+      if (
+        upload.type ===
+        AppTypes.AssetsSerivce.UploadsStatus.UploadType.EVENTS_ASSETS
+      ) {
+        return await this.db.models.eventsAssets.deleteOne({
+          uploadId: upload.id,
+        });
+      }
+      if (
+        upload.type ===
+        AppTypes.AssetsSerivce.UploadsStatus.UploadType.USERS_ASSETS
+      ) {
+        return await this.db.models.userAssets.deleteOne({
+          uploadId: upload.id,
+        });
+      }
+    }
   }
 
   public async startEventPictureUpload(
@@ -229,7 +257,7 @@ export class AssetsUploaderDal {
         ],
         { session },
       );
-      asset;
+
       await this.db.models.users.findOneAndUpdate(
         { cid: cid },
         {

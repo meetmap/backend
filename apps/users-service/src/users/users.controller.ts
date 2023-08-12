@@ -11,9 +11,11 @@ import {
 } from '@golevelup/nestjs-rabbitmq';
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   Param,
+  Patch,
   Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
@@ -56,19 +58,19 @@ export class UsersController {
   })
   public async handleUserUpdated(
     @RabbitPayload()
-    payload: AppDto.TransportDto.Users.UserUpdatedRmqRequestDto,
+    payload /* : AppDto.TransportDto.Users.UserUpdatedRmqRequestDto */,
     @RabbitRequest() req: { fields: RequestOptions },
   ) {
     const routingKey = req.fields.routingKey;
     console.log({
-      handler: this.handleUserCreated.name,
+      handler: this.handleUserUpdated.name,
       routingKey: routingKey,
       msg: {
         cid: payload.cid,
       },
     });
     if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED) {
-      await this.usersService.updateUser(payload);
+      await this.usersService.handleUpdateUser(payload);
       return;
     }
     if (routingKey === RMQConstants.exchanges.USERS.routingKeys.USER_DELETED) {
@@ -147,5 +149,18 @@ export class UsersController {
       throw new BadRequestException('Invalid userId');
     }
     return this.usersService.getUserByCid(jwt.cid, userCid);
+  }
+
+  @ApiOkResponse({
+    type: AppDto.UsersServiceDto.UsersDto.SingleUserResponseDto,
+    description: 'Self user response',
+  })
+  @UseMicroserviceAuthGuard()
+  @Patch('update')
+  public async updateUser(
+    @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
+    @Body() payload: AppDto.UsersServiceDto.UsersDto.UpdateUserRequestDto,
+  ) {
+    return await this.usersService.updateUser(jwt.cid, payload);
   }
 }

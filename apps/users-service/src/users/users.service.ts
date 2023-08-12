@@ -32,7 +32,7 @@ export class UsersService {
     );
   }
 
-  public async updateUser(
+  public async handleUpdateUser(
     payload: AppDto.TransportDto.Users.UserUpdatedRmqRequestDto,
   ): Promise<AppDto.UsersServiceDto.UsersDto.SingleUserResponseDto | null> {
     const user = await this.dal.updateUser(payload.cid, payload);
@@ -49,6 +49,27 @@ export class UsersService {
         nextPage: friends.nextPage ?? undefined,
       },
     );
+  }
+
+  public async updateUser(
+    userCid: string,
+    payload: AppDto.UsersServiceDto.UsersDto.UpdateUserRequestDto,
+  ): Promise<AppDto.UsersServiceDto.UsersDto.SingleUserResponseDto> {
+    await this.rmqService.amqp.publish(
+      RMQConstants.exchanges.USERS.name,
+      RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED,
+      AppDto.TransportDto.Users.UserUpdatedRmqRequestDto.create({
+        cid: userCid,
+        description: payload.description,
+        name: payload.name,
+      }),
+    );
+
+    const userSelf = await this.getUserSelf(userCid);
+    return {
+      ...userSelf,
+      description: payload.description,
+    };
   }
 
   public async deleteUser(cid: string) {
@@ -157,8 +178,10 @@ export class UsersService {
       id: user.id,
       birthDate: user.birthDate,
       friends: {
-        paginatedResults: friends.paginatedResults.map(
-          AppDto.UsersServiceDto.UsersDto.UserWithoutFriendsResponseDto.create,
+        paginatedResults: friends.paginatedResults.map((r) =>
+          AppDto.UsersServiceDto.UsersDto.UserWithoutFriendsResponseDto.create(
+            r,
+          ),
         ),
         totalCount: friends.totalCount,
         nextPage: friends.nextPage,
@@ -178,6 +201,7 @@ export class UsersService {
         : undefined,
       friendshipStatus: user.friendshipStatus,
       gender: user.gender,
+      lastTimeOnline: user.lastTimeOnline,
     });
   }
 
@@ -202,6 +226,7 @@ export class UsersService {
         : undefined,
       friendshipStatus: user.friendshipStatus,
       gender: user.gender,
+      lastTimeOnline: user.lastTimeOnline,
     });
   }
 }

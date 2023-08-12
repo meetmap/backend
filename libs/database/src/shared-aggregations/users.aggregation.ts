@@ -136,6 +136,7 @@ export const getFriendsipStatusForUserFromUsersAggregation = (
       _id: 1,
       friendshipStatus: 1,
       gender: 1,
+      lastTimeOnline: 1,
     } satisfies Record<
       | keyof Omit<AppTypes.Shared.Users.IAnyUser, FieldsToOmit>
       | '_id'

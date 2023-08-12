@@ -86,7 +86,7 @@ export class EventsController {
     required: false,
   })
   @ApiQuery({
-    name: 'tags',
+    name: 'tags[]',
     required: false,
   })
   @ApiQuery({
@@ -95,6 +95,19 @@ export class EventsController {
   })
   @ApiQuery({
     name: 'endDate',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'lat',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'lng',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'radius',
+    description: 'In km, min 1, by default infinite',
     required: false,
   })
   public async getEventsByKeywords(
@@ -137,7 +150,39 @@ export class EventsController {
       }),
     )
     maxEndDate: Date | undefined,
+    @Query(
+      'lat',
+      new ParseNumberPipe({
+        optional: true,
+      }),
+    )
+    latitude: number | undefined,
+    @Query(
+      'lng',
+      new ParseNumberPipe({
+        optional: true,
+      }),
+    )
+    longitude: number | undefined,
+    @Query(
+      'radius',
+      new ParseNumberPipe({
+        optional: true,
+        default: Infinity,
+        max: Infinity,
+        min: 1,
+      }),
+    )
+    radius: number,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
+    const coordSearch =
+      typeof latitude !== 'undefined' && typeof longitude !== 'undefined'
+        ? {
+            lat: latitude,
+            lng: longitude,
+            radius: radius,
+          }
+        : undefined;
     return this.eventsService.getEventsByKeywords(
       jwt.cid,
       keywords,
@@ -147,6 +192,7 @@ export class EventsController {
       maxPrice,
       minStartDate,
       maxEndDate,
+      coordSearch,
     );
   }
 
