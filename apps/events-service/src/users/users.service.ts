@@ -70,6 +70,7 @@ export class UsersService {
             AppTypes.AssetsSerivce.Other.SizeName.S,
           )
         : undefined,
+      lastTimeOnline: user.lastTimeOnline,
     };
   }
 }

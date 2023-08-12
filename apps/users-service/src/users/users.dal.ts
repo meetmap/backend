@@ -51,6 +51,7 @@ export class UsersDal implements OnModuleInit {
         | 'fbId'
         | 'description'
         | 'profilePicture'
+        | 'lastTimeOnline'
       >
     >,
   ) {
@@ -67,6 +68,7 @@ export class UsersDal implements OnModuleInit {
           fbId: payload.fbId,
           description: payload.description,
           profilePicture: payload.profilePicture,
+          lastTimeOnline: payload.lastTimeOnline,
         },
       },
       {

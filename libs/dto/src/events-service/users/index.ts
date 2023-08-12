@@ -35,6 +35,9 @@ export class UserResponseDto
   description?: string;
   @StringField({ enum: AppTypes.Shared.Users.Gender })
   gender: AppTypes.Shared.Users.Gender;
+
+  @DateField({ optional: true })
+  lastTimeOnline?: Date | undefined;
 }
 
 export class UserPaginatedResponseDto

@@ -266,9 +266,14 @@ export class EventsDal {
     tagsCids: string[],
     minPrice: number,
     maxPrice: number,
-    minStartDate?: Date,
+    minDate: Date = new Date(Date.now() - 24 * 60 * 60 * 1000),
     //1 day before
-    maxEndDate: Date = new Date(Date.now() - 24 * 60 * 60 * 1000),
+    maxDate?: Date,
+    searchByCoordinates?: {
+      radius: number;
+      lat: number;
+      lng: number;
+    },
   ): Promise<
     AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>
   > {
@@ -303,16 +308,27 @@ export class EventsDal {
               },
             },
           ],
-          ...(!!minStartDate && {
-            startTime: {
-              $gte: minStartDate,
-            },
-          }),
-          ...(!!maxEndDate && {
+          ...(!!minDate && {
             endTime: {
-              $lte: maxEndDate,
+              $gte: minDate,
             },
           }),
+          ...(!!maxDate && {
+            startTime: {
+              $lte: maxDate,
+            },
+          }),
+          ...(!!searchByCoordinates &&
+            Number.isFinite(searchByCoordinates.radius) && {
+              'location.coordinates': {
+                $geoWithin: {
+                  $centerSphere: [
+                    [searchByCoordinates.lng, searchByCoordinates.lat],
+                    this.getRadiusInRadians(searchByCoordinates.radius),
+                  ],
+                },
+              },
+            }),
         } satisfies mongoose.FilterQuery<AppTypes.EventsService.Event.IEvent>,
       },
       {
@@ -556,8 +572,8 @@ export class EventsDal {
       {
         $lookup: {
           from: 'eventsusers',
-          localField: '_id',
-          foreignField: 'event',
+          localField: 'cid',
+          foreignField: 'eventCid',
           as: 'userStats',
           pipeline: [
             {

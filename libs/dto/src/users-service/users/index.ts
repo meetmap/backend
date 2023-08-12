@@ -51,6 +51,8 @@ export class UserWithoutFriendsResponseDto
     enum: AppTypes.Shared.Users.Gender,
   })
   gender: AppTypes.Shared.Users.Gender;
+  @DateField({ optional: true })
+  lastTimeOnline?: Date;
 }
 
 export class UserWithoutFriendsPaginatedResponseDto
@@ -117,6 +119,8 @@ export class SingleUserResponseDto
   friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus | null;
   @StringField({ enum: AppTypes.Shared.Users.Gender })
   gender: AppTypes.Shared.Users.Gender;
+  @DateField({ optional: true })
+  lastTimeOnline?: Date;
 }
 
 export class UserPartialResponseDto
@@ -168,6 +172,8 @@ export class UserPartialResponseDto
     optional: true,
   })
   fbId?: string;
+  @DateField({ optional: true })
+  lastTimeOnline?: Date;
 }
 
 export class UserPartialPaginatedResponseDto
@@ -181,4 +187,20 @@ export class UserPartialPaginatedResponseDto
   totalCount: number;
   @NumberField({ optional: true })
   nextPage?: number;
+}
+
+export class UpdateUserRequestDto extends BaseDto {
+  @StringField({
+    maxLength: 350,
+    description: 'Max 350 symbols',
+    optional: true,
+  })
+  description?: string;
+
+  @StringField({
+    maxLength: 100,
+    description: 'Max 100 symbols',
+    optional: true,
+  })
+  name?: string;
 }

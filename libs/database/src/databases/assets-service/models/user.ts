@@ -27,6 +27,9 @@ export const UserSchema =
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'UserAssets',
       },
+      lastTimeOnline: {
+        type: mongoose.SchemaTypes.Date,
+      },
     },
     {
       id: true,

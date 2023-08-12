@@ -80,13 +80,13 @@ export class UsersDal implements OnModuleInit {
           profilePicture: payload.profilePicture,
           username: payload.username,
           gender: payload.gender,
+          lastTimeOnline: payload.lastTimeOnline,
         } satisfies Partial<
           AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Users.IUser>
         >,
       },
       {
         new: true,
-        upsert: true,
       },
     );
   }

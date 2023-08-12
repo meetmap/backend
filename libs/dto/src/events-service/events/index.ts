@@ -123,11 +123,11 @@ export class MinimalEventByLocationResponseDto
   implements
     Pick<
       AppTypes.EventsService.Event.IMinimalEventByLocation,
-      'id' | 'thumbnail' | 'coordinates'
+      'cid' | 'thumbnail' | 'coordinates'
     >
 {
   @IdField()
-  id: string;
+  cid: string;
   @ApiProperty({
     type: [Number],
     minItems: 2,
