@@ -1,6 +1,7 @@
 import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import { RMQConstants } from '@app/constants';
 import { AppDto } from '@app/dto';
+import { ParsePagePipe } from '@app/dto/pipes';
 import { AppTypes } from '@app/types';
 import {
   RabbitPayload,
@@ -8,8 +9,8 @@ import {
   RabbitSubscribe,
   RequestOptions,
 } from '@golevelup/nestjs-rabbitmq';
-import { Controller, Get } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { Controller, Get, Query } from '@nestjs/common';
+import { ApiOkResponse, ApiQuery } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 
 @Controller('/users')
@@ -133,14 +134,19 @@ export class UsersController {
 
   //endpoints for user
   @ApiOkResponse({
-    type: [AppDto.EventsServiceDto.EventsDto.EventResponseDto],
+    type: AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto,
   })
-  @Get('/events/liked')
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
+  @Get('/events/liked/?')
   @UseMicroserviceAuthGuard()
   public async getUserLikedEvents(
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
-  ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto[]> {
-    return this.usersService.getUserLikedEvents(jwt.cid);
+    @Query('page', new ParsePagePipe()) page: number,
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
+    return this.usersService.getUserLikedEvents(jwt.cid, page);
   }
 
   // @ApiOkResponse({

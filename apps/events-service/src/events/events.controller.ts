@@ -1,6 +1,7 @@
 import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import { RMQConstants } from '@app/constants';
 import { AppDto } from '@app/dto';
+import { ParseDatePipe, ParseNumberPipe, ParsePagePipe } from '@app/dto/pipes';
 import { AppTypes } from '@app/types';
 import {
   RabbitPayload,
@@ -11,6 +12,7 @@ import {
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
@@ -67,46 +69,168 @@ export class EventsController {
   }
 
   @ApiOkResponse({
-    type: [AppDto.EventsServiceDto.EventsDto.EventResponseDto],
+    type: AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto,
   })
   @Get('/?')
   @UseMicroserviceAuthGuard()
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'minPrice',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'maxPrice',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'tags[]',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'lat',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'lng',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'radius',
+    description: 'In km, min 1, by default infinite',
+    required: false,
+  })
   public async getEventsByKeywords(
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
     @Query('q') keywords: string,
-  ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto[]> {
-    return this.eventsService.getEventsByKeywords(jwt.cid, keywords);
+    @Query(
+      'tags',
+      new DefaultValuePipe([]),
+      new ParseArrayPipe({ items: String, optional: true }),
+    )
+    tags: string[],
+    @Query('page', new ParsePagePipe()) page: number,
+    @Query(
+      'minPrice',
+      new ParseNumberPipe({
+        optional: true,
+        default: 0,
+      }),
+    )
+    minPrice: number,
+    @Query(
+      'maxPrice',
+      new ParseNumberPipe({
+        optional: true,
+        default: Infinity,
+      }),
+    )
+    maxPrice: number,
+    @Query(
+      'startDate',
+      new ParseDatePipe({
+        optional: true,
+      }),
+    )
+    minStartDate: Date | undefined,
+    @Query(
+      'endDate',
+      new ParseDatePipe({
+        optional: true,
+      }),
+    )
+    maxEndDate: Date | undefined,
+    @Query(
+      'lat',
+      new ParseNumberPipe({
+        optional: true,
+      }),
+    )
+    latitude: number | undefined,
+    @Query(
+      'lng',
+      new ParseNumberPipe({
+        optional: true,
+      }),
+    )
+    longitude: number | undefined,
+    @Query(
+      'radius',
+      new ParseNumberPipe({
+        optional: true,
+        default: Infinity,
+        max: Infinity,
+        min: 1,
+      }),
+    )
+    radius: number,
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
+    const coordSearch =
+      typeof latitude !== 'undefined' && typeof longitude !== 'undefined'
+        ? {
+            lat: latitude,
+            lng: longitude,
+            radius: radius,
+          }
+        : undefined;
+    return this.eventsService.getEventsByKeywords(
+      jwt.cid,
+      keywords,
+      page,
+      tags,
+      minPrice,
+      maxPrice,
+      minStartDate,
+      maxEndDate,
+      coordSearch,
+    );
   }
 
   @ApiOkResponse({
-    type: [AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataResponseDto],
+    type: AppDto.EventsServiceDto.EventsDto
+      .EventTagWithMetadataPaginatedResponseDto,
     description: 'Returns all tags sorted by popularity',
   })
   @ApiQuery({ name: 'q', required: false })
+  @ApiQuery({ name: 'page', required: false })
   @Get('/tags/?')
   @UseMicroserviceAuthGuard()
   public async searchTags(
     @Query('q') query: string,
-  ): Promise<
-    AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataResponseDto[]
-  > {
+    @Query('page', new ParsePagePipe()) page: number,
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataPaginatedResponseDto> {
     if (!query) {
-      return await this.eventsService.getAllTags();
+      return await this.eventsService.getAllTags(page);
     }
-    return await this.eventsService.searchTags(query);
+    return await this.eventsService.searchTags(query, page);
   }
 
   @ApiOkResponse({
-    type: [AppDto.EventsServiceDto.EventsDto.EventResponseDto],
+    type: AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto,
   })
   @UseMicroserviceAuthGuard()
   @Get('/batch')
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
   public async getEventsBatch(
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
-    @Query('ids', new ParseArrayPipe({ items: String, separator: ',' }))
-    eventsIds: string[],
-  ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto[]> {
-    return this.eventsService.getEventsBatch(jwt.cid, eventsIds);
+    @Query('page', new ParsePagePipe()) page: number,
+    @Query('cids', new ParseArrayPipe({ items: String }))
+    eventsCids: string[],
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
+    return this.eventsService.getEventsBatch(jwt.cid, eventsCids, page);
   }
 
   @ApiOkResponse({
@@ -219,14 +343,18 @@ export class EventsController {
 
   @Get('/likes/:eventCid')
   @ApiOkResponse({
-    type: [AppDto.EventsServiceDto.UsersDto.EventsServiceUserResponseDto],
+    type: AppDto.EventsServiceDto.UsersDto.UserPaginatedResponseDto,
   })
   @UseMicroserviceAuthGuard()
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
   public async getEventLikes(
     @Param('eventCid') eventCid: string,
-    @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
-  ): Promise<AppDto.EventsServiceDto.UsersDto.EventsServiceUserResponseDto[]> {
-    const usersLiked = await this.eventsService.getEventLikes(eventCid);
+    @Query('page', new ParsePagePipe()) page: number,
+  ): Promise<AppDto.EventsServiceDto.UsersDto.UserPaginatedResponseDto> {
+    const usersLiked = await this.eventsService.getEventLikes(eventCid, page);
     return usersLiked;
   }
 }

@@ -27,7 +27,7 @@ export class LocationService {
   ): Promise<
     AppDto.LocationServiceDto.LocationDto.GetUserWithLocationResponseDto[]
   > {
-    const userFriends = await this.dal.getSelfUserFriends(cid);
+    const userFriends = await this.dal.getAllSelfUserFriends(cid);
 
     if (!userFriends) {
       throw new ForbiddenException('Invalid user');

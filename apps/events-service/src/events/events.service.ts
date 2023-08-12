@@ -19,9 +19,40 @@ export class EventsService {
     await this.dal.updatePicturesForEvent(eventCid, keys);
   }
 
-  public async getEventsByKeywords(userCId: string, keywords: string) {
-    const events = await this.dal.getEventsByKeywords(userCId, keywords);
-    return events.map(EventsService.mapDbEventToEventResponse);
+  public async getEventsByKeywords(
+    userCId: string,
+    keywords: string,
+    page: number,
+    tagsCids: string[],
+    minPrice: number,
+    maxPrice: number,
+    minStartDate?: Date,
+    maxEndDate?: Date,
+    searchByCoordinates?: {
+      radius: number;
+      lat: number;
+      lng: number;
+    },
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
+    const events = await this.dal.getEventsByKeywords(
+      userCId,
+      keywords,
+      page,
+      tagsCids,
+      minPrice,
+      maxPrice,
+      minStartDate,
+      maxEndDate,
+      searchByCoordinates,
+    );
+
+    return AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto.create({
+      paginatedResults: events.paginatedResults.map(
+        EventsService.mapDbEventToEventResponse,
+      ),
+      totalCount: events.totalCount,
+      nextPage: events.nextPage ?? undefined,
+    });
   }
 
   public async getEventByCid(
@@ -67,9 +98,18 @@ export class EventsService {
     });
   }
 
-  public async getEventLikes(eventCid: string) {
-    const users = await this.dal.getUsersLikedAnEvent(eventCid);
-    return users.map(UsersService.mapEventsUserToUserResponseDto);
+  public async getEventLikes(
+    eventCid: string,
+    page: number,
+  ): Promise<AppDto.EventsServiceDto.UsersDto.UserPaginatedResponseDto> {
+    const users = await this.dal.getUsersLikedAnEvent(eventCid, page);
+    return AppDto.EventsServiceDto.UsersDto.UserPaginatedResponseDto.create({
+      paginatedResults: users.paginatedResults.map(
+        UsersService.mapEventsUserToUserResponseDto,
+      ),
+      totalCount: users.totalCount,
+      nextPage: users.nextPage ?? undefined,
+    });
   }
   public async cancelUserAction(
     userCId: string,
@@ -102,7 +142,8 @@ export class EventsService {
       AppDto.EventsServiceDto.EventsDto.MinimalEventByLocationResponseDto.create(
         {
           coordinates: event.coordinates,
-          id: event.id,
+          cid: event.cid,
+
           thumbnail:
             event.thumbnail &&
             (event.isThirdParty
@@ -118,42 +159,65 @@ export class EventsService {
 
   public async searchTags(
     query: string,
-  ): Promise<
-    AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataResponseDto[]
-  > {
+    page: number,
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataPaginatedResponseDto> {
     const tagsWithMetadata = await this.dal.getTagsByKeywordsWithMetadata(
       query,
+      page,
     );
 
-    return tagsWithMetadata.map((tag) =>
-      AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataResponseDto.create({
-        cid: tag.cid,
-        count: tag.count,
-        label: tag.label,
-      }),
+    return AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataPaginatedResponseDto.create(
+      {
+        paginatedResults: tagsWithMetadata.paginatedResults.map((tag) =>
+          AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataResponseDto.create(
+            {
+              cid: tag.cid,
+              count: tag.count,
+              label: tag.label,
+            },
+          ),
+        ),
+        totalCount: tagsWithMetadata.totalCount,
+        nextPage: tagsWithMetadata.nextPage ?? undefined,
+      },
     );
   }
 
-  public async getAllTags(): Promise<
-    AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataResponseDto[]
-  > {
-    const tagsWithMetadata = await this.dal.getAllTagsWithMetadata();
+  public async getAllTags(
+    page: number,
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataPaginatedResponseDto> {
+    const tagsWithMetadata = await this.dal.getAllTagsWithMetadata(page);
 
-    return tagsWithMetadata.map((tag) =>
-      AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataResponseDto.create({
-        cid: tag.cid,
-        count: tag.count,
-        label: tag.label,
-      }),
+    return AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataPaginatedResponseDto.create(
+      {
+        paginatedResults: tagsWithMetadata.paginatedResults.map((tag) =>
+          AppDto.EventsServiceDto.EventsDto.EventTagWithMetadataResponseDto.create(
+            {
+              cid: tag.cid,
+              count: tag.count,
+              label: tag.label,
+            },
+          ),
+        ),
+        totalCount: tagsWithMetadata.totalCount,
+        nextPage: tagsWithMetadata.nextPage ?? undefined,
+      },
     );
   }
 
   public async getEventsBatch(
     userCId: string,
-    eventIds: string[],
-  ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto[]> {
-    const events = await this.dal.getEventsBatch(userCId, eventIds);
-    return events.map(EventsService.mapDbEventToEventResponse);
+    eventCids: string[],
+    page: number,
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
+    const events = await this.dal.getEventsBatch(userCId, eventCids, page);
+    return AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto.create({
+      paginatedResults: events.paginatedResults.map(
+        EventsService.mapDbEventToEventResponse,
+      ),
+      totalCount: events.totalCount,
+      nextPage: events.nextPage ?? undefined,
+    });
   }
 
   public async createUserEvent(

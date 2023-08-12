@@ -1,11 +1,11 @@
 import { ExtractJwtPayload, UseMicroserviceAuthGuard } from '@app/auth/jwt';
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FriendsService } from './friends.service';
 
 import { AppDto } from '@app/dto';
+import { ParsePagePipe } from '@app/dto/pipes';
 import { AppTypes } from '@app/types';
-import { UsersService } from '../users/users.service';
 
 @ApiTags('Friends')
 @Controller('friends')
@@ -29,34 +29,43 @@ export class FreindsController {
   }
 
   @ApiOkResponse({
-    type: [AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto],
+    type: AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto,
     description: 'All incoming requests',
   })
   @Get('incoming')
   @UseMicroserviceAuthGuard()
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
   public async getIncomingFriendshipRequests(
     @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
-  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto[]> {
-    const incoming = await this.friendsService.getIncomingFriendshipRequests(
+    @Query('page', new ParsePagePipe()) page: number,
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto> {
+    return await this.friendsService.getIncomingFriendshipRequests(
       jwtPayload.cid,
+      page,
     );
-
-    return incoming.map(UsersService.mapUserDbToResponsePartialUser);
   }
 
   @ApiOkResponse({
-    type: [AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto],
+    type: AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto,
     description: 'All outcoming requests',
   })
   @Get('outcoming')
   @UseMicroserviceAuthGuard()
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
   public async getOutcomingFriendshipRequests(
     @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
-  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto[]> {
-    const requestedUsers =
-      await this.friendsService.getOutcomingFriendshipRequests(jwtPayload.cid);
-
-    return requestedUsers.map(UsersService.mapUserDbToResponsePartialUser);
+    @Query('page', new ParsePagePipe()) page: number,
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto> {
+    return await this.friendsService.getOutcomingFriendshipRequests(
+      jwtPayload.cid,
+      page,
+    );
   }
 
   @ApiOkResponse({
@@ -91,34 +100,23 @@ export class FreindsController {
     );
   }
 
-  // @ApiOkResponse({
-  //   type: [GetUserLocationResponseDto],
-  //   description: 'Get friends location',
-  // })
-  // @UseMicroserviceAuthGuard()
-  // @Get('location')
-  // public async getFriendsLocation(
-  //   @ExtractJwtPayload() jwtPayload:  AppTypes.JWT.User.IJwtPayload,
-  // ): Promise<GetUserLocationResponseDto[]> {
-  //   return this.friendsService.getFriendsLocation(user.id);
-  // }
-
   @ApiOkResponse({
-    type: [AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto],
-    description: 'Array of users',
+    type: AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto,
   })
-  @Get('/get/:searchUserCId/?')
+  @Get('/get/:userCid/?')
   @UseMicroserviceAuthGuard()
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
   public async getUserFirends(
-    @Param('searchUserCId') searchUserCId: string,
-    @Query('limit') limit: number,
-    @Query('page') page: number,
+    @Param('userCid') userCid: string,
+    @Query('page', new ParsePagePipe()) page: number,
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
-  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialResponseDto[]> {
+  ): Promise<AppDto.UsersServiceDto.UsersDto.UserPartialPaginatedResponseDto> {
     const friends = await this.friendsService.getUserFriends(
       jwt.cid,
-      searchUserCId,
-      limit,
+      userCid,
       page,
     );
     return friends;

@@ -64,6 +64,7 @@ export const getFriendsUserListFromFriendsAggregation = <
       updatedAt: 1,
       _id: 1,
       gender: 1,
+      lastTimeOnline: 1,
       friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus.FRIENDS,
     } satisfies Record<
       | keyof Omit<AppTypes.Shared.Users.IAnyUser, FieldsToOmit>
@@ -128,6 +129,7 @@ export const getIncomingRequestsUserListFromFriendsAggregation = <
       _id: 1,
       gender: 1,
       friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus.PENDING,
+      lastTimeOnline: 1,
     } satisfies Record<
       | keyof Omit<AppTypes.Shared.Users.IAnyUser, FieldsToOmit>
       | '_id'
@@ -190,6 +192,7 @@ export const getOutcomingRequestsUserListFromFriendsAggregation = <
       _id: 1,
       gender: 1,
       friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus.REQUESTED,
+      lastTimeOnline: 1,
     } satisfies Record<
       | keyof Omit<AppTypes.Shared.Users.IAnyUser, FieldsToOmit>
       | '_id'

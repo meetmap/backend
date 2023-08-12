@@ -9,7 +9,9 @@ export class LocationController {
   constructor(private readonly locationService: LocationService) {}
 
   @Post('/update')
-  @UseMicroserviceAuthGuard()
+  @UseMicroserviceAuthGuard({
+    disableLastTimeOnline: true,
+  })
   @ApiOkResponse({
     type: AppDto.LocationServiceDto.LocationDto.GetUserWithLocationResponseDto,
     description: 'Update self location',

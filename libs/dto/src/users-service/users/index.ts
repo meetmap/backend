@@ -1,15 +1,17 @@
+import { BaseDto } from '@app/dto/base';
 import {
   DateField,
   EmailField,
   IdField,
-  ImageField,
   NestedField,
+  NumberField,
   PhoneField,
   StringField,
 } from '@app/dto/decorators';
 import { AppTypes } from '@app/types';
 
 export class UserWithoutFriendsResponseDto
+  extends BaseDto
   implements AppTypes.UsersService.Users.IUserWithoutFriends
 {
   @StringField({
@@ -49,9 +51,28 @@ export class UserWithoutFriendsResponseDto
     enum: AppTypes.Shared.Users.Gender,
   })
   gender: AppTypes.Shared.Users.Gender;
+  @DateField({ optional: true })
+  lastTimeOnline?: Date;
 }
 
-export class UserResponseDto implements AppTypes.UsersService.Users.ISafeUser {
+export class UserWithoutFriendsPaginatedResponseDto
+  extends BaseDto
+  implements
+    AppTypes.Other.PaginatedResponse
+      .IPaginatedResponse<UserWithoutFriendsResponseDto>
+{
+  @NestedField([UserWithoutFriendsResponseDto])
+  paginatedResults: UserWithoutFriendsResponseDto[];
+  @NumberField()
+  totalCount: number;
+  @NumberField({ optional: true })
+  nextPage?: number;
+}
+
+export class SingleUserResponseDto
+  extends BaseDto
+  implements AppTypes.UsersService.Users.ISafeUserWithFriends
+{
   @IdField()
   id: string;
   @EmailField()
@@ -85,11 +106,8 @@ export class UserResponseDto implements AppTypes.UsersService.Users.ISafeUser {
   })
   fbId?: string;
 
-  @NestedField([UserWithoutFriendsResponseDto], {
-    description: 'Cids of friends or friends(users) array',
-    example: ['6436b4ff091dc0948e75671f', '6436b4fa091dc0948e7566c5'],
-  })
-  friends: UserWithoutFriendsResponseDto[];
+  @NestedField(UserWithoutFriendsPaginatedResponseDto)
+  friends: UserWithoutFriendsPaginatedResponseDto;
 
   @IdField()
   cid: string;
@@ -101,9 +119,12 @@ export class UserResponseDto implements AppTypes.UsersService.Users.ISafeUser {
   friendshipStatus: AppTypes.Shared.Friends.FriendshipStatus | null;
   @StringField({ enum: AppTypes.Shared.Users.Gender })
   gender: AppTypes.Shared.Users.Gender;
+  @DateField({ optional: true })
+  lastTimeOnline?: Date;
 }
 
 export class UserPartialResponseDto
+  extends BaseDto
   implements AppTypes.UsersService.Users.ISafePartialUser
 {
   @StringField({
@@ -151,9 +172,35 @@ export class UserPartialResponseDto
     optional: true,
   })
   fbId?: string;
+  @DateField({ optional: true })
+  lastTimeOnline?: Date;
 }
 
-export class UpdateUserProfilePictureRequestDto {
-  @ImageField()
-  photo: Express.Multer.File;
+export class UserPartialPaginatedResponseDto
+  extends BaseDto
+  implements
+    AppTypes.Other.PaginatedResponse.IPaginatedResponse<UserPartialResponseDto>
+{
+  @NestedField([UserPartialResponseDto])
+  paginatedResults: UserPartialResponseDto[];
+  @NumberField()
+  totalCount: number;
+  @NumberField({ optional: true })
+  nextPage?: number;
+}
+
+export class UpdateUserRequestDto extends BaseDto {
+  @StringField({
+    maxLength: 350,
+    description: 'Max 350 symbols',
+    optional: true,
+  })
+  description?: string;
+
+  @StringField({
+    maxLength: 100,
+    description: 'Max 100 symbols',
+    optional: true,
+  })
+  name?: string;
 }

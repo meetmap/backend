@@ -1,3 +1,4 @@
+import { Other } from '@app/types/other';
 import { Shared } from '@app/types/shared';
 
 export interface IUser extends Shared.Users.IUsersBase {
@@ -10,10 +11,11 @@ export interface IUser extends Shared.Users.IUsersBase {
 }
 
 export interface IUserWithoutFriends
-  extends Omit<ISafeUser, 'friends' | 'createdAt' | 'updatedAt'> {}
+  extends Omit<ISafeUserWithFriends, 'friends' | 'createdAt' | 'updatedAt'> {}
 
-export interface ISafeUser extends Omit<IUser, 'createdAt' | 'updatedAt'> {
-  friends: IUserWithoutFriends[];
+export interface ISafeUserWithFriends
+  extends Omit<IUser, 'createdAt' | 'updatedAt'> {
+  friends: Other.PaginatedResponse.IPaginatedResponse<IUserWithoutFriends>;
   friendshipStatus: Shared.Friends.FriendshipStatus | null;
 }
 

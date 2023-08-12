@@ -1,6 +1,13 @@
 import { ExtractUser, UseAuthGuard } from '@app/auth/jwt';
+import { RMQConstants } from '@app/constants';
 import { AppDto } from '@app/dto';
 import { AppTypes } from '@app/types';
+import {
+  RabbitPayload,
+  RabbitRequest,
+  RabbitSubscribe,
+  RequestOptions,
+} from '@golevelup/nestjs-rabbitmq';
 import {
   BadRequestException,
   Body,
@@ -20,30 +27,31 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // @RabbitSubscribe({
-  //   exchange: RMQConstants.exchanges.USERS.name,
-  //   routingKey: [RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED],
-  //   queue: 'auth_service.users.update-handler',
-  // })
-  // public async userUpdatedHandler(
-  //   @RabbitPayload() payload:AppDto.TransportDto.Users.UserUpdatedRmqRequestDto,
-  //   @RabbitRequest() req: { fields: RequestOptions },
-  // ) {
-  //   const routingKey = req.fields.routingKey;
-  //   console.log({
-  //     handler: this.userUpdatedHandler.name,
-  //     routingKey: routingKey,
-  //     msg: {
-  //       cid: payload.cid,
-  //     },
-  //   });
-  //   try {
-  //     await this.usersService.handleUpdateUser(payload);
-  //     return;
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // }
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.USERS.name,
+    routingKey: [RMQConstants.exchanges.USERS.routingKeys.USER_UPDATED],
+    queue: 'auth_service.users.update-handler',
+  })
+  public async userUpdatedHandler(
+    @RabbitPayload()
+    payload: AppDto.TransportDto.Users.UserUpdatedRmqRequestDto,
+    @RabbitRequest() req: { fields: RequestOptions },
+  ) {
+    const routingKey = req.fields.routingKey;
+    console.log({
+      handler: this.userUpdatedHandler.name,
+      routingKey: routingKey,
+      msg: {
+        cid: payload.cid,
+      },
+    });
+    try {
+      await this.authService.handleUpdateUser(payload);
+      return;
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   @ApiOkResponse({
     type: AppDto.AuthService.AuthDto.SignInResponseDto,
