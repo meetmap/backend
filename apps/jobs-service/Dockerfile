@@ -10,6 +10,7 @@ COPY package*.json ./
 
 COPY yarn.lock ./
 
+
 RUN yarn install
 # If you are building your code for production
 # RUN npm ci --only=production
@@ -17,7 +18,7 @@ RUN yarn install
 # Bundle app source
 COPY . .
 
-RUN yarn build location-service
+RUN yarn build jobs-service
 
-EXPOSE 3002
-CMD [ "node", "dist/apps/location-service/main.js" ]
+EXPOSE 3000
+CMD [ "node", "dist/apps/jobs-service/main.js" ]
