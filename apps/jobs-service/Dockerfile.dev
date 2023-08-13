@@ -16,6 +16,7 @@ RUN yarn install
 # Copy the rest of the app
 COPY . .
 
-EXPOSE 3003
+EXPOSE 3000
+
 # Default command, starting the app with hot-reloading enabled
-CMD [ "yarn", "run", "start:dev", "auth-service" ]
+CMD [ "yarn", "run", "start:dev", "jobs-service" ]

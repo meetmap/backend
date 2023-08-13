@@ -9,6 +9,8 @@ ENV PATH /app/node_modules/.bin:$PATH
 
 # Install dependencies first to take advantage of Docker layer caching
 COPY package*.json ./
+
+COPY yarn.lock ./
 RUN yarn install
 
 # Copy the rest of the app

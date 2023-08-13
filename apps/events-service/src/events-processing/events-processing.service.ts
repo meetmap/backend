@@ -10,7 +10,6 @@ import {
   RequestOptions,
 } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { EventsProcessingDal } from './events-processing.dal';
 
 @Injectable()
@@ -70,7 +69,14 @@ export class EventsProcessingService {
     }
   }
 
-  @Cron('0 0 * * *')
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.JOBS.name,
+    routingKey: [
+      RMQConstants.exchanges.JOBS.routingKeys
+        .EVENTS_SERVICE_EVENTS_PROCESSING_REQUEST,
+    ],
+    queue: 'events-service.processing.events',
+  })
   public async processEventsWithoutTagsJob() {
     const eventsCursor = this.dal.getEventsWithoutTagsCursor();
     for await (const event of eventsCursor) {
