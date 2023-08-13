@@ -5,7 +5,6 @@ import { AppTypes } from '@app/types';
 
 import { RabbitPayload, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, ParseArrayPipe } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { SnapshotDal } from './snapshot.dal';
 
 @Injectable()
@@ -82,7 +81,14 @@ export class SnapshotService {
     }
   }
 
-  @Cron('0,30 * * * *')
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.JOBS.name,
+    routingKey: [
+      RMQConstants.exchanges.JOBS.routingKeys
+        .EVENTS_SERVICE_EVENTS_SNAPSHOT_REQUEST,
+    ],
+    queue: 'events-service.snapshot.events',
+  })
   public async eventsSnapshotJob() {
     const batchSize = 50;
     console.log('Events snapshot task started');

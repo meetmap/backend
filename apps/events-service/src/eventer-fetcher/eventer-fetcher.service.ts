@@ -2,8 +2,8 @@ import { RMQConstants } from '@app/constants';
 import { AppDto } from '@app/dto';
 import { RabbitmqService } from '@app/rabbitmq';
 import { AppTypes } from '@app/types';
+import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { randomUUID } from 'crypto';
 import * as mongoose from 'mongoose';
 import { EventerFetcherDal } from './eventer-fetcher.dal';
@@ -20,7 +20,14 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
     // this.getAllCountryEvents();
   }
 
-  @Cron('0,30 * * * *')
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.JOBS.name,
+    routingKey: [
+      RMQConstants.exchanges.JOBS.routingKeys
+        .EVENTS_SERVICE_EVENTER_CO_IL_SYNC_REQUEST,
+    ],
+    queue: 'events-service.sync.eventer_co_il',
+  })
   public async getAllCountryEvents() {
     const cities = await this.dal.getAllCities();
     console.log('Number of cities:', cities.length);
