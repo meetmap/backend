@@ -115,8 +115,7 @@ deploy-jobs-service:
 
 
 .PHONY: deploy-all
-make deploy-all:
-	make deploy-jobs-service && make deploy-users-service && make deploy-location-service && make deploy-auth-service && make deploy-events-service && make deploy-assets-service
+make deploy-all: deploy-jobs-service deploy-users-service deploy-location-service deploy-auth-service deploy-events-service deploy-assets-service
 
 .PHONY: registry-login
 registry-login:
