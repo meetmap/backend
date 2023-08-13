@@ -4,4 +4,5 @@ export enum MicroServiceName {
   LOCATION_SERVICE = 'location',
   AUTH_SERVICE = 'auth',
   ASSETS_SERVICE = 'assets',
+  JOBS_SERVICE = 'jobs',
 }

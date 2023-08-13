@@ -4,7 +4,6 @@ import { RabbitmqService } from '@app/rabbitmq';
 import { AppTypes } from '@app/types';
 import { RabbitPayload, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, ParseArrayPipe } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { SnapshotDal } from './snapshot.dal';
 
 @Injectable()
@@ -36,7 +35,14 @@ export class SnapshotService {
     }
   }
 
-  @Cron('0,30 * * * *')
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.JOBS.name,
+    routingKey: [
+      RMQConstants.exchanges.JOBS.routingKeys
+        .USERS_SERVICE_FRIENDS_SNAPSHOT_REQUEST,
+    ],
+    queue: 'users-service.snapshot.friends',
+  })
   public async friendsSnapshotJob() {
     const batchSize = 50;
     console.log('Friends snapshot task started');
@@ -68,7 +74,14 @@ export class SnapshotService {
     console.log('Friends snapshot task ended');
   }
 
-  @Cron('15,45 * * * *')
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.JOBS.name,
+    routingKey: [
+      RMQConstants.exchanges.JOBS.routingKeys
+        .USERS_SERVICE_USER_SNAPSHOT_REQUEST,
+    ],
+    queue: 'users-service.snapshot.users',
+  })
   public async usersSnapshotJob() {
     const batchSize = 50;
     console.log('Users snapshot task started');

@@ -18,6 +18,10 @@ export interface IDatabaseModuleConfig {
 }
 export class DatabaseModule {
   static init(config: IDatabaseModuleConfig): DynamicModule {
+    const Db = microserviceDatabaseMap[config.microserviceName];
+    if (!Db) {
+      throw new Error(`No database found for ${config.microserviceName}`);
+    }
     return {
       global: true,
       module: DatabaseModule,
@@ -27,22 +31,22 @@ export class DatabaseModule {
             const connectionString = configService.getOrThrow(
               config.connectionStringEnvPath,
             );
-            return new microserviceDatabaseMap[config.microserviceName]({
+            return new Db({
               connectionString,
             });
           },
-          provide: microserviceDatabaseMap[config.microserviceName],
+          provide: Db,
           inject: [ConfigService],
         },
       ],
-      exports: [microserviceDatabaseMap[config.microserviceName]],
+      exports: [Db],
     };
   }
 }
 
 const microserviceDatabaseMap: Record<
   AppTypes.Other.Microservice.MicroServiceName,
-  typeof AbstractBaseDatabase
+  typeof AbstractBaseDatabase | null
 > = {
   [AppTypes.Other.Microservice.MicroServiceName.EVENTS_SERVICE]:
     EventsServiceDatabase,
@@ -54,4 +58,5 @@ const microserviceDatabaseMap: Record<
     AuthServiceDatabase,
   [AppTypes.Other.Microservice.MicroServiceName.ASSETS_SERVICE]:
     AssetsServiceDatabase,
+  [AppTypes.Other.Microservice.MicroServiceName.JOBS_SERVICE]: null,
 };

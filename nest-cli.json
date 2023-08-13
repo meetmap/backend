@@ -155,6 +155,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/ai-processing/tsconfig.lib.json"
       }
+    },
+    "jobs-service": {
+      "type": "application",
+      "root": "apps/jobs-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/jobs-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/jobs-service/tsconfig.app.json"
+      }
     }
   },
   "compilerOptions": {
