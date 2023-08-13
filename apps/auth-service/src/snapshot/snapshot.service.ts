@@ -3,9 +3,9 @@ import { AppDto } from '@app/dto';
 
 import { RabbitmqService } from '@app/rabbitmq';
 import { AppTypes } from '@app/types';
+import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 
 import { Injectable } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { SnapshotDal } from './snapshot.dal';
 
 @Injectable()
@@ -15,7 +15,14 @@ export class SnapshotService {
     private readonly dal: SnapshotDal,
   ) {}
 
-  @Cron('0,30 * * * *')
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.JOBS.name,
+    routingKey: [
+      RMQConstants.exchanges.JOBS.routingKeys
+        .AUTH_SERVICE_USER_SNAPSHOT_REQUEST,
+    ],
+    queue: 'auth-service.snapshot.users',
+  })
   public async usersSnapshotJob() {
     const batchSize = 50;
     console.log('Users snapshot task started');

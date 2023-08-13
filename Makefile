@@ -44,6 +44,15 @@ push-image-assets-service:
 	docker push 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-assets-service:latest
 
 
+.PHONY: build-jobs-service
+build-jobs-service:
+	docker buildx build --platform linux/amd64 -t meetmap:jobs-service -f apps/jobs-service/Dockerfile . && docker tag meetmap:jobs-service 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-jobs-service:latest
+
+.PHONY: push-image-jobs-service
+push-image-jobs-service:
+	docker push 970180171170.dkr.ecr.eu-west-1.amazonaws.com/meetmap-jobs-service:latest
+
+
 .PHONY: build-microservices
 build-all-microservices: build-events-service build-location-service build-users-service
 
@@ -97,9 +106,16 @@ deploy-assets-service:
 	make push-image-assets-service && \
 	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service assets-service --force-new-deployment --no-cli-pager	
 
+.PHONY: deploy-jobs-service
+deploy-jobs-service:
+	make registry-login && \
+	make build-jobs-service && \
+	make push-image-jobs-service && \
+	aws ecs update-service --profile meetmap --region eu-west-1 --cluster main-prod-cluster --service jobs-service --force-new-deployment --no-cli-pager	
+
+
 .PHONY: deploy-all
-make deploy-all:
-	make deploy-users-service && make deploy-location-service && make deploy-auth-service && make deploy-events-service && make deploy-assets-service
+make deploy-all: deploy-jobs-service deploy-users-service deploy-location-service deploy-auth-service deploy-events-service deploy-assets-service
 
 .PHONY: registry-login
 registry-login:

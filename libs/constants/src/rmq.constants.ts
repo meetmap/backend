@@ -1,6 +1,25 @@
 export class RMQConstants {
   static get exchanges() {
     return {
+      JOBS: {
+        name: 'jobs_exchange',
+        type: 'direct',
+        routingKeys: {
+          AUTH_SERVICE_USER_SNAPSHOT_REQUEST:
+            'auth-service.snapshot.users.request',
+          USERS_SERVICE_USER_SNAPSHOT_REQUEST:
+            'user-service.snapshot.users.request',
+          USERS_SERVICE_FRIENDS_SNAPSHOT_REQUEST:
+            'user-service.snapshot.friends.request',
+          EVENTS_SERVICE_EVENTS_SNAPSHOT_REQUEST:
+            'events-service.snapshot.events.request',
+          EVENTS_SERVICE_TAGS_SYNC_REQUEST: 'events-service.sync.tags.request',
+          EVENTS_SERVICE_EVENTER_CO_IL_SYNC_REQUEST:
+            'events-service.sync.eventer_co_il.request',
+          EVENTS_SERVICE_EVENTS_PROCESSING_REQUEST:
+            'events-service.processing.events.request',
+        },
+      },
       ASSETS: {
         name: 'assets_exchange',
         type: 'direct',

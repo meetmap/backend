@@ -7,15 +7,20 @@ import {
   RequestOptions,
 } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { EventTagsDal } from './event-tags.dal';
 
 @Injectable()
 export class EventTagsService {
   constructor(private readonly dal: EventTagsDal) {}
 
-  @Cron('33,0 * * * *')
-  public async syncTagsCountJob() {
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.JOBS.name,
+    routingKey: [
+      RMQConstants.exchanges.JOBS.routingKeys.EVENTS_SERVICE_TAGS_SYNC_REQUEST,
+    ],
+    queue: 'events-service.sync.tags',
+  })
+  public async syncTagsMetadataJob() {
     console.log('Event tags sync job started');
     const maxBatchSize = 50;
     const tagsCursor = this.dal.getAllEventTagsCursor();
