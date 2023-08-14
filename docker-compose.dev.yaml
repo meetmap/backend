@@ -57,6 +57,56 @@ services:
       timeout: 15s
       retries: 5
 
+  os01:
+    image: opensearchproject/opensearch:2.9.0
+    container_name: os01
+    environment:
+      - cluster.name=os-cluster
+      - node.name=os01
+      - discovery.seed_hosts=os01,os02
+      - cluster.initial_cluster_manager_nodes=os01,os02
+      - "DISABLE_SECURITY_PLUGIN=true"
+    volumes:
+      - ./docker-containers/os01:/usr/share/opensearch/data
+    networks:
+      - os-net
+    ports:
+      - 9200:9200 # REST API
+      - 9600:9600 # Performance Analyzer
+
+  os02:
+    image: opensearchproject/opensearch:2.9.0
+    container_name: os02
+    environment:
+      - cluster.name=os-cluster
+      - node.name=os02
+      - discovery.seed_hosts=os01,os02
+      - cluster.initial_cluster_manager_nodes=os01,os02
+      - "DISABLE_SECURITY_PLUGIN=true"
+    volumes:
+      - ./docker-containers/os02:/usr/share/opensearch/data
+    networks:
+      - os-net
+
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.9.0
+    container_name: opensearch-dashboards
+    ports:
+      - 5601:5601
+    expose:
+      - "5601"
+    environment:
+      - 'OPENSEARCH_HOSTS=["http://os01:9200","http://os02:9200"]'
+      - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true" # disables security dashboards plugin in OpenSearch Dashboards
+    networks:
+      - os-net
+    depends_on:
+      - os01
+      - os02
+
 networks:
   default:
+    driver: bridge
+  os-net:
     driver: bridge
