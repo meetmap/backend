@@ -308,6 +308,8 @@ export class SingleEventResponseDto
 
   @NestedField([EventTagResponseDto])
   tags: EventTagResponseDto[];
+  @NestedField(EventPaginatedResponseDto)
+  hits: EventPaginatedResponseDto;
 }
 
 class CreateUserEventLocationRequestDto extends BaseDto {

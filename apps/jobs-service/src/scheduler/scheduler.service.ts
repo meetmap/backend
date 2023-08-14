@@ -76,11 +76,22 @@ export class SchedulerService {
     );
   }
 
-  @Cron('0,33 * * * *')
+  @Cron('3,33 * * * *')
   public async requestEventsServiceSyncTagsMetadataRequest() {
     await this.rmqService.amqp.publish(
       RMQConstants.exchanges.JOBS.name,
       RMQConstants.exchanges.JOBS.routingKeys.EVENTS_SERVICE_TAGS_SYNC_REQUEST,
+      {},
+      defaultRequestOptions,
+    );
+  }
+
+  @Cron('8,38 * * * *')
+  public async requestEventsServiceEventsSearchWarmingRequest() {
+    await this.rmqService.amqp.publish(
+      RMQConstants.exchanges.JOBS.name,
+      RMQConstants.exchanges.JOBS.routingKeys
+        .EVENTS_SERVICE_EVENTS_SEARCH_WARMING_REQUEST,
       {},
       defaultRequestOptions,
     );

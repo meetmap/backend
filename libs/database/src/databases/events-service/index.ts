@@ -18,6 +18,12 @@ export class EventsServiceDatabase extends AbstractBaseDatabase {
     for (const modelName in this.models) {
       await this.models[modelName].syncIndexes();
     }
+    // const a = this.models.event.setMaxListeners(1);
+    // const eventEmitter = a.watch();
+    // eventEmitter.on('change', (data) => {
+    //   console.log(data);
+    //   console.log(data._id);
+    // });
     // for await (const eventsUsers of this.models.eventsUsers
     //   .aggregate([
     //     {

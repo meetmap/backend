@@ -92,12 +92,12 @@ export class SnapshotService {
   public async eventsSnapshotJob() {
     const batchSize = 50;
     console.log('Events snapshot task started');
-    const eventsCursor = this.dal.getAllEventsCursor(batchSize);
+    const eventsCursor = this.dal.getAllEventsSnapshotCursor(batchSize);
     const eventsBatch: AppTypes.Transport.Snapshot.Events.IEventsServiceSnapshotEvent[] =
       [];
     let multiplier = 0;
-    for await (const userDoc of eventsCursor) {
-      eventsBatch.push(userDoc.toObject());
+    for await (const eventDoc of eventsCursor) {
+      eventsBatch.push(eventDoc.toObject());
       if (eventsBatch.length === batchSize) {
         await this.publishBatch(eventsBatch);
         console.log(

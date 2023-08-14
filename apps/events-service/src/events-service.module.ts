@@ -8,6 +8,7 @@ import { AuthModule } from '@app/auth';
 import { RabbitmqModule } from '@app/rabbitmq';
 import { RedisModule } from '@app/redis';
 import { S3UploaderModule } from '@app/s3-uploader';
+import { SearchModule } from '@app/search';
 import { AppTypes } from '@app/types';
 import { EventTagsModule } from './event-tags/event-tags.module';
 import { EventerFetcherModule } from './eventer-fetcher/eventer-fetcher.module';
@@ -17,6 +18,7 @@ import { EventsModule } from './events/events.module';
 import { SnapshotModule } from './snapshot/snapshot.module';
 import { TicketingPlatofrmsModule } from './ticketing-platofrm/ticketing-platofrm.module';
 import { UserModule } from './users/users.module';
+import { SearchJobsModule } from './search-jobs/search-jobs.module';
 
 @Module({
   imports: [
@@ -35,6 +37,7 @@ import { UserModule } from './users/users.module';
     }),
     S3UploaderModule,
     RabbitmqModule.forRoot(),
+    SearchModule,
     // InternalAxiosModule,
     EventerFetcherModule,
     EventsModule,
@@ -44,6 +47,7 @@ import { UserModule } from './users/users.module';
     SnapshotModule,
     EventsProcessingModule,
     EventTagsModule,
+    SearchJobsModule,
   ],
   controllers: [EventsFetcherController],
   providers: [],

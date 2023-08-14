@@ -2,6 +2,7 @@ import { RADIANS_PER_KILOMETER } from '@app/constants';
 import { EventsServiceDatabase } from '@app/database';
 import { getPaginatedResultAggregation } from '@app/database/shared-aggregations';
 import { AppDto } from '@app/dto';
+import { SearchService } from '@app/search';
 import { AppTypes } from '@app/types';
 
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -9,7 +10,10 @@ import { randomUUID } from 'crypto';
 import * as mongoose from 'mongoose';
 @Injectable()
 export class EventsDal {
-  constructor(private readonly db: EventsServiceDatabase) {}
+  constructor(
+    private readonly db: EventsServiceDatabase,
+    private readonly searchService: SearchService,
+  ) {}
 
   public async getEventWithUserMetadataAndTags(
     userCid: string,
@@ -48,6 +52,47 @@ export class EventsDal {
         coordinates: objectEvent.location.coordinates,
         country: objectEvent.location.country,
       },
+    };
+  }
+
+  public async getMLTEvents(
+    userCid: string,
+    eventCid: string,
+    page: number = 1,
+  ): Promise<
+    AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>
+  > {
+    const pageSize = 15;
+    const startFrom = (page - 1) * pageSize;
+    const res = await this.searchService.indexes.events.search({
+      body: {
+        from: startFrom,
+        size: pageSize,
+        query: {
+          more_like_this: {
+            fields: ['description^3', 'title', 'tags.label'],
+            like: [
+              {
+                _id: eventCid,
+              },
+            ],
+            min_term_freq: 1,
+            min_doc_freq: 5,
+            max_query_terms: 20,
+          },
+        },
+      },
+    });
+    const foundAmount = res.hits.hits.length;
+
+    const totalCount = res.hits.total.value;
+    const matchedCids = res.hits.hits.map((hit) => hit._source.cid);
+    const events = await this.getEventsBatch(userCid, matchedCids);
+    // console.log(hits);
+    return {
+      totalCount: totalCount,
+      paginatedResults: events,
+      nextPage: startFrom + foundAmount < totalCount ? page + 1 : undefined,
     };
   }
 
@@ -365,6 +410,25 @@ export class EventsDal {
   }
 
   public async getEventsBatch(
+    userCid: string,
+    eventCids: string[],
+    distinct: boolean = false,
+  ): Promise<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags[]> {
+    return await this.db.models.event.aggregate<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>(
+      [
+        {
+          $match: {
+            cid: { $in: distinct ? [...new Set(eventCids)] : eventCids },
+          } satisfies Partial<
+            Record<keyof AppTypes.EventsService.Event.IEvent, any>
+          >,
+        },
+        ...EventsDal.getEventsWithUserStatsTagsAggregation(userCid),
+      ],
+    );
+  }
+
+  public async getEventsBatchPaginated(
     userCId: string,
     eventCIds: string[],
     page: number = 1,
