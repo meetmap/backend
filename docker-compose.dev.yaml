@@ -66,6 +66,13 @@ services:
       - discovery.seed_hosts=os01,os02
       - cluster.initial_cluster_manager_nodes=os01,os02
       - "DISABLE_SECURITY_PLUGIN=true"
+
+    healthcheck:
+      test: [ "CMD", "curl", "http://localhost:9200/" ]
+      interval: 5s
+      timeout: 15s
+      retries: 15
+
     volumes:
       - ./docker-containers/os01:/usr/share/opensearch/data
     networks:
@@ -87,7 +94,11 @@ services:
       - ./docker-containers/os02:/usr/share/opensearch/data
     networks:
       - os-net
-
+    healthcheck:
+      test: [ "CMD", "curl", "http://localhost:9200/" ]
+      interval: 5s
+      timeout: 15s
+      retries: 15
 
   opensearch-dashboards:
     image: opensearchproject/opensearch-dashboards:2.9.0
@@ -101,9 +112,16 @@ services:
       - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true" # disables security dashboards plugin in OpenSearch Dashboards
     networks:
       - os-net
+    command: |
+      curl --location --request PUT 'http://os01:9200/_cluster/settings' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{ "transient": { "cluster.routing.allocation.disk.watermark.low": "93%","cluster.routing.allocation.disk.watermark.high": "95%" } }'
+
     depends_on:
-      - os01
-      - os02
+      os01:
+        condition: service_healthy
+      os02:
+        condition: service_healthy
 
 networks:
   default:
