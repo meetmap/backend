@@ -56,20 +56,22 @@ export class EventsService {
   }
 
   public async getEventByCid(
-    cid: string,
+    userCid: string,
     eventCid: string,
+    hitsPage?: number,
   ): Promise<AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto> {
     const event = await this.dal.getEventByCid(eventCid);
     if (!event) {
       throw new NotFoundException('Event not found');
     }
     const eventWithUserStatsTags =
-      await this.dal.getEventWithUserMetadataAndTags(cid, event.cid);
+      await this.dal.getEventWithUserMetadataAndTags(userCid, event.cid);
     if (!eventWithUserStatsTags) {
       throw new NotFoundException('Event not found');
     }
 
     const eventStats = await this.dal.getEventStats(eventCid);
+    const hits = await this.dal.getMLTEvents(userCid, eventCid, hitsPage);
     // const userStats = await this.dal.getEventUserStats(eventId, cid);
     return EventsService.mapDbEventToSingleEventResponse(
       event,
@@ -77,6 +79,7 @@ export class EventsService {
       eventStats,
       eventWithUserStatsTags.userStats,
       eventWithUserStatsTags.tags,
+      hits,
     );
   }
 
@@ -210,7 +213,11 @@ export class EventsService {
     eventCids: string[],
     page: number,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
-    const events = await this.dal.getEventsBatch(userCId, eventCids, page);
+    const events = await this.dal.getEventsBatchPaginated(
+      userCId,
+      eventCids,
+      page,
+    );
     return AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto.create({
       paginatedResults: events.paginatedResults.map(
         EventsService.mapDbEventToEventResponse,
@@ -291,6 +298,7 @@ export class EventsService {
     eventStats: AppTypes.EventsService.Event.IEventStats,
     userStats: AppTypes.EventsService.Event.IEventWithUserMetadataAndTags['userStats'],
     tags: AppTypes.EventsService.EventTags.ISafeTag[],
+    hits: AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>,
   ): AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto {
     return AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto.create({
       id: event.id,
@@ -332,6 +340,13 @@ export class EventsService {
       updatedAt: event.updatedAt,
       link: event.link,
       tags: tags,
+      hits: {
+        paginatedResults: hits.paginatedResults.map((hit) =>
+          this.mapDbEventToEventResponse(hit),
+        ),
+        totalCount: hits.totalCount,
+        nextPage: hits.nextPage,
+      },
     });
   }
 }

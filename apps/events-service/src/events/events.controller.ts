@@ -237,12 +237,17 @@ export class EventsController {
     type: AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto,
   })
   @Get('/:eventCid')
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
   @UseMicroserviceAuthGuard()
   public async getEventById(
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
+    @Query('page', new ParsePagePipe()) page: number,
     @Param('eventCid') eventCid: string,
   ): Promise<AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto> {
-    return this.eventsService.getEventByCid(jwt.cid, eventCid);
+    return this.eventsService.getEventByCid(jwt.cid, eventCid, page);
   }
 
   @ApiOkResponse({

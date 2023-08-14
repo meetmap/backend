@@ -90,6 +90,12 @@
       ],
       "@app/ai-processing/*": [
         "libs/ai-processing/src/*"
+      ],
+      "@app/search": [
+        "libs/search/src"
+      ],
+      "@app/search/*": [
+        "libs/search/src/*"
       ]
     }
   }
