@@ -2,7 +2,6 @@ import {
   ArgumentMetadata,
   BadRequestException,
   Injectable,
-  ParseIntPipe,
   PipeTransform,
 } from '@nestjs/common';
 
@@ -23,7 +22,7 @@ export class ParseNumberPipe
     },
   ) {}
   async transform(value: string, metadata: ArgumentMetadata) {
-    const parseIntPipe = new ParseIntPipe();
+    // const parseIntPipe = new ParseFloatPipe();
     if (typeof value === 'undefined') {
       if (this.config.optional) {
         return this.config.default;
@@ -32,8 +31,13 @@ export class ParseNumberPipe
         `${metadata.type} ${metadata.data} is required`,
       );
     }
-
-    const num = await parseIntPipe.transform(value, metadata);
+    const parsedValue = +value;
+    if (Number.isNaN(parsedValue)) {
+      throw new BadRequestException(
+        `${metadata.type} ${metadata.data} expected numeric string`,
+      );
+    }
+    const num = parsedValue;
     if (typeof this.config.min !== 'undefined' && num < this.config.min) {
       throw new BadRequestException(
         `${metadata.type} ${metadata.data} min is (${this.config.min})`,
