@@ -2,14 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { AbstractBaseDatabase } from '../abstract.db';
 import {
   ApiKeySchema,
-  CitySchema,
+  CountrySchema,
   EventSchema,
   EventsUsersSchema,
+  EventTagsSchema,
   FriendsSchema,
+  LocalitySchema,
   TicketingPlatformSchema,
   UserSchema,
 } from './models';
-import { EventTagsSchema } from './models/eventTags';
+import { CitySchema } from './models/city';
 
 @Injectable()
 export class EventsServiceDatabase extends AbstractBaseDatabase {
@@ -62,6 +64,8 @@ export class EventsServiceDatabase extends AbstractBaseDatabase {
     return {
       event: this.connection.model('Event', EventSchema),
       city: this.connection.model('City', CitySchema),
+      locality: this.connection.model('Locality', LocalitySchema),
+      country: this.connection.model('Country', CountrySchema),
       ticketingPlatform: this.connection.model(
         'TicketingPlatform',
         TicketingPlatformSchema,

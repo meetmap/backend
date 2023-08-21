@@ -13,6 +13,7 @@ export class UsersService {
     userCId: string,
     page: number,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
+    //@todo change location extraction
     const events = await this.dal.getEventsByUserAction(userCId, 'liked', page);
     return {
       paginatedResults: events.paginatedResults.map(

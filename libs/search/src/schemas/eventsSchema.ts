@@ -27,4 +27,19 @@ export const EventsSchema = new BaseSchema<AppTypes.Search.Event.ICachedEvent>({
       },
     },
   },
+  // ageLimit: {
+  //   type: 'integer',
+  // },
+  // city: {
+  //   type: 'keyword',
+  // },
+  // country: {
+  //   type: 'keyword',
+  // },
+  // endTime: {
+  //   type: 'date',
+  // },
+  // startTime: {
+  //   type: 'date',
+  // },
 });

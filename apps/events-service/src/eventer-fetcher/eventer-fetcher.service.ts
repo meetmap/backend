@@ -32,16 +32,13 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
     const cities = await this.dal.getAllCities();
     console.log('Number of cities:', cities.length);
     for (const city of cities) {
-      const events = await this.dal.fetchEventerList(city.name);
+      const events = await this.dal.fetchEventerList(city.local_name);
 
       for (const event of events) {
         if (!event.linkName) {
           continue;
         }
         await this.getAndPublishValidEvent(event.linkName.toLowerCase());
-
-        // return;
-        // debugger;
       }
     }
     console.log('Finished!');
@@ -64,8 +61,17 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
 
     const tickets = await this.dal.fetchEventerEventTickets(event.event._id);
     console.log('Event found!', event.event.linkName);
-    const city = await this.extractCityFromEventerResponse(event);
-    const payload = this.mapEventerResponseToDbEvent(event, tickets, city);
+
+    const location = await this.extractLocationFromEventerResponse(
+      event,
+      dbEvent,
+    );
+    const payload = this.mapEventerResponseToDbEvent(
+      event,
+      tickets,
+      location?.countryId ?? null,
+      location?.localityId ?? null,
+    );
     if (!payload) {
       return null;
     }
@@ -79,6 +85,15 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
       if (!updatedEvent) {
         return null;
       }
+
+      await this.rmqService.amqp.publish(
+        RMQConstants.exchanges.EVENTS.name,
+        RMQConstants.exchanges.EVENTS.routingKeys.EVENT_UPDATED,
+        AppDto.TransportDto.Events.EventsServiceEventRequestDto.create({
+          cid: updatedEvent.cid,
+          creator: undefined,
+        }),
+      );
 
       ///if no tags has been assigned to an event, publish event to assign tags
       if (!updatedEvent.tagsCids.length) {
@@ -107,25 +122,39 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
     return newEvent;
   }
 
-  public async extractCityFromEventerResponse(
+  public async extractLocationFromEventerResponse(
     event: AppTypes.TicketingPlatforms.ThirdParty.EventerCoIl.IEventerFullEventResponse,
-  ): Promise<AppTypes.Shared.City.ICity | null> {
+    dbEvent: AppTypes.EventsService.Event.IEvent | null,
+  ): Promise<{
+    countryId?: string;
+    localityId?: string;
+  } | null> {
     const { longitude, latitude } = event.event.location;
     if (!longitude || !latitude) {
       return null;
     }
-    const city = await this.dal.getCityByCoordinates(longitude, latitude);
-    city
-      ? console.log('City found!', city.name)
-      : console.log('City not found :(');
 
-    return city;
+    if (dbEvent) {
+      const [lng, lat] = dbEvent.location.coordinates.coordinates;
+      if (longitude === lng && latitude === lat) {
+        return {
+          countryId: dbEvent.location.countryId?.toString(),
+          localityId: dbEvent.location.localityId?.toString(),
+        };
+      }
+    }
+
+    return await this.dal.lookupLocalityByCoordinates({
+      lat: latitude,
+      lng: longitude,
+    });
   }
 
   public mapEventerResponseToDbEvent(
     event: AppTypes.TicketingPlatforms.ThirdParty.EventerCoIl.IEventerFullEventResponse,
     tickets: AppTypes.TicketingPlatforms.ThirdParty.EventerCoIl.IEventerTicketsResponse | null,
-    city: AppTypes.Shared.City.ICity | null,
+    countryId: string | null,
+    localityId: string | null,
   ): AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent> | null {
     const location = event.event.location;
     if (!location.latitude || !location.longitude) {
@@ -144,8 +173,12 @@ export class EventerFetcherService implements OnModuleInit, OnModuleDestroy {
       startTime: new Date(event.event.schedule.start),
       endTime: new Date(event.event.schedule.end),
       location: {
-        cityId: city ? new mongoose.Types.ObjectId(city.id) : undefined,
-        country: 'Israel',
+        localityId: localityId
+          ? new mongoose.Types.ObjectId(localityId)
+          : undefined,
+        countryId: countryId
+          ? new mongoose.Types.ObjectId(countryId)
+          : undefined,
         coordinates: {
           type: 'Point',
           coordinates: [location.longitude, location.latitude],

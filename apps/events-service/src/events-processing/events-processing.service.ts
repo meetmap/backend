@@ -137,7 +137,7 @@ export class EventsProcessingService {
     const promptTemplate = `
       event:{
         event_description: ${event.description},
-        event_origin: ${event.location.country},
+        event_origin: ${event.location.countryId},
         event_title: ${event.title},
         event_age_limit: ${event.ageLimit},
       }

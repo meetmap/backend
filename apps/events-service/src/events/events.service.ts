@@ -58,7 +58,6 @@ export class EventsService {
   public async getEventByCid(
     userCid: string,
     eventCid: string,
-    hitsPage?: number,
   ): Promise<AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto> {
     const event = await this.dal.getEventByCid(eventCid);
     if (!event) {
@@ -71,16 +70,33 @@ export class EventsService {
     }
 
     const eventStats = await this.dal.getEventStats(eventCid);
-    const hits = await this.dal.getMLTEvents(userCid, eventCid, hitsPage);
+    // const hits = await this.dal.getMLTEvents(userCid, eventCid, hitsPage);
     // const userStats = await this.dal.getEventUserStats(eventId, cid);
     return EventsService.mapDbEventToSingleEventResponse(
       event,
-      event.location.city,
       eventStats,
       eventWithUserStatsTags.userStats,
       eventWithUserStatsTags.tags,
-      hits,
     );
+  }
+
+  public async getSimilarEvents(
+    userCid: string,
+    eventCid: string,
+    page?: number,
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
+    const event = await this.dal.getEventByCid(eventCid);
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    const hits = await this.dal.getMLTEvents(userCid, eventCid, page);
+    return AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto.create({
+      paginatedResults: hits.paginatedResults.map(
+        EventsService.mapDbEventToEventResponse,
+      ),
+      totalCount: hits.totalCount,
+      nextPage: hits.nextPage,
+    });
   }
 
   public async userAction(
@@ -231,7 +247,7 @@ export class EventsService {
     userCid: string,
     payload: AppDto.EventsServiceDto.EventsDto.CreateUserEventRequestDto,
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto> {
-    const { event, tags } = await this.dal.createUserEvent(
+    const { event, tags, location } = await this.dal.createUserEvent(
       userCid,
       payload,
       payload.tagsCids,
@@ -256,11 +272,13 @@ export class EventsService {
         userStatus: undefined,
       },
       tags: tags,
+      location,
     });
   }
 
   static mapDbEventToEventResponse(
     event: AppTypes.EventsService.Event.IEventWithUserMetadataAndTags,
+    // location: AppTypes.Shared.Location.IEntityLocationPopulated,
   ): AppDto.EventsServiceDto.EventsDto.EventResponseDto {
     return AppDto.EventsServiceDto.EventsDto.EventResponseDto.create({
       id: event.id,
@@ -268,8 +286,11 @@ export class EventsService {
       endTime: event.endTime,
       eventType: event.eventType,
       location: {
+        countryName: event.location.country,
+        localityId: event.location.localityId,
+        localityName: event.location.locality,
         coordinates: event.location.coordinates,
-        country: event.location.country,
+        countryId: event.location.countryId,
       },
       slug: event.slug,
       startTime: event.startTime,
@@ -293,12 +314,11 @@ export class EventsService {
   }
 
   static mapDbEventToSingleEventResponse(
-    event: AppTypes.EventsService.Event.IEvent,
-    city: Omit<AppTypes.Shared.City.ICity, 'location'> | undefined,
+    event: AppTypes.EventsService.Event.IEventWithLocation,
     eventStats: AppTypes.EventsService.Event.IEventStats,
     userStats: AppTypes.EventsService.Event.IEventWithUserMetadataAndTags['userStats'],
     tags: AppTypes.EventsService.EventTags.ISafeTag[],
-    hits: AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>,
+    // hits: AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>,
   ): AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto {
     return AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto.create({
       id: event.id,
@@ -307,9 +327,11 @@ export class EventsService {
       endTime: event.endTime,
       eventType: event.eventType,
       location: {
+        countryName: event.location.country,
+        localityId: event.location.localityId,
+        localityName: event.location.locality,
+        countryId: event.location.countryId,
         coordinates: event.location.coordinates,
-        country: event.location.country,
-        city: city?.name,
       },
       slug: event.slug,
       startTime: event.startTime,
@@ -340,13 +362,13 @@ export class EventsService {
       updatedAt: event.updatedAt,
       link: event.link,
       tags: tags,
-      hits: {
-        paginatedResults: hits.paginatedResults.map((hit) =>
-          this.mapDbEventToEventResponse(hit),
-        ),
-        totalCount: hits.totalCount,
-        nextPage: hits.nextPage,
-      },
+      // hits: {
+      //   paginatedResults: hits.paginatedResults.map((hit) =>
+      //     this.mapDbEventToEventResponse(hit),
+      //   ),
+      //   totalCount: hits.totalCount,
+      //   nextPage: hits.nextPage,
+      // },
     });
   }
 }

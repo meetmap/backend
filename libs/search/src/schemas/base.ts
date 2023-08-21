@@ -57,16 +57,15 @@ export class BaseSchema<DataType> {
   ) => {
     return await this.client.bulk({
       body: data
-        .map((d) => [
+        .map(({ _id, ...d }) => [
           {
             index: {
               _index: this.indexName,
-              _id: d._id,
+              _id: _id,
             },
           },
           {
             ...d,
-            _id: undefined,
           },
         ])
         .flat(),
@@ -93,7 +92,12 @@ export class BaseSchema<DataType> {
   }
 }
 
-export type SchemaFieldType = 'text' | 'integer' | 'nested' | 'keyword';
+export type SchemaFieldType =
+  | 'text'
+  | 'integer'
+  | 'nested'
+  | 'keyword'
+  | 'date';
 
 export interface ISchemaProperties {
   [fieldName: string]: ISchemaField | ISchemaFieldNested;
@@ -106,6 +110,11 @@ export interface ISchemaField {
   optional?: boolean;
 }
 
+export interface ISchemaDateField {
+  type: Extract<SchemaFieldType, 'date'>;
+  format?: string;
+}
+
 export interface ISchemaFieldNested
   extends Omit<ISchemaField, 'type' | 'analyzer'> {
   type: Extract<SchemaFieldType, 'nested'>;
@@ -113,23 +122,23 @@ export interface ISchemaFieldNested
   properties: ISchemaProperties;
 }
 
-type SchemaToDataType<T extends ISchemaProperties> = { id?: string } & {
-  [K in keyof T]: T[K] extends { optional: true } // Check if optional is true
-    ? T[K] extends ISchemaFieldNested
-      ? Array<SchemaToDataType<T[K]['properties']>> | undefined
-      : T[K]['type'] extends 'text' | 'keyword'
-      ? string | undefined
-      : T[K]['type'] extends 'integer'
-      ? number | undefined
-      : never
-    : T[K] extends ISchemaFieldNested
-    ? Array<SchemaToDataType<T[K]['properties']>>
-    : T[K]['type'] extends 'text' | 'keyword'
-    ? string
-    : T[K]['type'] extends 'integer'
-    ? number
-    : never;
-};
+// type SchemaToDataType<T extends ISchemaProperties> = { id?: string } & {
+//   [K in keyof T]: T[K] extends { optional: true } // Check if optional is true
+//     ? T[K] extends ISchemaFieldNested
+//       ? Array<SchemaToDataType<T[K]['properties']>> | undefined
+//       : T[K]['type'] extends 'text' | 'keyword'
+//       ? string | undefined
+//       : T[K]['type'] extends 'integer'
+//       ? number | undefined
+//       : never
+//     : T[K] extends ISchemaFieldNested
+//     ? Array<SchemaToDataType<T[K]['properties']>>
+//     : T[K]['type'] extends 'text' | 'keyword'
+//     ? string
+//     : T[K]['type'] extends 'integer'
+//     ? number
+//     : never;
+// };
 
 type DataTypeToSchemaField<T> = T extends string
   ? { type: 'text' | 'keyword' } & ISchemaField
@@ -140,6 +149,8 @@ type DataTypeToSchemaField<T> = T extends string
       type: 'nested';
       properties: DataTypeToSchema<U>;
     }
+  : T extends Date
+  ? ISchemaDateField
   : never;
 
 type DataTypeToSchema<T> = {

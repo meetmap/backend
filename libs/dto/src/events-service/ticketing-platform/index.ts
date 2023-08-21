@@ -23,7 +23,7 @@ export class EventForOrganizersResponseDto
       | 'endTime'
       | 'ageLimit'
       | 'creator'
-      | 'location'
+      // | 'location'
       | 'eventType'
     >
 {

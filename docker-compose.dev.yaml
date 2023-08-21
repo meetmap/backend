@@ -144,7 +144,10 @@ services:
       - |
         curl --location --request PUT 'http://os01:9200/_cluster/settings' \
           --header 'Content-Type: application/json' \
-          --data-raw '{ "transient": { "cluster.routing.allocation.disk.watermark.low": "93%","cluster.routing.allocation.disk.watermark.high": "95%" } }' &
+          --data-raw '{ "transient": { "cluster.routing.allocation.disk.threshold_enabled":false } }' &
+        curl --location --request PUT 'http://os02:9200/_cluster/settings' \
+          --header 'Content-Type: application/json' \
+          --data-raw '{ "transient": { "cluster.routing.allocation.disk.watermark.low": "95%","cluster.routing.allocation.disk.watermark.high": "97%" ,"cluster.routing.allocation.disk.threshold_enabled":false} }' &
         curl --location --request PUT 'http://os01:9200/.kibana_1/_alias/.kibana'
 
     depends_on:
