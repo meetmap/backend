@@ -1,6 +1,6 @@
 import { RMQConstants } from '@app/constants';
 import { RabbitmqService } from '@app/rabbitmq';
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { Options } from 'amqplib';
 
@@ -9,8 +9,11 @@ const defaultRequestOptions: Options.Publish = {
 };
 
 @Injectable()
-export class SchedulerService {
+export class SchedulerService implements OnModuleInit {
   constructor(private readonly rmqService: RabbitmqService) {}
+  onModuleInit() {
+    this.requestEventsServiceEventerCoIlSyncJob();
+  }
   @Cron('0,30 * * * *')
   public async requestAuthServiceUsersSnapshotJob() {
     await this.rmqService.amqp.publish(
@@ -67,6 +70,7 @@ export class SchedulerService {
 
   @Cron('0,30 * * * *')
   public async requestEventsServiceEventerCoIlSyncJob() {
+    console.log('Eventer co il job');
     await this.rmqService.amqp.publish(
       RMQConstants.exchanges.JOBS.name,
       RMQConstants.exchanges.JOBS.routingKeys

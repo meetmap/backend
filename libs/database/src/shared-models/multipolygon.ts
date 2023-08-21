@@ -1,16 +1,16 @@
 import { AppTypes } from '@app/types';
 import * as mongoose from 'mongoose';
-/**@deprecated use instead MultiPolygon */
-export const PolygonSchema =
-  new mongoose.Schema<AppTypes.Shared.Location.IPolygon>(
+
+export const MultiPolygonSchema =
+  new mongoose.Schema<AppTypes.Shared.Location.IMultiPolygon>(
     {
       type: {
         type: String,
-        enum: ['Polygon'],
+        enum: ['MultiPolygon'],
         required: true,
       },
       coordinates: {
-        type: [[[Number]]],
+        type: [[[[Number]]]],
         required: true,
       },
     },

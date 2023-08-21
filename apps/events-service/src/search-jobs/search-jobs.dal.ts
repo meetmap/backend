@@ -36,6 +36,12 @@ export class SearchJobsDal {
             description: true,
             title: true,
             tags: true,
+            //@todo change it back
+            // ageLimit:true,
+            // city: true,
+            // country: true,
+            // endTime: true,
+            // startTime: true
           } satisfies Record<
             keyof AppTypes.Search.Event.ICachedEvent | '_id',
             boolean
