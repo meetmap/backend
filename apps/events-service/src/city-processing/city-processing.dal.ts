@@ -1,7 +1,6 @@
 import { EventsServiceDatabase } from '@app/database';
 import { Injectable } from '@nestjs/common';
 import * as mongoose from 'mongoose';
-import { output } from './output';
 @Injectable()
 export class CityProcessingDal {
   constructor(private readonly db: EventsServiceDatabase) {}
@@ -15,7 +14,7 @@ export class CityProcessingDal {
       { en_name: 'Russia' },
       {
         $set: {
-          location: output.geometry,
+          // location: output.geometry,
         },
       },
     );
