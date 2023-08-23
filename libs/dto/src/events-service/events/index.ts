@@ -9,7 +9,6 @@ import {
 } from '@app/dto/decorators';
 import { AppTypes } from '@app/types';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
 
 export class EventTagResponseDto
   extends BaseDto
@@ -17,7 +16,7 @@ export class EventTagResponseDto
 {
   @IdField()
   cid: string;
-  @IsString()
+  @StringField()
   label: string;
 }
 
@@ -71,14 +70,17 @@ export class PointResponseDto
   coordinates: [number, number];
 }
 
-export class LocationResponseDto
-  extends BaseDto
-  implements Omit<AppTypes.Shared.Location.ILocation, 'cityId'>
-{
-  @StringField()
-  country: string;
+export class LocationResponseDto extends BaseDto {
+  // implements AppTypes.Shared.Location.IEntityLocation
   @StringField({ optional: true })
-  city?: string;
+  countryId?: string;
+  @StringField({ optional: true })
+  countryName?: string;
+  @StringField({ optional: true })
+  localityId?: string;
+  @StringField({ optional: true })
+  localityName?: string;
+
   @NestedField(PointResponseDto)
   coordinates: PointResponseDto;
 }
@@ -151,7 +153,6 @@ export class EventResponseDto
       | 'endTime'
       | 'ageLimit'
       | 'creator'
-      | 'location'
       | 'eventType'
       | 'description'
       | 'accessibility'
@@ -254,7 +255,7 @@ export class EventStatsResponseDto
 
 export class SingleEventResponseDto
   extends BaseDto
-  implements Omit<AppTypes.EventsService.Event.IEvent, 'tagsCids'>
+  implements Omit<AppTypes.EventsService.Event.IEvent, 'tagsCids' | 'location'>
 {
   @IdField()
   id: string;
@@ -308,6 +309,8 @@ export class SingleEventResponseDto
 
   @NestedField([EventTagResponseDto])
   tags: EventTagResponseDto[];
+  // @NestedField(EventPaginatedResponseDto)
+  // hits: EventPaginatedResponseDto;
 }
 
 class CreateUserEventLocationRequestDto extends BaseDto {

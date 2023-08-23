@@ -2,6 +2,8 @@ import { RADIANS_PER_KILOMETER } from '@app/constants';
 import { EventsServiceDatabase } from '@app/database';
 import { getPaginatedResultAggregation } from '@app/database/shared-aggregations';
 import { AppDto } from '@app/dto';
+import { GeocodingService } from '@app/geocoding';
+import { SearchService } from '@app/search';
 import { AppTypes } from '@app/types';
 
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -9,7 +11,11 @@ import { randomUUID } from 'crypto';
 import * as mongoose from 'mongoose';
 @Injectable()
 export class EventsDal {
-  constructor(private readonly db: EventsServiceDatabase) {}
+  constructor(
+    private readonly db: EventsServiceDatabase,
+    private readonly searchService: SearchService,
+    private readonly geocoder: GeocodingService,
+  ) {}
 
   public async getEventWithUserMetadataAndTags(
     userCid: string,
@@ -22,32 +28,97 @@ export class EventsDal {
     return event ?? null;
   }
 
-  public async getEventByCid(eventCid: string): Promise<
-    | (AppTypes.EventsService.Event.IEvent & {
-        location: AppTypes.Shared.Location.ILocationWithCity;
-      })
-    | null
-  > {
+  public async getEventByCid(
+    eventCid: string,
+  ): Promise<AppTypes.EventsService.Event.IEventWithLocation | null> {
     const event = await this.db.models.event
       .findOne({ cid: eventCid })
-      .populate({
-        path: 'location.cityId',
+      .populate<{
+        location: {
+          countryId: AppTypes.Shared.Country.ICountry;
+          localityId?: AppTypes.Shared.Locality.ILocality;
+          coordinates: AppTypes.EventsService.Event.IEvent['location']['coordinates'];
+        };
+      }>({
+        path: 'location.localityId location.countryId',
         select: '-location',
-      });
+      })
+      .lean();
     if (!event) {
       return null;
     }
-    const objectEvent = event.toObject();
+    //@todo make sure if .id field exists
     return {
-      ...objectEvent,
+      ...event,
       location: {
-        city: objectEvent.location.cityId as unknown as Omit<
-          AppTypes.Shared.City.ICity,
-          'location'
-        >,
-        coordinates: objectEvent.location.coordinates,
-        country: objectEvent.location.country,
+        countryId: event.location.countryId.id,
+        localityId: event.location.localityId?.id,
+        country: event.location.countryId.en_name,
+        locality: event.location.localityId?.en_name,
+        coordinates: event.location.coordinates,
       },
+    };
+  }
+
+  public async getMLTEvents(
+    userCid: string,
+    eventCid: string,
+    page: number = 1,
+  ): Promise<
+    AppTypes.Other.PaginatedResponse.IPaginatedResponse<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>
+  > {
+    const pageSize = 15;
+    const startFrom = (page - 1) * pageSize;
+    const res = await this.searchService.indexes.events.search({
+      body: {
+        from: startFrom,
+        size: pageSize,
+        query: {
+          bool: {
+            should: [
+              {
+                more_like_this: {
+                  fields: ['description', 'title'],
+                  like: {
+                    _index: 'events',
+                    _id: eventCid,
+                  },
+                  min_term_freq: 1,
+                  max_query_terms: 20,
+                  boost: 2.5,
+                },
+              },
+              {
+                nested: {
+                  path: 'tags',
+                  query: {
+                    more_like_this: {
+                      fields: ['tags.label'],
+                      like: {
+                        _index: 'events',
+                        _id: eventCid,
+                      },
+                      min_term_freq: 1,
+                      max_query_terms: 10,
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+    const foundAmount = res.hits.hits.length;
+
+    const totalCount = res.hits.total.value;
+    const matchedCids = res.hits.hits.map((hit) => hit._source.cid);
+    const events = await this.getEventsBatch(userCid, matchedCids);
+    // console.log(hits);
+    return {
+      totalCount: totalCount,
+      paginatedResults: events,
+      nextPage: startFrom + foundAmount < totalCount ? page + 1 : undefined,
     };
   }
 
@@ -365,6 +436,25 @@ export class EventsDal {
   }
 
   public async getEventsBatch(
+    userCid: string,
+    eventCids: string[],
+    distinct: boolean = false,
+  ): Promise<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags[]> {
+    return await this.db.models.event.aggregate<AppTypes.EventsService.Event.IEventWithUserMetadataAndTags>(
+      [
+        {
+          $match: {
+            cid: { $in: distinct ? [...new Set(eventCids)] : eventCids },
+          } satisfies Partial<
+            Record<keyof AppTypes.EventsService.Event.IEvent, any>
+          >,
+        },
+        ...EventsDal.getEventsWithUserStatsTagsAggregation(userCid),
+      ],
+    );
+  }
+
+  public async getEventsBatchPaginated(
     userCId: string,
     eventCIds: string[],
     page: number = 1,
@@ -430,23 +520,66 @@ export class EventsDal {
     return radius * RADIANS_PER_KILOMETER;
   }
 
-  public async getCityByEventCoordinates({
+  public async lookupLocalityByCoordinates({
     lat,
     lng,
   }: {
     lat: number;
     lng: number;
-  }): Promise<AppTypes.Shared.City.ICity | null> {
-    return await this.db.models.city.findOne({
-      location: {
-        $geoIntersects: {
-          $geometry: {
+  }) {
+    const locality = await this.geocoder.reverseLocality({ lat, lng });
+    let dbCountry = await this.db.models.country
+      .findOne({
+        en_name: locality.country?.en_name,
+      })
+      .lean();
+
+    if (!dbCountry) {
+      const country = await this.geocoder.reverseCountry({ lat, lng });
+      if (country) {
+        dbCountry = await this.db.models.country.create({
+          en_name: country.en_name,
+          coordinates: {
+            coordinates: [country.coordinates.lng, country.coordinates.lat],
             type: 'Point',
-            coordinates: [lng, lat],
-          },
-        },
-      },
-    });
+          } satisfies AppTypes.Shared.Country.ICountry['coordinates'],
+          google_place_id: country.place_id,
+        });
+      }
+    }
+    let dbLocality = await this.db.models.locality
+      .findOne({
+        en_name: locality.locality?.en_name,
+        countryId: dbCountry?._id,
+      })
+      .lean();
+    if (!dbLocality) {
+      if (locality.locality) {
+        dbLocality = await this.db.models.locality.create({
+          en_name: locality.locality.en_name,
+          coordinates: (locality.coordinates
+            ? {
+                coordinates: [
+                  locality.coordinates.lng,
+                  locality.coordinates.lat,
+                ],
+                type: 'Point',
+              }
+            : undefined) satisfies
+            | AppTypes.Shared.Country.ICountry['coordinates']
+            | undefined,
+          google_place_id: locality.place_id,
+          countryId: dbCountry?._id,
+        });
+      }
+    }
+
+    return {
+      countryId: dbCountry?._id.toString(),
+      localityId: dbLocality?._id.toString(),
+      localityName: dbLocality?.en_name,
+      countryName: dbCountry?.en_name,
+    };
   }
 
   /**
@@ -457,7 +590,11 @@ export class EventsDal {
     creatorCid: string,
     payload: AppDto.EventsServiceDto.EventsDto.CreateUserEventRequestDto,
     tagsCids: string[],
-  ) {
+  ): Promise<{
+    tags: AppTypes.EventsService.EventTags.ISafeTag[];
+    event: AppTypes.EventsService.Event.IEvent;
+    location: AppTypes.Shared.Location.IEntityLocationPopulated;
+  }> {
     const tags = await this.db.models.eventTags
       .find<Pick<AppTypes.EventsService.EventTags.ITag, 'cid' | 'label'>>({
         cid: {
@@ -472,7 +609,7 @@ export class EventsDal {
       cid: tag.cid,
       label: tag.label,
     }));
-    const city = await this.getCityByEventCoordinates({
+    const locality = await this.lookupLocalityByCoordinates({
       lat: payload.location.lat,
       lng: payload.location.lng,
     });
@@ -492,13 +629,17 @@ export class EventsDal {
       startTime: payload.startTime,
       endTime: payload.endTime,
       location: {
-        cityId: city ? new mongoose.Types.ObjectId(city.id) : undefined,
+        localityId: locality.localityId
+          ? new mongoose.Types.ObjectId(locality.localityId)
+          : undefined,
         coordinates: {
           type: 'Point',
           coordinates: [payload.location.lng, payload.location.lat],
         },
-        country: 'Israel',
-      } satisfies AppTypes.Shared.Location.ILocation,
+        countryId: locality.countryId
+          ? new mongoose.Types.ObjectId(locality.countryId)
+          : undefined,
+      } satisfies AppTypes.Shared.Location.IEntityLocation,
       cid: cid,
       slug: cid,
       tagsCids: dbTags.map((tag) => tag.cid),
@@ -514,6 +655,13 @@ export class EventsDal {
     } satisfies AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>);
     return {
       event: createdEvent.toObject(),
+      location: {
+        coordinates: createdEvent.location.coordinates,
+        country: locality.countryName,
+        countryId: locality.countryId,
+        locality: locality.localityName,
+        localityId: locality.localityId,
+      },
       tags: dbTags,
     };
   }
@@ -563,6 +711,60 @@ export class EventsDal {
       ...getPaginatedResultAggregation(page, pageSize),
     ]);
     return result;
+  }
+
+  static getEventsWithPopulatedLocationAggregation(): mongoose.PipelineStage[] {
+    return [
+      //@todo make lookup on countries
+      {
+        $lookup: {
+          from: 'countries',
+          localField: 'location.countryId',
+          foreignField: '_id',
+          as: 'country',
+        },
+      },
+      {
+        $unwind: {
+          path: '$country',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'localities',
+          localField: 'location.localityId',
+          foreignField: '_id',
+          as: 'locality',
+        },
+      },
+      {
+        $unwind: {
+          path: '$locality',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          location: {
+            coordinates: '$location.coordinates',
+            country: '$country.en_name',
+            countryId: '$country._id',
+            locality: '$locality.en_name',
+            localityId: '$locality._id',
+          } satisfies Record<
+            keyof AppTypes.Shared.Location.IEntityLocationPopulated,
+            any
+          >,
+        } satisfies Partial<
+          Record<
+            keyof AppTypes.EventsService.Event.IEventWithUserMetadataAndTags,
+            any
+          >
+        >,
+      },
+      { $unset: ['country', 'locality'] },
+    ];
   }
 
   static getEventsWithUserStatsTagsAggregation(
@@ -633,6 +835,7 @@ export class EventsDal {
           >
         >,
       },
+      ...EventsDal.getEventsWithPopulatedLocationAggregation(),
     ];
   }
 }

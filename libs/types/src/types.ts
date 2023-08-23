@@ -5,6 +5,7 @@ export * from './jwt';
 export * from './location-service';
 export * from './other';
 export * from './prompts';
+export * from './search';
 export * from './shared';
 export * from './ticketing-platforms';
 export * from './transport';

@@ -67,7 +67,7 @@ export class SnapshotDal {
     );
   }
 
-  public getAllEventsCursor(batchSize: number) {
+  public getAllEventsSnapshotCursor(batchSize: number) {
     return this.db.models.event
       .find({}, {
         creator: true,

@@ -242,7 +242,24 @@ export class EventsController {
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
     @Param('eventCid') eventCid: string,
   ): Promise<AppDto.EventsServiceDto.EventsDto.SingleEventResponseDto> {
-    return this.eventsService.getEventByCid(jwt.cid, eventCid);
+    return await this.eventsService.getEventByCid(jwt.cid, eventCid);
+  }
+
+  @ApiOkResponse({
+    type: AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto,
+  })
+  @Get('/:eventCid/similar')
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
+  @UseMicroserviceAuthGuard()
+  public async getSimilarEvents(
+    @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
+    @Query('page', new ParsePagePipe()) page: number,
+    @Param('eventCid') eventCid: string,
+  ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
+    return await this.eventsService.getSimilarEvents(jwt.cid, eventCid, page);
   }
 
   @ApiOkResponse({

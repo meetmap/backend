@@ -3,17 +3,17 @@ import { AppTypes } from '@app/types';
 import * as mongoose from 'mongoose';
 
 export const LocationSchema =
-  new mongoose.Schema<AppTypes.Shared.Location.ILocation>(
+  new mongoose.Schema<AppTypes.Shared.Location.IEntityLocation>(
     {
-      cityId: {
+      localityId: {
         type: mongoose.SchemaTypes.ObjectId,
-        ref: 'City',
+        ref: 'Locality',
       },
-      country: {
-        type: mongoose.SchemaTypes.String,
-        required: true,
+      countryId: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Country',
+        // required: true,
       },
-
       coordinates: {
         type: PointSchema,
         required: true,

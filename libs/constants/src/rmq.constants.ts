@@ -18,6 +18,8 @@ export class RMQConstants {
             'events-service.sync.eventer_co_il.request',
           EVENTS_SERVICE_EVENTS_PROCESSING_REQUEST:
             'events-service.processing.events.request',
+          EVENTS_SERVICE_EVENTS_SEARCH_WARMING_REQUEST:
+            'events-service.search-warming.events.request',
         },
       },
       ASSETS: {
@@ -42,10 +44,12 @@ export class RMQConstants {
 
         routingKeys: {
           EVENT_CREATED: 'events-service.event.created',
+          EVENT_UPDATED: 'events-service.event.updated',
+          EVENT_DELETED: 'events-service.event.deleted',
           ASSIGN_TAGS: 'events-service.event.assign-tags',
           EVENT_PROCESSING_PENDING: 'events-service.event.processing.pending',
           EVENT_PROCESSING_SUCCEED: 'events-service.event.processing.succeed',
-          EVENT_PROCESSING_FAILED: 'events.service.event.processing.failed',
+          EVENT_PROCESSING_FAILED: 'events-service.event.processing.failed',
         },
       },
       EVENTS_SERVICE_EVENTS_SNAPSHOT: {
