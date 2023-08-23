@@ -5,15 +5,19 @@ import { ConfigModule } from '@nestjs/config';
 
 import { AiProcessingModule } from '@app/ai-processing';
 import { AuthModule } from '@app/auth';
+import { GeocodingModule } from '@app/geocoding';
 import { RabbitmqModule } from '@app/rabbitmq';
 import { RedisModule } from '@app/redis';
 import { S3UploaderModule } from '@app/s3-uploader';
+import { SearchModule } from '@app/search';
 import { AppTypes } from '@app/types';
+import { CityProcessingModule } from './city-processing/city-processing.module';
 import { EventTagsModule } from './event-tags/event-tags.module';
 import { EventerFetcherModule } from './eventer-fetcher/eventer-fetcher.module';
 import { EventsProcessingModule } from './events-processing/events-processing.module';
 import { EventsFetcherController } from './events-service.controller';
 import { EventsModule } from './events/events.module';
+import { SearchJobsModule } from './search-jobs/search-jobs.module';
 import { SnapshotModule } from './snapshot/snapshot.module';
 import { TicketingPlatofrmsModule } from './ticketing-platofrm/ticketing-platofrm.module';
 import { UserModule } from './users/users.module';
@@ -35,6 +39,8 @@ import { UserModule } from './users/users.module';
     }),
     S3UploaderModule,
     RabbitmqModule.forRoot(),
+    SearchModule,
+    GeocodingModule,
     // InternalAxiosModule,
     EventerFetcherModule,
     EventsModule,
@@ -44,6 +50,8 @@ import { UserModule } from './users/users.module';
     SnapshotModule,
     EventsProcessingModule,
     EventTagsModule,
+    SearchJobsModule,
+    CityProcessingModule,
   ],
   controllers: [EventsFetcherController],
   providers: [],

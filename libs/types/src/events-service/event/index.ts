@@ -23,7 +23,7 @@ export interface IEvent {
   ageLimit: number;
 
   creator?: ICreator;
-  location: Shared.Location.ILocation;
+  location: Shared.Location.IEntityLocation;
 
   eventType: EventType;
 
@@ -35,6 +35,10 @@ export interface IEvent {
 
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface IEventWithLocation extends Omit<IEvent, 'location'> {
+  location: Shared.Location.IEntityLocationPopulated;
 }
 
 export interface ICreator {
@@ -80,7 +84,7 @@ export interface IEventStats {
   ticketsPurchased: number;
   wantGo: number;
 }
-export interface IEventWithUserMetadataAndTags extends IEvent {
+export interface IEventWithUserMetadataAndTags extends IEventWithLocation {
   thumbnail?: string;
   userStats: Pick<IEventsUsers, 'isUserLike' | 'userStatus'>;
   tags: ISafeTag[];

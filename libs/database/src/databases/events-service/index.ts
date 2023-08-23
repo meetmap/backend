@@ -2,14 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { AbstractBaseDatabase } from '../abstract.db';
 import {
   ApiKeySchema,
-  CitySchema,
+  CountrySchema,
   EventSchema,
   EventsUsersSchema,
+  EventTagsSchema,
   FriendsSchema,
+  LocalitySchema,
   TicketingPlatformSchema,
   UserSchema,
 } from './models';
-import { EventTagsSchema } from './models/eventTags';
+import { CitySchema } from './models/city';
 
 @Injectable()
 export class EventsServiceDatabase extends AbstractBaseDatabase {
@@ -18,6 +20,12 @@ export class EventsServiceDatabase extends AbstractBaseDatabase {
     for (const modelName in this.models) {
       await this.models[modelName].syncIndexes();
     }
+    // const a = this.models.event.setMaxListeners(1);
+    // const eventEmitter = a.watch();
+    // eventEmitter.on('change', (data) => {
+    //   console.log(data);
+    //   console.log(data._id);
+    // });
     // for await (const eventsUsers of this.models.eventsUsers
     //   .aggregate([
     //     {
@@ -56,6 +64,8 @@ export class EventsServiceDatabase extends AbstractBaseDatabase {
     return {
       event: this.connection.model('Event', EventSchema),
       city: this.connection.model('City', CitySchema),
+      locality: this.connection.model('Locality', LocalitySchema),
+      country: this.connection.model('Country', CountrySchema),
       ticketingPlatform: this.connection.model(
         'TicketingPlatform',
         TicketingPlatformSchema,

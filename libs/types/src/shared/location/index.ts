@@ -1,13 +1,17 @@
 import * as mongoose from 'mongoose';
-import { ICity } from '../city';
+// import { ICity } from '../city';
 
-export interface ILocation {
-  country: string;
-  cityId?: mongoose.Types.ObjectId;
+export interface IEntityLocation {
+  countryId?: mongoose.Types.ObjectId;
+  localityId?: mongoose.Types.ObjectId;
   coordinates: IPoint;
 }
-export interface ILocationWithCity extends Omit<ILocation, 'cityId'> {
-  city?: Omit<ICity, 'location'>;
+export interface IEntityLocationPopulated
+  extends Omit<IEntityLocation, 'localityId' | 'countryId'> {
+  countryId?: string;
+  localityId?: string;
+  locality?: string;
+  country?: string;
 }
 
 export interface IPoint {
@@ -25,3 +29,10 @@ export interface IPolygon {
    */
   coordinates: [[number, number][]];
 }
+
+export interface IMultiPolygon {
+  type: 'MultiPolygon';
+  coordinates: IPolygon['coordinates'][];
+}
+
+export type GeoJsonPolygon = IPolygon | IMultiPolygon;

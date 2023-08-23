@@ -1,7 +1,10 @@
 export * from './apiKey';
-export * from './city';
+// export * from './city';
+export * from './country';
 export * from './event';
 export * from './events-users';
+export * from './eventTags';
 export * from './friends';
+export * from './locality';
 export * from './ticketing-platform';
 export * from './user';
