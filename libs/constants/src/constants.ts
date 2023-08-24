@@ -30,3 +30,9 @@ export enum RabbitMQExchanges {
 
 export const ASSETS_BUCKET_URL =
   'https://meetmap-assets.s3.eu-west-1.amazonaws.com';
+
+const ONE_HOUR = 60 * 60 * 1000;
+const ONE_DAY = 24 * ONE_HOUR;
+
+export const getInvalidEventStartDate = () => {};
+export const getMinEventEndDate = () => new Date(Date.now() - ONE_DAY);

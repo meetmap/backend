@@ -1,6 +1,7 @@
 import { EventsServiceDatabase } from '@app/database';
 import { AppTypes } from '@app/types';
 import { Injectable } from '@nestjs/common';
+import { EventsDal } from '../events/events.dal';
 
 @Injectable()
 export class SearchJobsDal {
@@ -29,6 +30,8 @@ export class SearchJobsDal {
             ],
           },
         },
+        ...EventsDal.getEventsWithPopulatedLocationAggregation(),
+
         {
           $project: {
             _id: false,
@@ -37,14 +40,14 @@ export class SearchJobsDal {
             title: true,
             tags: true,
             //@todo change it back
-            // ageLimit:true,
-            // city: true,
-            // country: true,
-            // endTime: true,
-            // startTime: true
+            ageLimit: true,
+            country: '$location.country',
+            locality: '$location.locality',
+            endTime: true,
+            startTime: true,
           } satisfies Record<
             keyof AppTypes.Search.Event.ICachedEvent | '_id',
-            boolean
+            any
           >,
         },
       ])
@@ -83,6 +86,8 @@ export class SearchJobsDal {
             ],
           },
         },
+
+        ...EventsDal.getEventsWithPopulatedLocationAggregation(),
         {
           $project: {
             _id: false,
@@ -90,9 +95,14 @@ export class SearchJobsDal {
             description: true,
             title: true,
             tags: true,
+            ageLimit: true,
+            endTime: true,
+            country: '$location.country',
+            locality: '$location.locality',
+            startTime: true,
           } satisfies Record<
             keyof AppTypes.Search.Event.ICachedEvent | '_id',
-            boolean
+            any
           >,
         },
       ]);

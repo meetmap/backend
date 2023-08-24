@@ -6,11 +6,11 @@ export interface ICachedEvent {
   tags: ICachedTag[];
   //@todo change it back
 
-  // startTime: Date;
-  // endTime: Date;
-  // ageLimit: number;
-  // country: string;
-  // city: string;
+  startTime: Date;
+  endTime: Date;
+  ageLimit: number;
+  country: string;
+  locality: string;
 }
 
 export interface ICachedTag {

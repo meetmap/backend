@@ -18,27 +18,30 @@ export class EventerFetcherDal {
     eventCid: string,
     payload: AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>,
   ): Promise<AppTypes.EventsService.Event.IEvent | null> {
-    return this.db.models.event.findByIdAndUpdate(eventId, {
-      $set: {
-        cid: eventCid,
-        accessibility: payload.accessibility,
-        ageLimit: payload.ageLimit,
-        creator: payload.creator,
-        description: payload.description,
-        endTime: payload.endTime,
-        startTime: payload.startTime,
-        eventType: AppTypes.EventsService.Event.EventType.PARTNER,
-        link: payload.link,
-        location: payload.location,
-        assets: payload.assets,
-        slug: payload.slug,
-        tickets: payload.tickets,
-        title: payload.title,
+    return this.db.models.event.findByIdAndUpdate(
+      eventId,
+      {
+        $set: {
+          cid: eventCid,
+          accessibility: payload.accessibility,
+          ageLimit: payload.ageLimit,
+          creator: payload.creator,
+          description: payload.description,
+          endTime: payload.endTime,
+          startTime: payload.startTime,
+          eventType: AppTypes.EventsService.Event.EventType.PARTNER,
+          link: payload.link,
+          location: payload.location,
+          assets: payload.assets,
+          slug: payload.slug,
+          tickets: payload.tickets,
+          title: payload.title,
+        },
       },
-      updatedAt: undefined,
-      createdAt: undefined,
-      id: undefined,
-    });
+      {
+        new: true,
+      },
+    );
   }
   public async storeEvent(
     payload: AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>,

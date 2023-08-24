@@ -21,6 +21,7 @@ import { SearchJobsModule } from './search-jobs/search-jobs.module';
 import { SnapshotModule } from './snapshot/snapshot.module';
 import { TicketingPlatofrmsModule } from './ticketing-platofrm/ticketing-platofrm.module';
 import { UserModule } from './users/users.module';
+import { YandexAfishaCrawlerModule } from './yandex-afisha-crawler/yandex-afisha-crawler.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { UserModule } from './users/users.module';
     EventTagsModule,
     SearchJobsModule,
     CityProcessingModule,
+    YandexAfishaCrawlerModule,
   ],
   controllers: [EventsFetcherController],
   providers: [],
