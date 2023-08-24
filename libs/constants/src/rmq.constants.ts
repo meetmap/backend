@@ -16,6 +16,10 @@ export class RMQConstants {
           EVENTS_SERVICE_TAGS_SYNC_REQUEST: 'events-service.sync.tags.request',
           EVENTS_SERVICE_EVENTER_CO_IL_SYNC_REQUEST:
             'events-service.sync.eventer_co_il.request',
+          EVENTS_SERVICE_YANDEX_AFISHA_SYNC_REQUEST:
+            'events-service.sync.yandex_afisha.request',
+          EVENTS_SERVICE_YANDEX_AFISHA_SYNC_CITY_REQUEST:
+            'events-service.sync.yandex_afisha.city.request',
           EVENTS_SERVICE_EVENTS_PROCESSING_REQUEST:
             'events-service.processing.events.request',
           EVENTS_SERVICE_EVENTS_SEARCH_WARMING_REQUEST:
