@@ -53,6 +53,11 @@ export class GetEventsByLocationRequestDto extends BaseDto {
   radius: number;
 }
 
+export class GetEventsBatchRequestDto extends BaseDto {
+  @StringField({ isArray: true })
+  cids: string[];
+}
+
 export class PointResponseDto
   extends BaseDto
   implements AppTypes.Shared.Location.IPoint

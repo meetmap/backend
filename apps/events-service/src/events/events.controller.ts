@@ -226,11 +226,10 @@ export class EventsController {
   })
   public async getEventsBatch(
     @ExtractJwtPayload() jwt: AppTypes.JWT.User.IJwtPayload,
+    @Body() payload: AppDto.EventsServiceDto.EventsDto.GetEventsBatchRequestDto,
     @Query('page', new ParsePagePipe()) page: number,
-    @Query('cids', new ParseArrayPipe({ items: String }))
-    eventsCids: string[],
   ): Promise<AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto> {
-    return this.eventsService.getEventsBatch(jwt.cid, eventsCids, page);
+    return this.eventsService.getEventsBatch(jwt.cid, payload.cids, page);
   }
 
   @ApiOkResponse({
