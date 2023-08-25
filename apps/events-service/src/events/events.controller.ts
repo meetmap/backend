@@ -219,7 +219,7 @@ export class EventsController {
     type: AppDto.EventsServiceDto.EventsDto.EventPaginatedResponseDto,
   })
   @UseMicroserviceAuthGuard()
-  @Get('/batch')
+  @Post('/batch')
   @ApiQuery({
     name: 'page',
     required: false,
