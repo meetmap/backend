@@ -45,6 +45,11 @@ export class SearchJobsService {
             tags: event.tags.map((tag) => ({ cid: tag.cid, label: tag.label })),
             title: event.title,
             _id: event.cid,
+            ageLimit: event.ageLimit,
+            locality: event.locality,
+            country: event.country,
+            endTime: event.endTime,
+            startTime: event.startTime,
           })),
         );
 
@@ -66,6 +71,11 @@ export class SearchJobsService {
           tags: event.tags.map((tag) => ({ cid: tag.cid, label: tag.label })),
           title: event.title,
           _id: event.cid,
+          ageLimit: event.ageLimit,
+          locality: event.locality,
+          country: event.country,
+          endTime: event.endTime,
+          startTime: event.startTime,
           // id:event.cid
         })),
       );
@@ -105,11 +115,11 @@ export class SearchJobsService {
       _id: event.cid,
       description: event.description,
       tags: event.tags.map((tag) => ({ cid: tag.cid, label: tag.label })),
-      //       ageLimit:event.ageLimit,
-      //       city:event.city,
-      //       country:event.country,
-      // endTime:event.endTime,
-      // startTime:event.startTime
+      ageLimit: event.ageLimit,
+      locality: event.locality,
+      country: event.country,
+      endTime: event.endTime,
+      startTime: event.startTime,
     });
     console.log(`Search cache updated for event: ${payload.cid}`);
   }

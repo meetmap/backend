@@ -57,7 +57,7 @@ export class EventsProcessingService {
         }),
       );
     } catch (error) {
-      console.error(error);
+      console.warn(`Failed to process event:${payload.cid}`);
       await this.rmqService.amqp.publish(
         RMQConstants.exchanges.EVENTS.name,
         RMQConstants.exchanges.EVENTS.routingKeys.EVENT_PROCESSING_FAILED,
@@ -101,47 +101,30 @@ export class EventsProcessingService {
   public async generateFiltersMetadata(
     event: AppTypes.EventsService.Event.IEvent,
   ) {
+    // try {
     const tags = await this.dal.getEventsTags();
     const systemPrompt = `
-      Generate min 1 and max 15 tags for input event:
-      {
-        event_description: String,
-        event_origin: String,
-        event_title: String,
-        event_age_limit: String,
-      }
-      Output should be in JSON format, without comments, etc. Output format:
-      {
-        tags: Enum(${tags.map((tag) => `"${tag}"`).join(', ')})[]
-      }
-    `;
-    // const systemPrompt = `
-    //   Generate filters for input event:
-    //   {
-    //     event_description: String,
-    //     event_origin: String,
-    //     event_title: String,
-    //     event_age_limit: String,
-    //   }
-    //   Output should be in JSON format, without comments, etc. Output format:
-    //   {
-    //     filters: {
-    //       age: Enum("All Ages", "18+", "21+"),
-    //       event_type: Enum("Clubbing", "Concerts", "Sports", "Festivals", "Art Exhibitions", "Theater Performances", "Workshops/Seminars", "Conferences")[] #at least on element,
-    //       event_features: Enum("Drinks", "Food", "Live Music", "Guest Speakers", "Interactive Activities", "Outdoor Events", "Indoor Events")[] #at least on element,
-    //       genre: Enum("Comedy", "Horror", "Drama", "Musical", "Romance", "Action", "Sci-Fi", "Hip-Hop")[] #at least on element,
-    //       environment: Enum("Family-friendly", "Adults Only", "Pet-friendly")[] #at least on element
-    //     }
-    //   }
-    // `;
+        Generate min 1 and max 15 tags for input event:
+        {
+          event_description: String,
+          event_origin: String,
+          event_title: String,
+          event_age_limit: String,
+        }
+        Output should be in JSON format, without comments, etc. Output format:
+        {
+          tags: Enum(${tags.map((tag) => `"${tag}"`).join(', ')})[]
+        }
+      `;
+
     const promptTemplate = `
-      event:{
-        event_description: ${event.description},
-        event_origin: ${event.location.countryId},
-        event_title: ${event.title},
-        event_age_limit: ${event.ageLimit},
-      }
-    `;
+        event:{
+          event_description: ${event.description},
+          event_origin: ${event.location.countryId},
+          event_title: ${event.title},
+          event_age_limit: ${event.ageLimit},
+        }
+      `;
 
     const aiResponse = await this.aiProcessing.sendAiRequest(
       systemPrompt,
@@ -154,6 +137,10 @@ export class EventsProcessingService {
       );
 
     return await this.dal.getTagsCids(promptTags.tags);
+    // } catch (error) {
+    //   console.warn(`Failed to generate tags for event:${event.cid}`)
+    //   return []
+    // }
     // return JSON.parse(aiResponse);
   }
 }

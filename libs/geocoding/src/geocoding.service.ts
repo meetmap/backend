@@ -16,11 +16,23 @@ export class GeocodingService implements OnModuleInit {
     'GOOGLE_MAPS_API_KEY',
   );
 
-  private limiter = new Bottleneck({
+  private limiterNominatim = new Bottleneck({
     // datastore: 'redis',
     maxConcurrent: 1,
     minTime: 1000,
-    id: 'meetmap-geocoding',
+    id: 'meetmap-geocoding-nominatim',
+    clearDatastore: false,
+    // clientOptions: {
+    //   url: this.configService.getOrThrow('CACHE_ENDPOINT'),
+    //   pingInterval: 10000,
+    // },
+  });
+
+  private limiterGoogle = new Bottleneck({
+    // datastore: 'redis',
+    maxConcurrent: 10,
+    minTime: 200,
+    id: 'meetmap-geocoding-google',
     clearDatastore: false,
     // clientOptions: {
     //   url: this.configService.getOrThrow('CACHE_ENDPOINT'),
@@ -30,7 +42,7 @@ export class GeocodingService implements OnModuleInit {
 
   constructor(private readonly configService: ConfigService) {}
   public async onModuleInit() {
-    await this.limiter.ready();
+    await this.limiterNominatim.ready();
   }
 
   public async reverseLocality({
@@ -40,14 +52,16 @@ export class GeocodingService implements OnModuleInit {
     lat: number;
     lng: number;
   }): Promise<IReverseLocalityResponse> {
-    const { data } = await googleGeocodeAxios<IGoogleReverseResponse>('', {
-      params: {
-        latlng: [lat, lng].join(','),
-        key: this.secret_key,
-        result_type: 'locality', //i.e kind of town
-        language: 'en',
-      },
-    });
+    const { data } = await this.limiterGoogle.schedule(() =>
+      googleGeocodeAxios<IGoogleReverseResponse>('', {
+        params: {
+          latlng: [lat, lng].join(','),
+          key: this.secret_key,
+          result_type: 'locality', //i.e kind of town
+          language: 'en',
+        },
+      }),
+    );
     const result = data.results[0];
     if (!result) {
       console.warn(`Result for latlng: ${[lat, lng].join(',')} not found.`);
@@ -95,7 +109,7 @@ export class GeocodingService implements OnModuleInit {
     lat: number;
     lng: number;
   }): Promise<IReverseLocalityResponse> {
-    const { data } = await this.limiter.schedule(() =>
+    const { data } = await this.limiterNominatim.schedule(() =>
       axios.get<INominatimReverseResponse>(
         'https://nominatim.openstreetmap.org/reverse.php',
         {
@@ -138,7 +152,7 @@ export class GeocodingService implements OnModuleInit {
     lat: number;
     lng: number;
   }): Promise<IReverseCountryResponse | null> {
-    const { data } = await this.limiter.schedule(() =>
+    const { data } = await this.limiterNominatim.schedule(() =>
       axios.get<INominatimReverseResponse>(
         'https://nominatim.openstreetmap.org/reverse.php',
         {
@@ -175,14 +189,16 @@ export class GeocodingService implements OnModuleInit {
     lng: number;
   }): Promise<IReverseCountryResponse | null> {
     console.log('fetching');
-    const { data } = await googleGeocodeAxios<IGoogleReverseResponse>('', {
-      params: {
-        latlng: [lat, lng].join(','),
-        key: this.secret_key,
-        result_type: 'country',
-        language: 'en',
-      },
-    });
+    const { data } = await this.limiterGoogle.schedule(() =>
+      googleGeocodeAxios<IGoogleReverseResponse>('', {
+        params: {
+          latlng: [lat, lng].join(','),
+          key: this.secret_key,
+          result_type: 'country',
+          language: 'en',
+        },
+      }),
+    );
     console.log('fetched');
 
     const result = data.results[0];

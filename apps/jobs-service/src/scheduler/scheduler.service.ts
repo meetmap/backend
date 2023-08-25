@@ -12,7 +12,7 @@ const defaultRequestOptions: Options.Publish = {
 export class SchedulerService implements OnModuleInit {
   constructor(private readonly rmqService: RabbitmqService) {}
   onModuleInit() {
-    this.requestEventsServiceEventerCoIlSyncJob();
+    this.requestEventsServiceEventsSearchWarmingRequest();
   }
   @Cron('0,30 * * * *')
   public async requestAuthServiceUsersSnapshotJob() {
@@ -96,6 +96,18 @@ export class SchedulerService implements OnModuleInit {
       RMQConstants.exchanges.JOBS.name,
       RMQConstants.exchanges.JOBS.routingKeys
         .EVENTS_SERVICE_EVENTS_SEARCH_WARMING_REQUEST,
+      {},
+      defaultRequestOptions,
+    );
+  }
+
+  @Cron('0 0 * * *')
+  public async requestEventsServiceYandexAfishaSyncJob() {
+    console.log('Yandex Afisha job');
+    await this.rmqService.amqp.publish(
+      RMQConstants.exchanges.JOBS.name,
+      RMQConstants.exchanges.JOBS.routingKeys
+        .EVENTS_SERVICE_YANDEX_AFISHA_SYNC_REQUEST,
       {},
       defaultRequestOptions,
     );
