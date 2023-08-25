@@ -1,4 +1,4 @@
-import { RADIANS_PER_KILOMETER } from '@app/constants';
+import { getMinEventEndDate, RADIANS_PER_KILOMETER } from '@app/constants';
 import { EventsServiceDatabase } from '@app/database';
 import { getPaginatedResultAggregation } from '@app/database/shared-aggregations';
 import { AppDto } from '@app/dto';
@@ -75,36 +75,47 @@ export class EventsDal {
         size: pageSize,
         query: {
           bool: {
-            should: [
-              {
-                more_like_this: {
-                  fields: ['description', 'title'],
-                  like: {
-                    _index: 'events',
-                    _id: eventCid,
-                  },
-                  min_term_freq: 1,
-                  max_query_terms: 20,
-                  boost: 2.5,
-                },
-              },
-              {
-                nested: {
-                  path: 'tags',
-                  query: {
+            must: {
+              bool: {
+                should: [
+                  {
                     more_like_this: {
-                      fields: ['tags.label'],
+                      fields: ['description', 'title'],
                       like: {
                         _index: 'events',
                         _id: eventCid,
                       },
                       min_term_freq: 1,
-                      max_query_terms: 10,
+                      max_query_terms: 20,
+                      boost: 2.5,
                     },
                   },
+                  {
+                    nested: {
+                      path: 'tags',
+                      query: {
+                        more_like_this: {
+                          fields: ['tags.label'],
+                          like: {
+                            _index: 'events',
+                            _id: eventCid,
+                          },
+                          min_term_freq: 1,
+                          max_query_terms: 10,
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+            filter: {
+              range: {
+                endTime: {
+                  gte: getMinEventEndDate().toISOString(), // Replace with your input date
                 },
               },
-            ],
+            },
           },
         },
       },
@@ -337,7 +348,7 @@ export class EventsDal {
     tagsCids: string[],
     minPrice: number,
     maxPrice: number,
-    minDate: Date = new Date(Date.now() - 24 * 60 * 60 * 1000),
+    minDate: Date = getMinEventEndDate(),
     //1 day before
     maxDate?: Date,
     searchByCoordinates?: {
@@ -479,7 +490,7 @@ export class EventsDal {
           $match: {
             endTime: {
               //exclude events that ended more than a day ago
-              $gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+              $gte: getMinEventEndDate(),
             },
             'location.coordinates': {
               $geoWithin: {
