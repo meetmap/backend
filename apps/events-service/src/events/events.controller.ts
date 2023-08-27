@@ -28,6 +28,19 @@ import { EventsService } from './events.service';
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
+  // @Post('/upload/')
+  // public async uploadEvent(
+  //   @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
+  //   @Body()
+  //   payload: AppDto.EventsServiceDto.EventsDto.CreateUserEventRequestDto,
+  // ) {
+  //   return await this.eventsService.uploadEvent(jwtPayload.cid, payload);
+  // }
+  // @Get('/upload/status-check/:uploadCid')
+  // public async checkEventUploadStatus(@Param('uploadCid') uploadCId: string) {
+  //   return await this.eventsService.checkEventStatus(uploadCId);
+  // }
+
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.ASSETS.name,
     routingKey: [
@@ -276,18 +289,18 @@ export class EventsController {
     return this.eventsService.getEventsByLocation(jwt.cid, dto);
   }
 
-  @ApiOkResponse({
-    type: AppDto.EventsServiceDto.EventsDto.EventResponseDto,
-  })
-  @UseMicroserviceAuthGuard()
-  @Post('/create')
-  public async createUserEvent(
-    @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
-    @Body()
-    payload: AppDto.EventsServiceDto.EventsDto.CreateUserEventRequestDto,
-  ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto> {
-    return await this.eventsService.createUserEvent(jwtPayload.cid, payload);
-  }
+  // @ApiOkResponse({
+  //   type: AppDto.EventsServiceDto.EventsDto.EventResponseDto,
+  // })
+  // @UseMicroserviceAuthGuard()
+  // @Post('/create')
+  // public async createUserEvent(
+  //   @ExtractJwtPayload() jwtPayload: AppTypes.JWT.User.IJwtPayload,
+  //   @Body()
+  //   payload: AppDto.EventsServiceDto.EventsDto.CreateUserEventRequestDto,
+  // ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto> {
+  //   return await this.eventsService.createUserEvent(jwtPayload.cid, payload);
+  // }
   //like event
   @ApiOkResponse({
     type: AppDto.EventsServiceDto.EventsDto.EventStatsResponseDto,

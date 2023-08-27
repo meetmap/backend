@@ -1,4 +1,3 @@
-import { RMQConstants } from '@app/constants';
 import { AppDto } from '@app/dto';
 import { RabbitmqService } from '@app/rabbitmq';
 import { AssetsUploaders } from '@app/s3-uploader';
@@ -14,6 +13,27 @@ export class EventsService {
 
     private readonly rmqService: RabbitmqService,
   ) {}
+
+  // public async uploadEvent(
+  //   userCid: string,
+  //   payload: AppDto.EventsServiceDto.EventsDto.CreateUserEventRequestDto,
+  // ) {
+  //   if (new Date(payload.startTime) > new Date(payload.endTime)) {
+  //     throw new BadRequestException("Event start time can't be after end time");
+  //   }
+  //   const { upload, transport } = await this.dal.createUserEventUpload(
+  //     userCid,
+  //     payload,
+  //   );
+  //   await this.rmqService.amqp.publish(
+  //     RMQConstants.exchanges.EVENT_PROCESSING.name,
+  //     RMQConstants.exchanges.EVENT_PROCESSING.routingKeys
+  //       .EVENT_PROCESSING_INITIALIZED,
+  //     transport,
+  //   );
+
+  //   return upload;
+  // }
 
   public async updateEventsPicture(eventCid: string, keys: string[]) {
     await this.dal.updatePicturesForEvent(eventCid, keys);
@@ -243,38 +263,38 @@ export class EventsService {
     });
   }
 
-  public async createUserEvent(
-    userCid: string,
-    payload: AppDto.EventsServiceDto.EventsDto.CreateUserEventRequestDto,
-  ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto> {
-    const { event, tags, location } = await this.dal.createUserEvent(
-      userCid,
-      payload,
-      payload.tagsCids,
-    );
-    await this.rmqService.amqp.publish(
-      RMQConstants.exchanges.EVENTS.name,
-      RMQConstants.exchanges.EVENTS.routingKeys.EVENT_CREATED,
-      AppDto.TransportDto.Events.EventsServiceEventRequestDto.create({
-        cid: event.cid,
-        creator: event.creator
-          ? {
-              creatorCid: event.creator.creatorCid,
-              type: event.creator.type,
-            }
-          : undefined,
-      }),
-    );
-    return EventsService.mapDbEventToEventResponse({
-      ...event,
-      userStats: {
-        isUserLike: false,
-        userStatus: undefined,
-      },
-      tags: tags,
-      location,
-    });
-  }
+  // public async createUserEvent(
+  //   userCid: string,
+  //   payload: AppDto.EventsServiceDto.EventsDto.CreateUserEventRequestDto,
+  // ): Promise<AppDto.EventsServiceDto.EventsDto.EventResponseDto> {
+  //   const { event, tags, location } = await this.dal.createUserEvent(
+  //     userCid,
+  //     payload,
+  //     payload.tagsCids,
+  //   );
+  //   await this.rmqService.amqp.publish(
+  //     RMQConstants.exchanges.EVENTS.name,
+  //     RMQConstants.exchanges.EVENTS.routingKeys.EVENT_CREATED,
+  //     AppDto.TransportDto.Events.EventProcessingStepRequestDto.create({
+  //       eventCid: event.cid,
+  //       creator: event.creator
+  //         ? {
+  //             creatorCid: event.creator.creatorCid,
+  //             type: event.creator.type,
+  //           }
+  //         : undefined,
+  //     }),
+  //   );
+  //   return EventsService.mapDbEventToEventResponse({
+  //     ...event,
+  //     userStats: {
+  //       isUserLike: false,
+  //       userStatus: undefined,
+  //     },
+  //     tags: tags,
+  //     location,
+  //   });
+  // }
 
   static mapDbEventToEventResponse(
     event: AppTypes.EventsService.Event.IEventWithUserMetadataAndTags,

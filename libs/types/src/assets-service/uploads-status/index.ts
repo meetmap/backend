@@ -2,7 +2,7 @@ export interface IUploadsStatus {
   id: string;
   status: UploadStatusType;
   type: UploadType;
-  userCid: string;
+  userCid?: string;
   reason?: string;
   createdAt: Date;
   updatedAt: Date;

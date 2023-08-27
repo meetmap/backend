@@ -19,7 +19,7 @@ export const UploadsStatusSchema =
       },
       userCid: {
         type: mongoose.SchemaTypes.String,
-        required: true,
+        // required: true,
       },
     },
     {

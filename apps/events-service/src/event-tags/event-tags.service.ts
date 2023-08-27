@@ -40,17 +40,17 @@ export class EventTagsService {
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.EVENTS.name,
     routingKey: [
-      RMQConstants.exchanges.EVENTS.routingKeys.EVENT_PROCESSING_SUCCEED,
-      RMQConstants.exchanges.EVENTS.routingKeys.EVENT_CREATED,
+      RMQConstants.exchanges.EVENT_PROCESSING.routingKeys
+        .EVENT_CHANGED_OR_CREATED,
     ],
     queue: 'events-service.event-tags.sync',
   })
   public async syncTagsHandler(
     @RabbitPayload()
-    payload: AppDto.TransportDto.Events.EventsServiceEventRequestDto,
+    payload: AppDto.TransportDto.Events.EventRequestDto,
     @RabbitRequest() req: { fields: RequestOptions },
   ) {
-    const event = await this.dal.getEventByCid(payload.cid);
+    const event = await this.dal.getEventByCid(payload.eventCid);
     if (!event) {
       return;
     }

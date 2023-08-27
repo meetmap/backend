@@ -91,22 +91,20 @@ export class SearchJobsService {
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.EVENTS.name,
     routingKey: [
-      RMQConstants.exchanges.EVENTS.routingKeys.EVENT_PROCESSING_SUCCEED,
-      RMQConstants.exchanges.EVENTS.routingKeys.EVENT_CREATED,
-      RMQConstants.exchanges.EVENTS.routingKeys.EVENT_UPDATED,
-      RMQConstants.exchanges.EVENTS.routingKeys.EVENT_DELETED,
+      RMQConstants.exchanges.EVENT_PROCESSING.routingKeys
+        .EVENT_CHANGED_OR_CREATED,
     ],
     queue: 'events-service.search-warming.handle-event',
   })
   public async handleUpdatedOrCreatedEvent(
     @RabbitPayload()
-    payload: AppDto.TransportDto.Events.EventsServiceEventRequestDto,
+    payload: AppDto.TransportDto.Events.EventRequestDto,
     @RabbitRequest() req: { fields: RequestOptions },
   ) {
-    console.log(`Handling search caching for event: ${payload.cid}`);
-    const event = await this.dal.getEventWithTags(payload.cid);
+    console.log(`Handling search caching for event: ${payload.eventCid}`);
+    const event = await this.dal.getEventWithTags(payload.eventCid);
     if (!event) {
-      console.warn(`Event ${payload.cid} not found`);
+      console.warn(`Event ${payload.eventCid} not found`);
       return;
     }
     await this.searchService.indexes.events.put({
@@ -121,6 +119,6 @@ export class SearchJobsService {
       endTime: event.endTime,
       startTime: event.startTime,
     });
-    console.log(`Search cache updated for event: ${payload.cid}`);
+    console.log(`Search cache updated for event: ${payload.eventCid}`);
   }
 }

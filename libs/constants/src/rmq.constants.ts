@@ -42,6 +42,46 @@ export class RMQConstants {
           SYNC: 'users-service.snapshot.friends.sync',
         },
       },
+      EVENT_PROCESSING_DEAD: {
+        name: 'events-service.event.processing.dead',
+        type: 'direct',
+        routingKeys: {
+          EVENT_PROCESSING_ALL: 'events-service.event.processing.#',
+        },
+      },
+      EVENT_PROCESSING: {
+        name: 'events-service.event.processing',
+        type: 'direct',
+        routingKeys: {
+          //internal usage
+          EVENT_PROCESSING_CREATE_REQUESTED:
+            'events-service.event.processing.creation-requested',
+          EVENT_PROCESSING_UPDATE_REQUESTED:
+            'events-service.event.processing.update-requested',
+          //public flow usage
+          EVENT_PROCESSING_CREATE_INITIALIZED:
+            'events-service.event.processing.creation-initialized',
+          EVENT_PROCESSING_UPDATE_INITIALIZED:
+            'events-service.event.processing.update-initialized',
+          EVENT_PROCESSING_EVENT_CREATED:
+            'events-service.event.processing.event-created',
+          EVENT_PROCESSING_EVENT_UPDATED:
+            'events-service.event.processing.event-updated',
+          EVENT_PROCESSING_MODERATED:
+            'events-service.event.processing.moderated',
+          EVENT_PROCESSING_TAGS_ASSIGNED:
+            'events-service.event.processing.tags-assigned',
+          EVENT_PROCESSING_SUCCEEDED:
+            'events-service.event.processing.succeeded',
+          EVENT_PROCESSING_FAILED:
+            'events-service.event.processing.any-step.failed',
+          EVENT_CHANGED_OR_CREATED:
+            'events-service.event.processing.changed-or-created',
+          //other
+          EVENT_PROCESSING_ASSIGN_TAGS_ONLY:
+            'events-service.event.processing.assign-tags-only',
+        },
+      },
       EVENTS: {
         name: 'events_service_events',
         type: 'direct',

@@ -21,6 +21,9 @@ export const CountrySchema =
         unique: true,
         sparse: true,
       },
+      currency: {
+        type: mongoose.SchemaTypes.String,
+      },
     },
     {
       id: true,

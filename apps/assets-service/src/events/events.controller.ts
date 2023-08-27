@@ -17,12 +17,15 @@ export class EventsController {
 
   @RabbitSubscribe({
     exchange: RMQConstants.exchanges.EVENTS.name,
-    routingKey: [RMQConstants.exchanges.EVENTS.routingKeys.EVENT_CREATED],
+    routingKey: [
+      RMQConstants.exchanges.EVENT_PROCESSING.routingKeys
+        .EVENT_PROCESSING_CREATE_INITIALIZED,
+    ],
     queue: 'assets-service.events.created',
   })
   public async handleCreateEvent(
     @RabbitPayload()
-    payload: AppDto.TransportDto.Events.EventsServiceEventRequestDto,
+    payload: AppDto.TransportDto.Events.CreateEventPayload,
     @RabbitRequest() req: { fields: RequestOptions },
   ) {
     const routingKey = req.fields.routingKey;

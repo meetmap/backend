@@ -4,8 +4,6 @@ import { RabbitmqService } from '@app/rabbitmq';
 import { AppTypes } from '@app/types';
 import { RabbitPayload, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'crypto';
-import * as mongoose from 'mongoose';
 import { YandexAfishaCrawlerDal } from './yandex-afisha-crawler.dal';
 
 const ONE_HOUR = 60 * 60 * 1000;
@@ -13,6 +11,7 @@ const ONE_DAY = 24 * ONE_HOUR;
 
 @Injectable()
 export class YandexAfishaCrawlerService {
+  private readonly creatorCid: string | null = null;
   constructor(
     private readonly dal: YandexAfishaCrawlerDal,
     private readonly rmqService: RabbitmqService,
@@ -66,88 +65,67 @@ export class YandexAfishaCrawlerService {
       console.log(`Parsing city: ${payload.city} finished`);
     } catch (error) {
       console.log(error);
-      debugger;
     }
   }
 
   public async getAndPublishValidEvent(
     rawEvent: AppTypes.TicketingPlatforms.ThirdParty.YandexAfisha.ISingleEvent,
-  ): Promise<AppTypes.EventsService.Event.IEvent | null> {
+  ): Promise<void> {
     if (!this.isValidAfishaEventDate(rawEvent)) {
-      return null;
+      return;
     }
     const slug = YandexAfishaCrawlerService.getEventSlug(rawEvent);
     console.log(`Preparing event: ${slug}`);
     const dbEvent = await this.dal.getDbEventBySlug(slug);
     if (this.validateEventExpiry(dbEvent)) {
       console.log('Fresh event found in DB!', dbEvent.slug);
-      return dbEvent;
+      return;
     }
 
-    const location = await this.extractLocationFromEventerResponse(
-      rawEvent,
-      dbEvent,
-    );
-    const formattedEvent = YandexAfishaCrawlerService.mapToDbEvent(
-      rawEvent,
-      location?.countryId ?? null,
-      location?.localityId ?? null,
-    );
+    const formattedEvent = this.mapToTicketingPlatformEvent(rawEvent);
 
     if (!formattedEvent) {
-      return null;
+      return;
     }
+
     //if expired
     if (dbEvent) {
       const eventFromDb = dbEvent as AppTypes.EventsService.Event.IEvent;
-      const updatedEvent = await this.dal.updateEvent(
-        eventFromDb.cid,
-        formattedEvent,
-      );
-      if (!updatedEvent) {
-        return null;
-      }
+      console.log(`Updating event: ${slug}`);
 
       await this.rmqService.amqp.publish(
-        RMQConstants.exchanges.EVENTS.name,
-        RMQConstants.exchanges.EVENTS.routingKeys.EVENT_UPDATED,
-        AppDto.TransportDto.Events.EventsServiceEventRequestDto.create({
-          cid: updatedEvent.cid,
-          creator: undefined,
-        }),
+        RMQConstants.exchanges.EVENT_PROCESSING.name,
+        RMQConstants.exchanges.EVENT_PROCESSING.routingKeys
+          .EVENT_PROCESSING_UPDATE_REQUESTED,
+        AppDto.TransportDto.Events.UpdateTicketingPlatformEventRequestDto.create(
+          {
+            ...formattedEvent,
+            tagsCids: undefined,
+            cid: eventFromDb.cid,
+          },
+        ),
       );
-
-      ///if no tags has been assigned to an event, publish event to assign tags
-      if (!updatedEvent.tagsCids.length) {
-        await this.rmqService.amqp.publish(
-          RMQConstants.exchanges.EVENTS.name,
-          RMQConstants.exchanges.EVENTS.routingKeys.ASSIGN_TAGS,
-          AppDto.TransportDto.Events.EventsServiceEventRequestDto.create({
-            cid: updatedEvent.cid,
-            creator: undefined,
-          }),
-        );
-      }
-      return updatedEvent;
+      return;
     }
 
-    const newEvent = await this.dal.createEvent(formattedEvent);
+    console.log(`Creating event: ${slug}`);
+    // const newEvent = await this.dal.createEvent(formattedEvent);
     //if new event, publish event.created event
     await this.rmqService.amqp.publish(
-      RMQConstants.exchanges.EVENTS.name,
-      RMQConstants.exchanges.EVENTS.routingKeys.EVENT_CREATED,
-      AppDto.TransportDto.Events.EventsServiceEventRequestDto.create({
-        cid: newEvent.cid,
-        creator: undefined,
+      RMQConstants.exchanges.EVENT_PROCESSING.name,
+      RMQConstants.exchanges.EVENT_PROCESSING.routingKeys
+        .EVENT_PROCESSING_CREATE_REQUESTED,
+      AppDto.TransportDto.Events.CreateTicketingPlatformEventRequestDto.create({
+        ...formattedEvent,
       }),
     );
-    return newEvent;
+    return;
   }
 
   public isValidAfishaEventDate(
     rawEvent: AppTypes.TicketingPlatforms.ThirdParty.YandexAfisha.ISingleEvent,
   ) {
-    const event = YandexAfishaCrawlerService.mapToDbEvent(rawEvent, null, null);
+    const event = this.mapToTicketingPlatformEvent(rawEvent);
 
     if (!event) {
       return false;
@@ -183,11 +161,9 @@ export class YandexAfishaCrawlerService {
     return `yandex_afisha:${event.event.id}`;
   }
 
-  static mapToDbEvent(
+  public mapToTicketingPlatformEvent(
     event: AppTypes.TicketingPlatforms.ThirdParty.YandexAfisha.ISingleEvent,
-    countryId: string | null,
-    localityId: string | null,
-  ): AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent> | null {
+  ): AppDto.TransportDto.Events.CreateTicketingPlatformEventRequestDto | null {
     const coordinates = event.scheduleInfo.onlyPlace?.coordinates;
     if (!event.event.image) {
       return null;
@@ -198,80 +174,55 @@ export class YandexAfishaCrawlerService {
     return {
       accessibility: AppTypes.EventsService.Event.EventAccessibilityType.PUBLIC,
       ageLimit: parseInt(event.event.contentRating) ?? 0,
-      cid: randomUUID(),
       title: event.event.title,
-      description: event.event.argument,
-      assets: [event.event.image.sizes.eventCover.url],
+      description: event.event.argument ?? undefined,
+      assetsUrls: [
+        event.event.image.sizes.eventCoverL2x.url ??
+          event.event.image.sizes.eventCoverL.url ??
+          event.event.image.sizes.eventCoverM.url ??
+          event.event.image.sizes.eventCover.url,
+      ],
       endTime: new Date(event.scheduleInfo.dateEnd),
       startTime: new Date(event.scheduleInfo.dateStarted),
-      eventType: AppTypes.EventsService.Event.EventType.PARTNER,
       tagsCids: [],
       location: {
-        coordinates: {
-          type: 'Point',
-          coordinates: [coordinates.longitude, coordinates.latitude],
-        },
-        localityId: localityId
-          ? new mongoose.Types.ObjectId(localityId)
-          : undefined,
-        countryId: countryId
-          ? new mongoose.Types.ObjectId(countryId)
-          : undefined,
+        lat: coordinates.latitude,
+        lng: coordinates.longitude,
       },
       slug: YandexAfishaCrawlerService.getEventSlug(event),
-      tickets: event.event.tickets.map((ticket) => ({
+      tickets: event.event.tickets.slice(0, 10).map((ticket) => ({
         amount: ticket.saleStatus === 'available' ? -1 : 0,
         name: `Ticket#${ticket.id}`,
-        price: {
-          amount: ticket.price
-            ? parseInt(
-                (
-                  (ticket.price.value ??
-                    ticket.price.min ??
-                    ticket.price.max ??
-                    0) / 100
-                ).toString(),
-              ) ?? 0
-            : 0,
-          currency: ticket.price?.currency ?? 'rub',
-        },
+        price: ticket.price
+          ? parseInt(
+              (
+                (ticket.price.value ??
+                  ticket.price.min ??
+                  ticket.price.max ??
+                  0) / 100
+              ).toString(),
+            ) ?? 0
+          : 0,
       })),
       link: YandexAfishaCrawlerService.getAffiliateLink(event.event.url),
     };
   }
 
-  public async extractLocationFromEventerResponse(
+  public extractLocationFromEventerResponse(
     event: AppTypes.TicketingPlatforms.ThirdParty.YandexAfisha.ISingleEvent,
-    dbEvent: AppTypes.EventsService.Event.IEvent | null,
-  ): Promise<{
-    countryId?: string;
-    localityId?: string;
-  } | null> {
-    try {
-      const coordinates = event.scheduleInfo.onlyPlace?.coordinates;
-      if (!coordinates) {
-        return null;
-      }
-      const { latitude, longitude } = coordinates;
-
-      if (dbEvent) {
-        const [lng, lat] = dbEvent.location.coordinates.coordinates;
-        if (longitude === lng && latitude === lat) {
-          return {
-            countryId: dbEvent.location.countryId?.toString(),
-            localityId: dbEvent.location.localityId?.toString(),
-          };
-        }
-      }
-
-      return await this.dal.lookupLocalityByCoordinates({
-        lat: latitude,
-        lng: longitude,
-      });
-    } catch (error) {
-      console.warn('Error in extractLocationFromEventerResponse');
+  ): {
+    lat: number;
+    lng: number;
+  } | null {
+    const coordinates = event.scheduleInfo.onlyPlace?.coordinates;
+    if (!coordinates) {
       return null;
     }
+    const { latitude, longitude } = coordinates;
+    return {
+      lat: latitude,
+      lng: longitude,
+    };
   }
 
   static getAffiliateLink(url: string) {

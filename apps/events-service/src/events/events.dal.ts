@@ -17,6 +17,62 @@ export class EventsDal {
     private readonly geocoder: GeocodingService,
   ) {}
 
+  // public async createUserEventUpload(
+  //   userCid: string,
+  //   payload: AppDto.EventsServiceDto.EventsDto.CreateUserEventRequestDto,
+  // ): Promise<{
+  //   upload: AppTypes.EventsService.EventUpload.EventProcessing;
+  //   transport: AppDto.TransportDto.Events.CreateEventPayload;
+  // }> {
+  //   const tags = await this.db.models.eventTags
+  //     .find<Pick<AppTypes.EventsService.EventTags.ITag, 'cid' | 'label'>>({
+  //       cid: {
+  //         $in: payload.tagsCids,
+  //       },
+  //     })
+  //     //max 15 tags
+  //     .limit(15)
+  //     .select('cid' satisfies keyof AppTypes.EventsService.EventTags.ITag)
+  //     .select('label' satisfies keyof AppTypes.EventsService.EventTags.ITag);
+  //   const dbTags = tags.map((tag) => ({
+  //     cid: tag.cid,
+  //     label: tag.label,
+  //   }));
+
+  //   const transportEvent = AppDto.TransportDto.Events.CreateEventPayload.create(
+  //     {
+  //       accessibility: payload.accessibility,
+  //       ageLimit: payload.ageLimit,
+  //       endTime: payload.endTime,
+  //       location: payload.location,
+  //       startTime: payload.startTime,
+  //       tagsCids: dbTags.map((tag) => tag.cid),
+  //       tickets: payload.tickets,
+  //       title: payload.title,
+  //       creator: {
+  //         creatorCid: userCid,
+  //         type: AppTypes.EventsService.Event.CreatorType.USER,
+  //       },
+  //       description: payload.description,
+  //     },
+  //   );
+
+  //   const upload = await this.db.models.eventProcessing.create({
+  //     cid: randomUUID(),
+  //     creator: {
+  //       creatorCid: userCid,
+  //       type: AppTypes.EventsService.Event.CreatorType.USER,
+  //     },
+  //     rawEvent: JSON.stringify(transportEvent),
+  //     status: AppTypes.EventsService.EventUpload.ProcessingStatus.INITIALIZED,
+  //   });
+
+  //   return {
+  //     transport: transportEvent,
+  //     upload,
+  //   };
+  // }
+
   public async getEventWithUserMetadataAndTags(
     userCid: string,
     eventCid: string,
@@ -47,7 +103,6 @@ export class EventsDal {
     if (!event) {
       return null;
     }
-    //@todo make sure if .id field exists
     return {
       ...event,
       location: {
@@ -633,7 +688,6 @@ export class EventsDal {
       } satisfies AppTypes.EventsService.Event.IEvent['creator'],
       description: payload.description ?? undefined,
       assets: [],
-      //@todo check if enums are working
       accessibility: payload.accessibility,
       eventType: AppTypes.EventsService.Event.EventType.USER, // EventType[payload.eventType] ?? EventType.USER,
       title: payload.title,
@@ -726,7 +780,6 @@ export class EventsDal {
 
   static getEventsWithPopulatedLocationAggregation(): mongoose.PipelineStage[] {
     return [
-      //@todo make lookup on countries
       {
         $lookup: {
           from: 'countries',

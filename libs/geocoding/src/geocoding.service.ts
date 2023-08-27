@@ -17,15 +17,10 @@ export class GeocodingService implements OnModuleInit {
   );
 
   private limiterNominatim = new Bottleneck({
-    // datastore: 'redis',
     maxConcurrent: 1,
     minTime: 1000,
     id: 'meetmap-geocoding-nominatim',
     clearDatastore: false,
-    // clientOptions: {
-    //   url: this.configService.getOrThrow('CACHE_ENDPOINT'),
-    //   pingInterval: 10000,
-    // },
   });
 
   private limiterGoogle = new Bottleneck({

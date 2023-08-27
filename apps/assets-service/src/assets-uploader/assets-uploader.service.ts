@@ -112,6 +112,43 @@ export class AssetsUploaderService {
     return uploadId;
   }
 
+  public async setEventUrlAssets(eventCid: string, assetsUrls: string[]) {
+    // const event = await this.dal.getEventByCid(eventCid);
+    // if (!event) {
+    //   throw new NotFoundException("Event doesn't exist");
+    // }
+
+    const uploadId = await this.dal.starUrlAssetsInternalUpload(
+      eventCid,
+      assetsUrls.length,
+    );
+    this.dal
+      .eventUrlAssetsUploadHandler(eventCid, uploadId, assetsUrls)
+      .then((keys) => {
+        this.rmqService.amqp.publish(
+          RMQConstants.exchanges.ASSETS.name,
+          RMQConstants.exchanges.ASSETS.routingKeys.EVENT_PICTURE_UPDATED,
+          AppDto.TransportDto.Assets.EventPicturesUpdatedRmqRequestDto.create({
+            eventCid,
+            assetKeys: keys,
+            uploadId: uploadId,
+          }),
+        );
+      })
+      .catch((e) => {
+        console.log(e);
+        this.rmqService.amqp.publish(
+          RMQConstants.exchanges.ASSETS.name,
+          RMQConstants.exchanges.ASSETS.routingKeys.ASSET_UPLOAD_FAILED,
+          AppDto.TransportDto.Assets.AssetUploadRmqRequestDto.create({
+            uploadId,
+          }),
+        );
+      });
+    console.log({ uploadId });
+    return uploadId;
+  }
+
   public async assetUploadStatusHandler(
     payloadId: string,
 

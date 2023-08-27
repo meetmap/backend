@@ -121,7 +121,9 @@ export class CreatorResponseDto
   extends BaseDto
   implements AppTypes.EventsService.Event.ICreator
 {
+  @StringField({ enum: AppTypes.EventsService.Event.CreatorType })
   type: AppTypes.EventsService.Event.CreatorType;
+  @IdField()
   creatorCid: string;
 }
 
@@ -335,7 +337,9 @@ class CreateUserEventTicketRequestDto extends BaseDto {
   @StringField({ optional: true })
   description?: string;
 }
-
+/**
+ * @deprecated
+ */
 export class CreateUserEventRequestDto extends BaseDto {
   @StringField()
   title: string;
@@ -348,7 +352,7 @@ export class CreateUserEventRequestDto extends BaseDto {
   @DateField()
   endTime: Date;
   @NumberField({
-    min: 1,
+    min: 0,
     max: 120,
   })
   ageLimit: number;

@@ -6,6 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import axios from 'axios';
 import * as mongoose from 'mongoose';
 
 @Injectable()
@@ -129,6 +130,27 @@ export class AssetsUploaderDal {
     return uploadStatus.toObject().id;
   }
 
+  public async starUrlAssetsInternalUpload(
+    eventCid: string,
+    amountOfAssets: number,
+  ) {
+    // const event = await this.db.models.events.findOne({ cid: eventCid });
+    // if (!event) {
+    //   throw new NotFoundException('Event not found');
+    // }
+
+    if (amountOfAssets > 10) {
+      throw new ConflictException('Reached limit of 10 assets per event');
+    }
+
+    const uploadStatus = await this.db.models.uploadsStatus.create({
+      status: AppTypes.AssetsSerivce.UploadsStatus.UploadStatusType.PENDING,
+      type: AppTypes.AssetsSerivce.UploadsStatus.UploadType.EVENTS_ASSETS,
+    });
+
+    return uploadStatus.toObject().id;
+  }
+
   public async eventPicturesUploadHandler(
     eventCid: string,
     uploadId: string,
@@ -143,6 +165,78 @@ export class AssetsUploaderDal {
         await this.eventAssetsUploader.uploadEventPicture(
           eventCid,
           image.buffer,
+        );
+      {
+        const event = await this.db.models.events.findOne({ cid: eventCid });
+        if (event && event.assets.length >= 9) {
+          throw new ConflictException('Reached limit of 10 assets per event');
+        }
+      }
+      await this.db.session(async (session) => {
+        const [asset] = await this.db.models.eventsAssets.create(
+          [
+            {
+              assetKey: objectKey,
+              sizes: sizes,
+              type: AppTypes.AssetsSerivce.Other.AssetType.IMAGE,
+              urls: sizes.map((size) =>
+                AssetsUploaders.EventAssetsUploader.getEventPictureUrl(
+                  objectKey,
+                  size as AssetsUploaders.EventPictureSize,
+                ),
+              ),
+              eventCid: eventCid,
+              uploadId: new mongoose.Types.ObjectId(uploadId),
+            },
+          ],
+          { session },
+        );
+        await this.db.models.events.findOneAndUpdate(
+          { cid: eventCid },
+          {
+            $push: {
+              assets: asset.id,
+            },
+          },
+          {
+            session,
+          },
+        );
+      });
+
+      return objectKey;
+    });
+
+    const asstes = await Promise.allSettled(assetsPromises);
+    return asstes
+      .filter((asset): asset is PromiseFulfilledResult<string> => {
+        if (asset.status === 'rejected') {
+          console.error(asset.reason);
+        }
+        return asset.status === 'fulfilled';
+      })
+      .map((asset) => asset.value);
+  }
+
+  public async eventUrlAssetsUploadHandler(
+    eventCid: string,
+    uploadId: string,
+    assetsURLs: string[],
+  ): Promise<string[]> {
+    // const event = await this.db.models.events.findOne({ cid: eventCid });
+    // if (!event) {
+    //   throw new NotFoundException('Event not found');
+    // }
+    const assetsPromises = assetsURLs.map(async (url) => {
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer',
+      });
+
+      const imageBuffer = Buffer.from(response.data, 'binary');
+      const { objectKey, sizes } =
+        await this.eventAssetsUploader.uploadEventPicture(
+          eventCid,
+          imageBuffer,
         );
       {
         const event = await this.db.models.events.findOne({ cid: eventCid });

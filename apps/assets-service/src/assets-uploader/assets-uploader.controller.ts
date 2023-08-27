@@ -115,4 +115,32 @@ export class AssetsUploaderController {
         : AppTypes.AssetsSerivce.UploadsStatus.UploadStatusType.SUCCEED,
     );
   }
+
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.EVENT_PROCESSING.name,
+    routingKey: [
+      RMQConstants.exchanges.EVENT_PROCESSING.routingKeys
+        .EVENT_PROCESSING_CREATE_INITIALIZED,
+    ],
+    queue: 'assets-service.assets.process-event-assets-urls',
+  })
+  public async processEventUrlAssets(
+    @RabbitPayload()
+    payload: AppDto.TransportDto.Events.CreateEventPayload,
+    @RabbitRequest() req: { fields: RequestOptions },
+  ) {
+    try {
+      console.log('Processing event assets');
+      if (!payload.assetsUrls) {
+        console.log('No assets urls found');
+        return;
+      }
+      await this.assetsUploaderService.setEventUrlAssets(
+        payload.cid,
+        payload.assetsUrls,
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }

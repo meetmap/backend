@@ -148,7 +148,7 @@ export interface ICityEventsResponseEvent {
   title: string;
   originalTitle?: string | null;
   dateReleased?: string | null;
-  argument: string;
+  argument?: string | null;
   promoArgument?: string | null;
   contentRating: string;
   kinopoisk?: any;

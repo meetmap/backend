@@ -12,7 +12,7 @@ const defaultRequestOptions: Options.Publish = {
 export class SchedulerService implements OnModuleInit {
   constructor(private readonly rmqService: RabbitmqService) {}
   onModuleInit() {
-    this.requestEventsServiceEventsSearchWarmingRequest();
+    this.requestEventsServiceYandexAfishaSyncJob();
   }
   @Cron('0,30 * * * *')
   public async requestAuthServiceUsersSnapshotJob() {

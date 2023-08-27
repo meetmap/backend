@@ -1,4 +1,5 @@
 import { AssetsServiceDatabase } from '@app/database';
+import { AppDto } from '@app/dto';
 import { AppTypes } from '@app/types';
 
 import { Injectable, OnModuleInit } from '@nestjs/common';
@@ -10,7 +11,7 @@ export class EventsDal implements OnModuleInit {
   onModuleInit() {}
 
   public async createEvent(
-    payload: AppTypes.Transport.Events.IEventsServiceEvent,
+    payload: AppDto.TransportDto.Events.CreateEventPayload,
   ) {
     return await this.db.models.events.create({
       cid: payload.cid,

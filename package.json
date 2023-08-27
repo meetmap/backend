@@ -20,7 +20,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./apps/backend-startap/test/jest-e2e.json",
     "compose:dev-start": "docker-compose -f docker-compose.dev.yaml up -d",
-    "compose:dev-stop": "docker-compose down"
+    "compose:dev-stop": "docker-compose -f docker-compose.dev.yaml down"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.317.0",

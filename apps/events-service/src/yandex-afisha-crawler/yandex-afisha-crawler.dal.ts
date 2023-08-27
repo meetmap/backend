@@ -11,38 +11,6 @@ export class YandexAfishaCrawlerDal {
     private readonly geocoder: GeocodingService,
   ) {}
 
-  public async updateEvent(
-    eventCid: string,
-    payload: AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>,
-  ) {
-    return this.db.models.event.findOneAndUpdate(
-      {
-        cid: eventCid,
-      },
-      {
-        $set: {
-          ageLimit: payload.ageLimit,
-          description: payload.description,
-          endTime: payload.endTime,
-          startTime: payload.startTime,
-          link: payload.link,
-          location: payload.location,
-          assets: payload.assets,
-          slug: payload.slug,
-          tickets: payload.tickets,
-          title: payload.title,
-        },
-      },
-      { new: true },
-    );
-  }
-
-  public async createEvent(
-    payload: AppTypes.Shared.Helpers.WithoutDocFields<AppTypes.EventsService.Event.IEvent>,
-  ) {
-    return await this.db.models.event.create({ ...payload });
-  }
-
   public async getAllAfishaCities() {
     //city param has to be like that, it will response with all of the cities
     const response =
@@ -105,67 +73,5 @@ export class YandexAfishaCrawlerDal {
         slug,
       })
       .lean();
-  }
-
-  public async lookupLocalityByCoordinates({
-    lat,
-    lng,
-  }: {
-    lat: number;
-    lng: number;
-  }) {
-    const locality = await this.geocoder.reverseLocality({ lat, lng });
-    let dbCountry = await this.db.models.country
-      .findOne({
-        en_name: locality.country?.en_name,
-      })
-      .lean();
-
-    if (!dbCountry) {
-      const country = await this.geocoder.reverseCountry({ lat, lng });
-      if (country) {
-        dbCountry = await this.db.models.country.create({
-          en_name: country.en_name,
-          coordinates: {
-            coordinates: [country.coordinates.lng, country.coordinates.lat],
-            type: 'Point',
-          } satisfies AppTypes.Shared.Country.ICountry['coordinates'],
-          google_place_id: country.place_id,
-        });
-      }
-    }
-    let dbLocality = await this.db.models.locality
-      .findOne({
-        en_name: locality.locality?.en_name,
-        countryId: dbCountry?._id,
-      })
-      .lean();
-    if (!dbLocality) {
-      if (locality.locality) {
-        dbLocality = await this.db.models.locality.create({
-          en_name: locality.locality.en_name,
-          coordinates: (locality.coordinates
-            ? {
-                coordinates: [
-                  locality.coordinates.lng,
-                  locality.coordinates.lat,
-                ],
-                type: 'Point',
-              }
-            : undefined) satisfies
-            | AppTypes.Shared.Country.ICountry['coordinates']
-            | undefined,
-          google_place_id: locality.place_id,
-          countryId: dbCountry?._id,
-        });
-      }
-    }
-
-    return {
-      countryId: dbCountry?._id.toString(),
-      localityId: dbLocality?._id.toString(),
-      localityName: dbLocality?.en_name,
-      countryName: dbCountry?.en_name,
-    };
   }
 }
