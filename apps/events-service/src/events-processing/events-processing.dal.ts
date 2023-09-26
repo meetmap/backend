@@ -416,10 +416,12 @@ export class EventsProcessingDal {
   }
 
   public async getProcessing(processingCid: string) {
-    const upload = await this.db.models.eventProcessing.findOne({
-      cid: processingCid,
-    });
-    return upload;
+    const processing = await this.db.models.eventProcessing
+      .findOne({
+        cid: processingCid,
+      })
+      .lean();
+    return processing;
   }
 
   public getEventsWithoutTagsCursor() {
@@ -628,15 +630,63 @@ export class EventsProcessingDal {
     processingCid: string,
     status: AppTypes.EventsService.EventProcessing.ProcessingStatus,
   ) {
-    return await this.db.models.eventProcessing.findOneAndUpdate(
-      {
-        cid: processingCid,
-      },
-      {
-        $set: {
-          status,
+    return await this.db.models.eventProcessing
+      .findOneAndUpdate(
+        {
+          cid: processingCid,
         },
-      },
-    );
+        {
+          $set: {
+            status,
+          },
+        },
+        { new: true },
+      )
+      .lean();
+  }
+
+  public async attachAssetsToEvent(
+    eventCid: string,
+    assets: AppTypes.EventsService.Event.IAsset[],
+  ) {
+    //@todo make attachment better
+
+    await this.db.session(async (session) => {
+      const event = await this.db.models.event
+        .findOne({
+          cid: eventCid,
+        })
+        .session(session)
+        .lean();
+      debugger;
+      if (!event) {
+        throw new Error('Event not found');
+      }
+      const assetsToInsert: AppTypes.EventsService.Event.IAsset[] = assets.map(
+        (asset) => ({
+          cid: asset.cid,
+          order: asset.order,
+          sizes: asset.sizes.map((size) => ({
+            size_label: size.size_label,
+            url: size.url,
+            width: size.width,
+            height: size.height,
+          })),
+          type: asset.type,
+          url: asset.url,
+        }),
+      );
+      await this.db.models.event
+        .findOneAndUpdate(
+          {
+            cid: eventCid,
+          },
+          {
+            $set: { assets: event.assets.concat(assetsToInsert).slice(0, 10) },
+          },
+        )
+        .session(session)
+        .lean();
+    });
   }
 }

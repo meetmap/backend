@@ -1,3 +1,4 @@
+export * as Asset from './asset';
 export * as AssetsBase from './assets-base';
 export * as Events from './events';
 export * as EventsAssets from './events-assets';

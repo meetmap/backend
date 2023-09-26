@@ -265,10 +265,14 @@ export class EventsProcessingService {
     payload: AppDto.TransportDto.Events.CreateEventPayload,
   ) {
     const event = await this.dal.createEvent(payload);
-    await this.dal.updateProcessingStatus(
+    const processing = await this.dal.updateProcessingStatus(
       payload.processingCid,
       AppTypes.EventsService.EventProcessing.ProcessingStatus.EVENT_CREATED,
     );
+
+    if (!processing) {
+      throw new Error('Processing not found');
+    }
 
     await this.rmqService.amqp.publish(
       RMQConstants.exchanges.EVENT_PROCESSING.name,
@@ -276,6 +280,8 @@ export class EventsProcessingService {
         .EVENT_PROCESSING_EVENT_CREATED,
       AppDto.TransportDto.Events.EventProcessingStepRequestDto.create({
         processingCid: payload.processingCid,
+        type: processing.type,
+        eventCid: processing.eventCid,
       }),
     );
 
@@ -286,16 +292,23 @@ export class EventsProcessingService {
     payload: AppDto.TransportDto.Events.UpdateEventPayload,
   ) {
     const event = await this.dal.updateEvent(payload);
-    await this.dal.updateProcessingStatus(
+    const processing = await this.dal.updateProcessingStatus(
       payload.processingCid,
       AppTypes.EventsService.EventProcessing.ProcessingStatus.EVENT_UPDATED,
     );
+
+    if (!processing) {
+      throw new Error('Processing not found');
+    }
+
     await this.rmqService.amqp.publish(
       RMQConstants.exchanges.EVENT_PROCESSING.name,
       RMQConstants.exchanges.EVENT_PROCESSING.routingKeys
         .EVENT_PROCESSING_EVENT_UPDATED,
       AppDto.TransportDto.Events.EventProcessingStepRequestDto.create({
         processingCid: payload.processingCid,
+        type: processing.type,
+        eventCid: processing.eventCid,
       }),
     );
     return event;
@@ -309,16 +322,22 @@ export class EventsProcessingService {
     //if moderation failed just throw error
     // throw new BadRequestException('Moderation failed');
     ///succeed
-    await this.dal.updateProcessingStatus(
+    const processing = await this.dal.updateProcessingStatus(
       processingCid,
       AppTypes.EventsService.EventProcessing.ProcessingStatus.MODERATED,
     );
+    if (!processing) {
+      throw new Error('Processing not found');
+    }
+
     await this.rmqService.amqp.publish(
       RMQConstants.exchanges.EVENT_PROCESSING.name,
       RMQConstants.exchanges.EVENT_PROCESSING.routingKeys
         .EVENT_PROCESSING_MODERATED,
       AppDto.TransportDto.Events.EventProcessingStepRequestDto.create({
         processingCid: processingCid,
+        type: processing.type,
+        eventCid: processing.eventCid,
       }),
     );
   }
@@ -327,6 +346,10 @@ export class EventsProcessingService {
     const event = await this.dal.getEventByProcessingCid(processingCid);
     if (!event) {
       throw new NotFoundException('Event not found');
+    }
+    const processing = await this.dal.getProcessing(processingCid);
+    if (!processing) {
+      throw new Error('Processing not found');
     }
 
     if (event.tagsCids.length) {
@@ -337,12 +360,15 @@ export class EventsProcessingService {
         processingCid,
         AppTypes.EventsService.EventProcessing.ProcessingStatus.TAGS_ASSIGNED,
       );
+
       await this.rmqService.amqp.publish(
         RMQConstants.exchanges.EVENT_PROCESSING.name,
         RMQConstants.exchanges.EVENT_PROCESSING.routingKeys
           .EVENT_PROCESSING_TAGS_ASSIGNED,
         AppDto.TransportDto.Events.EventProcessingStepRequestDto.create({
           processingCid: processingCid,
+          type: processing.type,
+          eventCid: processing.eventCid,
         }),
       );
       return event;
@@ -354,6 +380,8 @@ export class EventsProcessingService {
         .EVENT_PROCESSING_TAGS_ASSIGNED,
       AppDto.TransportDto.Events.EventProcessingStepRequestDto.create({
         processingCid: processingCid,
+        type: processing.type,
+        eventCid: processing.eventCid,
       }),
     );
   }
@@ -392,6 +420,10 @@ export class EventsProcessingService {
   }
 
   public async publishFailedStatus(processingCid: string, reason: string) {
+    const processing = await this.dal.getProcessing(processingCid);
+    if (!processing) {
+      throw new Error('Processing not found');
+    }
     return await this.rmqService.amqp.publish(
       RMQConstants.exchanges.EVENT_PROCESSING.name,
       RMQConstants.exchanges.EVENT_PROCESSING.routingKeys
@@ -399,22 +431,28 @@ export class EventsProcessingService {
       AppDto.TransportDto.Events.EventProcessingStepRequestDto.create({
         processingCid: processingCid,
         failureReason: reason,
+        type: processing.type,
+        eventCid: processing.eventCid,
       }),
     );
   }
 
   public async eventProcessingSucceed(processingCid: string) {
-    await this.dal.updateProcessingStatus(
+    const processing = await this.dal.updateProcessingStatus(
       processingCid,
       AppTypes.EventsService.EventProcessing.ProcessingStatus.SUCCEEDED,
     );
-
+    if (!processing) {
+      throw new Error('Processing not found');
+    }
     await this.rmqService.amqp.publish(
       RMQConstants.exchanges.EVENT_PROCESSING.name,
       RMQConstants.exchanges.EVENT_PROCESSING.routingKeys
         .EVENT_PROCESSING_SUCCEEDED,
       AppDto.TransportDto.Events.EventProcessingStepRequestDto.create({
         processingCid: processingCid,
+        type: processing.type,
+        eventCid: processing.eventCid,
       }),
     );
     const event = await this.dal.getEventByProcessingCid(processingCid);
@@ -485,5 +523,10 @@ export class EventsProcessingService {
     // return JSON.parse(aiResponse);
   }
 
-  static mapTo;
+  public async attachAssetsToEvent(
+    eventCid: string,
+    assets: AppDto.TransportDto.Assets.EventAssetsReadyToAttachDto['assets'],
+  ) {
+    await this.dal.attachAssetsToEvent(eventCid, assets);
+  }
 }

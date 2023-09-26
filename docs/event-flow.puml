@@ -1,0 +1,34 @@
+@startuml Event Processing flow
+rectangle "Ticketing platform Event" as TicketingPlatformEvent
+rectangle "System event" as SystemEvent
+rectangle "User event" as UserEvent
+
+rectangle "Event upload" as EventUpload{
+    component "User" as User
+    component "System" as System
+    component "Ticketing Platform" as TicketingPlatform
+}
+rectangle "Db event creation" as DbEventCreation
+rectangle "Assets attachment" as EventAssetsAttachment
+
+rectangle "Ai processing" as AiProcessing{
+    rectangle "Violation validation" as ViolationValidation
+    rectangle "Tags assign" as TagsAssign
+    ViolationValidation --> TagsAssign : Successfull validation
+}
+AiProcessing --> AiProcessing : Retry on ai fail
+
+EventUpload --> DbEventCreation
+DbEventCreation --> AiProcessing
+DbEventCreation --> EventAssetsAttachment
+
+component "Start upload from asset-uploader" as AssetUploadStarted
+component "Publish upload completed event" as AssetUploadCompleted
+component "Lambda post processing started" as AssetProcessingStart
+component "Lambda post processing finished" as AssetProcessingFinished
+EventAssetsAttachment --> AssetProcessingStarted
+AssetUploadStarted --> AssetUploadCompleted : Create record in db, upload to lambda
+AssetUploadCompleted --> AssetProcessingStart : on lambda
+AssetProcessingStart --> AssetProcessingFinished 
+AssetProcessingFinished --> "Update db record as processing completed"
+@enduml

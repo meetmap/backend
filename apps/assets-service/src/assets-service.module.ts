@@ -5,8 +5,8 @@ import { S3UploaderModule } from '@app/s3-uploader';
 import { AppTypes } from '@app/types';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AssetUploaderModule } from './asset-uploader/asset-uploader.module';
 import { AssetsServiceController } from './assets-service.controller';
-import { AssetsUploaderModule } from './assets-uploader/assets-uploader.module';
 import { EventsModule } from './events/events.module';
 import { SnapshotModule } from './snapshot/snapshot.module';
 import { UserModule } from './users/users.module';
@@ -30,7 +30,9 @@ import { UserModule } from './users/users.module';
     SnapshotModule,
     UserModule,
     EventsModule,
-    AssetsUploaderModule,
+    // AssetsUploaderModule,
+    //test one
+    AssetUploaderModule,
   ],
 
   controllers: [AssetsServiceController],

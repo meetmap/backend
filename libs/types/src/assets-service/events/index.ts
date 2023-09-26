@@ -1,11 +1,10 @@
 import { EventsService } from '@app/types/events-service';
-import { ObjectId } from 'mongoose';
 
 export interface IEvent {
   id: string;
   cid: string;
   creator?: ICreator;
-  assets: ObjectId[];
+  assets: string[];
   createdAt: Date;
   updatedAt: Date;
 }

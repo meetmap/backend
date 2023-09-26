@@ -14,7 +14,7 @@ export interface IEventProcessing {
    */
   rawEvent: string;
 
-  eventCid?: string;
+  eventCid: string;
 
   status: ProcessingStatus;
   failureReason?: string;

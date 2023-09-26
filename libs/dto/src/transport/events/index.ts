@@ -36,6 +36,12 @@ export class EventProcessingStepRequestDto extends BaseDto {
   @StringField()
   processingCid: string;
 
+  @StringField()
+  eventCid: string;
+
+  @StringField({ enum: AppTypes.EventsService.EventProcessing.ProcessingType })
+  type: AppTypes.EventsService.EventProcessing.ProcessingType;
+
   @StringField({ optional: true })
   failureReason?: string;
 }

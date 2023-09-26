@@ -12,9 +12,11 @@ export class EventsService {
     await this.dal.createEvent(payload);
   }
 
-  public async handleDeleteEvent(
-    payload: AppDto.TransportDto.Events.CreateEventPayload,
-  ) {
-    await this.dal.deleteEvent(payload.cid);
+  public async deleteEvent(eventCid: string) {
+    await this.dal.deleteEvent(eventCid);
+  }
+
+  public async attachAssetsToEvent(eventCid: string, assetsCids: string[]) {
+    return await this.dal.attachAssetsToEvent(eventCid, assetsCids);
   }
 }

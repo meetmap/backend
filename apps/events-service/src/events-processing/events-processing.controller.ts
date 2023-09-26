@@ -310,6 +310,23 @@ export class EventsProcessingController {
     }
   }
 
+  @RabbitSubscribe({
+    exchange: RMQConstants.exchanges.ASSETS.name,
+    routingKey:
+      RMQConstants.exchanges.ASSETS.routingKeys
+        .ASSETS_PROCESSING_EVENT_ASSETS_READY_TO_ATTACH,
+    queue: 'events-service.processing.attach-assets',
+  })
+  public async attachAssetsToEvent(
+    @RabbitPayload()
+    payload: AppDto.TransportDto.Assets.EventAssetsReadyToAttachDto,
+  ) {
+    await this.eventsProcessingService.attachAssetsToEvent(
+      payload.eventCid,
+      payload.assets,
+    );
+  }
+
   //JOBS HERE
 
   @RabbitSubscribe({

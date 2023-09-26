@@ -1,2 +1,1 @@
-export * from './event-assets-uploader';
-export * from './user-assets.uploader';
+export * from './asset-uploader';

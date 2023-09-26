@@ -1,7 +1,9 @@
+import { CreatorSchema } from '@app/database/shared-models';
 import { arrayMaxLength } from '@app/database/shared-validators';
 import { AppTypes } from '@app/types';
 import * as mongoose from 'mongoose';
-import { CreatorSchema } from './creator-schema';
+import { AssetSchema } from './asset';
+
 import { LocationSchema } from './location';
 import { TicketSchema } from './ticket';
 
@@ -21,7 +23,7 @@ export const EventSchema =
         unique: true,
       },
       assets: {
-        type: [mongoose.SchemaTypes.String],
+        type: [AssetSchema],
         default: [],
       },
       ageLimit: {

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AbstractBaseDatabase } from '../abstract.db';
-import { UserAssetsSchema, UserSchema } from './models';
+import { BatchUploadSchema, UserAssetsSchema, UserSchema } from './models';
+import { AssetSchema } from './models/asset';
 import { EventsSchema } from './models/event';
 import { EventsAssetsSchema } from './models/eventsAssets';
 import { UploadsStatusSchema } from './models/uploadsStatus';
@@ -23,6 +24,8 @@ export class AssetsServiceDatabase extends AbstractBaseDatabase {
         'UploadsStatus',
         UploadsStatusSchema,
       ),
+      assets: this.connection.model('Assets', AssetSchema),
+      batchUploads: this.connection.model('BatchUploads', BatchUploadSchema),
     };
   }
 }

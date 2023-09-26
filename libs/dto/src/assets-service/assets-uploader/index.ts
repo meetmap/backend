@@ -14,7 +14,7 @@ export class UploadImageRequestDto extends BaseDto {
 
 export class UploadImageRequestBulkDto extends BaseDto {
   @ImageField({ isArray: true })
-  'photo': [Express.Multer.File];
+  photo: [Express.Multer.File];
 }
 
 export class AttachImagesToEventRequestDto extends UploadImageRequestBulkDto {

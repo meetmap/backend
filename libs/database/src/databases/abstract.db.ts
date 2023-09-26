@@ -24,8 +24,14 @@ export class AbstractBaseDatabase implements OnModuleInit, OnModuleDestroy {
   public async onModuleDestroy() {
     await this.connection.close();
   }
-  public async session(
-    callback: (session: mongoose.ClientSession) => Promise<void>,
+  /**
+   *
+   * @param callback
+   * @param deps list of abort controllers needs to be abort afer session failed
+   */
+  public async session<T extends unknown>(
+    callback: (session: mongoose.ClientSession) => Promise<T>,
+    deps: AbortController[] = [],
   ) {
     const session = await this.connection.startSession({
       defaultTransactionOptions: {
@@ -48,6 +54,8 @@ export class AbstractBaseDatabase implements OnModuleInit, OnModuleDestroy {
       console.log('Transaction error: ', error);
       await session.abortTransaction();
       await session.endSession();
+      //abort any dependency here
+      deps.forEach((abort) => abort.abort());
       throw error;
     } finally {
       await session.endSession();

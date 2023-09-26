@@ -1,6 +1,6 @@
+import { CreatorSchema } from '@app/database/shared-models';
 import { AppTypes } from '@app/types';
 import * as mongoose from 'mongoose';
-import { CreatorSchema } from './creator-schema';
 
 export const EventProcessingSchema =
   new mongoose.Schema<AppTypes.EventsService.EventProcessing.EventProcessing>(
@@ -28,6 +28,7 @@ export const EventProcessingSchema =
       },
       eventCid: {
         type: mongoose.SchemaTypes.String,
+        required: true,
       },
       status: {
         type: mongoose.SchemaTypes.String,

@@ -1,6 +1,22 @@
+import { AppTypes } from '@app/types';
 import { Shared } from '@app/types/shared';
 import { ISafeTag } from '../event-tags';
 import { IEventsUsers } from '../events-users';
+
+export interface IAssetSize {
+  size_label: AppTypes.AssetsSerivce.Asset.SizeLabel;
+  url: string;
+  width?: number; //for images, no need for videos
+  height?: number; //for images, no need for videos
+}
+
+export interface IAsset {
+  cid: string;
+  order: number;
+  type: AppTypes.AssetsSerivce.Asset.AssetType;
+  url: string;
+  sizes: IAssetSize[];
+}
 
 export interface IEvent {
   id: string;
@@ -8,7 +24,7 @@ export interface IEvent {
   slug: string;
   link?: string;
   title: string;
-  assets: string[];
+  assets: IAsset[];
   description?: string;
   /**
    *  timestamp

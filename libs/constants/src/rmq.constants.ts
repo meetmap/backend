@@ -30,9 +30,15 @@ export class RMQConstants {
         name: 'assets_exchange',
         type: 'direct',
         routingKeys: {
-          PROFILE_PICTURE_UPDATED: 'assets-service.profile_picture.updated',
-          EVENT_PICTURE_UPDATED: 'assets-service.event_pitcture.updated',
-          ASSET_UPLOAD_FAILED: 'assets-service.asset_upload.failed',
+          UPLOAD_STARTED: 'service.assets.upload.started',
+          UPLOAD_SUCEEED: 'service.assets.upload.succeed',
+          UPLOAD_FAILED: 'service.assets.upload.failed',
+          POST_PROCESSING_STARTED:
+            'service.assets-serverless.post-processing.started',
+          POST_PROCESSING_SUCCEED:
+            'service.assets-serverless.post-processing.succeed',
+          POST_PROCESSING_FAILED:
+            'service.assets-serverless.post-processing.failed',
         },
       },
       FRIENDS_SNAPSHOT: {

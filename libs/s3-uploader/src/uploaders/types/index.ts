@@ -6,3 +6,7 @@ export interface IPictureSettings {
   sizes: IImageSize[];
   contentType: 'image/jpeg';
 }
+
+export interface IAssetMetadata {
+  cid?: string;
+}
